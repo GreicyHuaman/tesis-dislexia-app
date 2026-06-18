@@ -1,0 +1,48 @@
+{
+  "feature_columns": [
+    "tipo_prueba_lectura",
+    "tipo_prueba_fonologia",
+    "tipo_prueba_otro",
+    "total_items",
+    "aciertos_primer_intento",
+    "errores_primer_intento",
+    "error_rate",
+    "taps_erroneos_totales",
+    "taps_rate",
+    "tiempo_promedio_ms",
+    "tiempo_min_ms",
+    "tiempo_max_ms",
+    "tiempo_std_ms",
+    "items_drag_drop",
+    "drag_drop_rate",
+    "tiempo_promedio_drag_drop_ms",
+    "errores_drag_drop",
+    "items_palabra_real",
+    "items_pseudopalabra",
+    "pseudopalabra_rate",
+    "errores_palabra_real",
+    "errores_pseudopalabra",
+    "tiempo_promedio_palabra_real_ms",
+    "tiempo_promedio_pseudopalabra_ms",
+    "total_baja",
+    "total_media",
+    "total_alta",
+    "total_sin_complejidad",
+    "errores_baja",
+    "errores_media",
+    "errores_alta",
+    "errores_sin_complejidad"
+  ],
+  "label_mapping": {
+    "VERDE": 0,
+    "AMARILLO": 1,
+    "ROJO": 2
+  },
+  "inverse_label_mapping": {
+    "0": "VERDE",
+    "1": "AMARILLO",
+    "2": "ROJO"
+  },
+  "preferred_model": "random_forest",
+  "model_version": "v0.3-pseudopalabras"
+}

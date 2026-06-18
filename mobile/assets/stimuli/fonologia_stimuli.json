@@ -1,0 +1,2892 @@
+[
+  {
+    "id": "fono_real_001_para",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "para",
+    "silaba_objetivo": "pa",
+    "opciones": [
+      "pa",
+      "ge",
+      "ho"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 6488.1239,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_002_pero",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "pero",
+    "silaba_objetivo": "pe",
+    "opciones": [
+      "nu",
+      "só",
+      "pe"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 5377.5143,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_003_como",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "como",
+    "silaba_objetivo": "co",
+    "opciones": [
+      "ni",
+      "po",
+      "co"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 3832.0389,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_004_todo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "todo",
+    "silaba_objetivo": "to",
+    "opciones": [
+      "to",
+      "rá",
+      "dó"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 2978.8741,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_005_vamos",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "vamos",
+    "silaba_objetivo": "va",
+    "opciones": [
+      "he",
+      "po",
+      "va"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 2538.4097,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_006_tengo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "tengo",
+    "silaba_objetivo": "te",
+    "opciones": [
+      "pe",
+      "te",
+      "va"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 2272.381,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_007_nada",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "nada",
+    "silaba_objetivo": "na",
+    "opciones": [
+      "mu",
+      "na",
+      "va"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 2124.6393,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_008_cómo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "cómo",
+    "silaba_objetivo": "có",
+    "opciones": [
+      "có",
+      "ge",
+      "ha"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 2031.09,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_009_bueno",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "bueno",
+    "silaba_objetivo": "bue",
+    "opciones": [
+      "bue",
+      "lle",
+      "que"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1998.5768,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_010_sólo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "sólo",
+    "silaba_objetivo": "só",
+    "opciones": [
+      "mi",
+      "na",
+      "só"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 1977.0598,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_011_tiene",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "tiene",
+    "silaba_objetivo": "tie",
+    "opciones": [
+      "tie",
+      "chi",
+      "mue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1939.4214,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_012_puedo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "puedo",
+    "silaba_objetivo": "pue",
+    "opciones": [
+      "gue",
+      "pue",
+      "sie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1903.5662,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_013_hacer",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "hacer",
+    "silaba_objetivo": "ha",
+    "opciones": [
+      "nu",
+      "to",
+      "ha"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1790.9167,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_014_todos",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "todos",
+    "silaba_objetivo": "to",
+    "opciones": [
+      "to",
+      "dé",
+      "ma"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1664.223,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_015_creo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "creo",
+    "silaba_objetivo": "creo",
+    "opciones": [
+      "quie",
+      "creo",
+      "sa"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 1510.3055,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_016_puede",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "puede",
+    "silaba_objetivo": "pue",
+    "opciones": [
+      "gra",
+      "pue",
+      "tie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1462.7732,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_017_sabes",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "sabes",
+    "silaba_objetivo": "sa",
+    "opciones": [
+      "có",
+      "po",
+      "sa"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1427.3115,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_018_hola",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "hola",
+    "silaba_objetivo": "ho",
+    "opciones": [
+      "se",
+      "ge",
+      "ho"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 1367.2352,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_019_casa",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "casa",
+    "silaba_objetivo": "ca",
+    "opciones": [
+      "só",
+      "ni",
+      "ca"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 1349.1574,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_020_nunca",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "nunca",
+    "silaba_objetivo": "nu",
+    "opciones": [
+      "nu",
+      "te",
+      "ju"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1325.6128,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_021_señor",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "señor",
+    "silaba_objetivo": "se",
+    "opciones": [
+      "no",
+      "nu",
+      "se"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1303.8278,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_022_dónde",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "dónde",
+    "silaba_objetivo": "dó",
+    "opciones": [
+      "dó",
+      "he",
+      "co"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1289.3838,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_023_favor",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "favor",
+    "silaba_objetivo": "fa",
+    "opciones": [
+      "fa",
+      "se",
+      "ca"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1286.967,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_024_mucho",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "mucho",
+    "silaba_objetivo": "mu",
+    "opciones": [
+      "me",
+      "mu",
+      "dé"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1217.6346,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_025_hace",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "hace",
+    "silaba_objetivo": "ha",
+    "opciones": [
+      "vo",
+      "mi",
+      "ha"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 1194.317,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_026_mejor",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "mejor",
+    "silaba_objetivo": "me",
+    "opciones": [
+      "me",
+      "vi",
+      "có"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1189.9202,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_027_vida",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "vida",
+    "silaba_objetivo": "vi",
+    "opciones": [
+      "do",
+      "vi",
+      "no"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 1101.3189,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_028_sobre",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "sobre",
+    "silaba_objetivo": "so",
+    "opciones": [
+      "so",
+      "mi",
+      "có"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1063.9636,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_029_decir",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "decir",
+    "silaba_objetivo": "de",
+    "opciones": [
+      "de",
+      "he",
+      "nu"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1041.6706,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_030_hasta",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "hasta",
+    "silaba_objetivo": "ha",
+    "opciones": [
+      "ha",
+      "te",
+      "ma"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 1027.7475,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_031_solo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "solo",
+    "silaba_objetivo": "so",
+    "opciones": [
+      "có",
+      "he",
+      "so"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 1008.2538,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_032_cosas",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "cosas",
+    "silaba_objetivo": "co",
+    "opciones": [
+      "to",
+      "mu",
+      "co"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 974.3874,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_033_noche",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "noche",
+    "silaba_objetivo": "no",
+    "opciones": [
+      "po",
+      "he",
+      "no"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 900.8722,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_034_poco",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "poco",
+    "silaba_objetivo": "po",
+    "opciones": [
+      "ha",
+      "po",
+      "dó"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 878.0431,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_035_gente",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "gente",
+    "silaba_objetivo": "ge",
+    "opciones": [
+      "ge",
+      "po",
+      "do"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 861.9843,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_036_hecho",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "hecho",
+    "silaba_objetivo": "he",
+    "opciones": [
+      "fa",
+      "he",
+      "ni"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 861.0202,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_037_nadie",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "nadie",
+    "silaba_objetivo": "na",
+    "opciones": [
+      "na",
+      "só",
+      "de"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 846.1416,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_038_padre",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "padre",
+    "silaba_objetivo": "pa",
+    "opciones": [
+      "mu",
+      "pa",
+      "ca"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 819.2703,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_039_mismo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "mismo",
+    "silaba_objetivo": "mi",
+    "opciones": [
+      "mi",
+      "nu",
+      "rá"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 804.3009,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_040_mira",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "mira",
+    "silaba_objetivo": "mi",
+    "opciones": [
+      "mi",
+      "te",
+      "dó"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 800.4013,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_041_dijo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "dijo",
+    "silaba_objetivo": "di",
+    "opciones": [
+      "di",
+      "do",
+      "ve"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 742.2748,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_042_pasa",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "pasa",
+    "silaba_objetivo": "pa",
+    "opciones": [
+      "so",
+      "ha",
+      "pa"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": 739.2399,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_043_claro",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "claro",
+    "silaba_objetivo": "cla",
+    "opciones": [
+      "que",
+      "cla",
+      "gue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 723.1659,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_044_desde",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "desde",
+    "silaba_objetivo": "de",
+    "opciones": [
+      "so",
+      "mu",
+      "de"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 703.3782,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_045_donde",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "donde",
+    "silaba_objetivo": "do",
+    "opciones": [
+      "so",
+      "pe",
+      "do"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": 701.2209,
+    "complejidad_estimulo": "BAJA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_046_cuando",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "cuando",
+    "silaba_objetivo": "cua",
+    "opciones": [
+      "cla",
+      "tie",
+      "cua"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 2162.6691,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_047_quiero",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "quiero",
+    "silaba_objetivo": "quie",
+    "opciones": [
+      "so",
+      "quie",
+      "creo"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 1924.7827,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_048_tienes",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "tienes",
+    "silaba_objetivo": "tie",
+    "opciones": [
+      "gue",
+      "tie",
+      "sie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 1587.7376,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_049_porque",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "porque",
+    "silaba_objetivo": "po",
+    "opciones": [
+      "po",
+      "ho",
+      "pa"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 1512.2705,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_050_verdad",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "verdad",
+    "silaba_objetivo": "ve",
+    "opciones": [
+      "co",
+      "ve",
+      "mi"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 1351.6174,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_051_tiempo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "tiempo",
+    "silaba_objetivo": "tie",
+    "opciones": [
+      "pri",
+      "cua",
+      "tie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 1287.689,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_052_hombre",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "hombre",
+    "silaba_objetivo": "ho",
+    "opciones": [
+      "ho",
+      "di",
+      "to"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 1138.5488,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_053_siento",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "siento",
+    "silaba_objetivo": "sie",
+    "opciones": [
+      "pue",
+      "gue",
+      "sie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 1136.9946,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_054_puedes",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "puedes",
+    "silaba_objetivo": "pue",
+    "opciones": [
+      "pue",
+      "gra",
+      "tie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 1093.5175,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_055_parece",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "parece",
+    "silaba_objetivo": "pa",
+    "opciones": [
+      "ca",
+      "pa",
+      "ju"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 851.1026,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_056_quiere",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "quiere",
+    "silaba_objetivo": "quie",
+    "opciones": [
+      "ca",
+      "creo",
+      "quie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 846.3037,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_057_hablar",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "hablar",
+    "silaba_objetivo": "ha",
+    "opciones": [
+      "ma",
+      "ha",
+      "di"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 749.8643,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_058_dinero",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "dinero",
+    "silaba_objetivo": "di",
+    "opciones": [
+      "di",
+      "ma",
+      "mu"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 727.4222,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_059_podría",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "podría",
+    "silaba_objetivo": "po",
+    "opciones": [
+      "ve",
+      "po",
+      "vo"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 682.1207,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_060_seguro",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "seguro",
+    "silaba_objetivo": "se",
+    "opciones": [
+      "pe",
+      "na",
+      "se"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 680.2833,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_061_mañana",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "mañana",
+    "silaba_objetivo": "ma",
+    "opciones": [
+      "so",
+      "ma",
+      "ha"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 667.0713,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_062_había",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "había",
+    "silaba_objetivo": "ha",
+    "opciones": [
+      "ha",
+      "de",
+      "dé"
+    ],
+    "num_silabas": 3,
+    "num_letras": 5,
+    "frecuencia": 654.9208,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_063_tenía",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "tenía",
+    "silaba_objetivo": "te",
+    "opciones": [
+      "po",
+      "pe",
+      "te"
+    ],
+    "num_silabas": 3,
+    "num_letras": 5,
+    "frecuencia": 609.8311,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_064_mierda",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "mierda",
+    "silaba_objetivo": "mie",
+    "opciones": [
+      "chi",
+      "mie",
+      "cue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 568.1785,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_065_nombre",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "nombre",
+    "silaba_objetivo": "no",
+    "opciones": [
+      "no",
+      "ve",
+      "di"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 537.6929,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_066_déjame",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "déjame",
+    "silaba_objetivo": "dé",
+    "opciones": [
+      "de",
+      "so",
+      "dé"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 524.7576,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_067_quería",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "quería",
+    "silaba_objetivo": "que",
+    "opciones": [
+      "tie",
+      "que",
+      "cue"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 504.3344,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_068_tienen",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "tienen",
+    "silaba_objetivo": "tie",
+    "opciones": [
+      "tie",
+      "sie",
+      "lle"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 498.6234,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_069_cierto",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "cierto",
+    "silaba_objetivo": "cie",
+    "opciones": [
+      "sue",
+      "cie",
+      "lle"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 434.0163,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_070_buenas",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "buenas",
+    "silaba_objetivo": "bue",
+    "opciones": [
+      "bue",
+      "chi",
+      "mue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 389.039,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_071_pasado",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "pasado",
+    "silaba_objetivo": "pa",
+    "opciones": [
+      "pa",
+      "nu",
+      "ma"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 386.832,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_072_cabeza",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "cabeza",
+    "silaba_objetivo": "ca",
+    "opciones": [
+      "ca",
+      "pa",
+      "ve"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 383.2955,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_073_cuenta",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "cuenta",
+    "silaba_objetivo": "cue",
+    "opciones": [
+      "cue",
+      "gra",
+      "chi"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 378.8339,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_074_pueden",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "pueden",
+    "silaba_objetivo": "pue",
+    "opciones": [
+      "sue",
+      "cuá",
+      "pue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 362.8745,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_075_muerto",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "muerto",
+    "silaba_objetivo": "mue",
+    "opciones": [
+      "mue",
+      "chi",
+      "sue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 362.2023,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_076_cariño",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "cariño",
+    "silaba_objetivo": "ca",
+    "opciones": [
+      "ca",
+      "ho",
+      "dé"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 352.9115,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_077_sabía",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "sabía",
+    "silaba_objetivo": "sa",
+    "opciones": [
+      "sa",
+      "di",
+      "se"
+    ],
+    "num_silabas": 3,
+    "num_letras": 5,
+    "frecuencia": 351.0201,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_078_muchas",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "muchas",
+    "silaba_objetivo": "mu",
+    "opciones": [
+      "mu",
+      "vi",
+      "ju"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 339.7752,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_079_rápido",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "rápido",
+    "silaba_objetivo": "rá",
+    "opciones": [
+      "to",
+      "se",
+      "rá"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 334.8337,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_080_sería",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "sería",
+    "silaba_objetivo": "se",
+    "opciones": [
+      "to",
+      "se",
+      "fa"
+    ],
+    "num_silabas": 3,
+    "num_letras": 5,
+    "frecuencia": 334.2717,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_081_puerta",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "puerta",
+    "silaba_objetivo": "pue",
+    "opciones": [
+      "sue",
+      "pue",
+      "tie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 334.1831,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_082_contra",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "contra",
+    "silaba_objetivo": "co",
+    "opciones": [
+      "co",
+      "dó",
+      "so"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 332.1944,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_083_chicos",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "chicos",
+    "silaba_objetivo": "chi",
+    "opciones": [
+      "chi",
+      "gra",
+      "cla"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 330.8412,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_084_dentro",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "dentro",
+    "silaba_objetivo": "de",
+    "opciones": [
+      "va",
+      "ma",
+      "de"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 329.6696,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_085_camino",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "camino",
+    "silaba_objetivo": "ca",
+    "opciones": [
+      "ge",
+      "ca",
+      "he"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 324.4168,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_086_suerte",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "suerte",
+    "silaba_objetivo": "sue",
+    "opciones": [
+      "sue",
+      "pue",
+      "mie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 324.4017,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_087_volver",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "volver",
+    "silaba_objetivo": "vo",
+    "opciones": [
+      "po",
+      "vo",
+      "no"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 314.0669,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_088_señora",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "señora",
+    "silaba_objetivo": "se",
+    "opciones": [
+      "fa",
+      "se",
+      "rá"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 312.4694,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_089_cuánto",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "cuánto",
+    "silaba_objetivo": "cuá",
+    "opciones": [
+      "cuá",
+      "pri",
+      "qui"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 308.4898,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_090_pronto",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "pronto",
+    "silaba_objetivo": "pro",
+    "opciones": [
+      "lle",
+      "pro",
+      "cue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 307.1323,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_091_ciudad",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "ciudad",
+    "silaba_objetivo": "ciu",
+    "opciones": [
+      "sie",
+      "ciu",
+      "cua"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 305.4614,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_092_semana",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "semana",
+    "silaba_objetivo": "se",
+    "opciones": [
+      "vi",
+      "pe",
+      "se"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 299.5623,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_093_muerte",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "muerte",
+    "silaba_objetivo": "mue",
+    "opciones": [
+      "sie",
+      "cuá",
+      "mue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 296.0064,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_094_quizás",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "quizás",
+    "silaba_objetivo": "qui",
+    "opciones": [
+      "lle",
+      "pro",
+      "qui"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 293.3713,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_095_buenos",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "buenos",
+    "silaba_objetivo": "bue",
+    "opciones": [
+      "bue",
+      "chi",
+      "sue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 289.8889,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_096_noches",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "noches",
+    "silaba_objetivo": "no",
+    "opciones": [
+      "no",
+      "ju",
+      "ca"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 289.3053,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_097_juntos",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "juntos",
+    "silaba_objetivo": "ju",
+    "opciones": [
+      "ju",
+      "po",
+      "ni"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 288.1185,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_098_genial",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "genial",
+    "silaba_objetivo": "ge",
+    "opciones": [
+      "nu",
+      "ge",
+      "po"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 282.3902,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_099_manera",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "manera",
+    "silaba_objetivo": "ma",
+    "opciones": [
+      "do",
+      "ma",
+      "mi"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": 282.1027,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_100_guerra",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "guerra",
+    "silaba_objetivo": "gue",
+    "opciones": [
+      "pri",
+      "gue",
+      "gra"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 279.4893,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_101_ningún",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "ningún",
+    "silaba_objetivo": "ni",
+    "opciones": [
+      "ge",
+      "ni",
+      "ju"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 259.2239,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_102_tierra",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "tierra",
+    "silaba_objetivo": "tie",
+    "opciones": [
+      "mue",
+      "cua",
+      "tie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 256.4591,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_103_grande",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "grande",
+    "silaba_objetivo": "gra",
+    "opciones": [
+      "pri",
+      "sue",
+      "gra"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 253.4674,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_104_cuándo",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "cuándo",
+    "silaba_objetivo": "cuá",
+    "opciones": [
+      "ciu",
+      "cuá",
+      "sie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 251.5133,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_105_sangre",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "sangre",
+    "silaba_objetivo": "sa",
+    "opciones": [
+      "sa",
+      "do",
+      "se"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 250.7286,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_106_llegar",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "llegar",
+    "silaba_objetivo": "lle",
+    "opciones": [
+      "mue",
+      "pro",
+      "lle"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 247.8623,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_107_cuatro",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "cuatro",
+    "silaba_objetivo": "cua",
+    "opciones": [
+      "pri",
+      "cua",
+      "chi"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 240.6381,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_108_doctor",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "doctor",
+    "silaba_objetivo": "do",
+    "opciones": [
+      "he",
+      "do",
+      "có"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 236.3775,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_109_muchos",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "muchos",
+    "silaba_objetivo": "mu",
+    "opciones": [
+      "sa",
+      "mu",
+      "va"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 233.5458,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_real_110_primer",
+    "tipo_estimulo": "PALABRA_REAL",
+    "fuente": "CORPUS_LECTURA",
+    "palabra": "primer",
+    "silaba_objetivo": "pri",
+    "opciones": [
+      "pue",
+      "lle",
+      "pri"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": 231.3344,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_001_mepue",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "mepue",
+    "silaba_objetivo": "me",
+    "opciones": [
+      "me",
+      "he",
+      "có"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_002_voca",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "voca",
+    "silaba_objetivo": "vo",
+    "opciones": [
+      "vo",
+      "po",
+      "sa"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_003_paporá",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "paporá",
+    "silaba_objetivo": "pa",
+    "opciones": [
+      "pa",
+      "me",
+      "se"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_004_dósue",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "dósue",
+    "silaba_objetivo": "dó",
+    "opciones": [
+      "nu",
+      "dó",
+      "rá"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_005_memieclave",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "memieclave",
+    "silaba_objetivo": "me",
+    "opciones": [
+      "pa",
+      "me",
+      "so"
+    ],
+    "num_silabas": 4,
+    "num_letras": 10,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_006_dotecuáju",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "dotecuáju",
+    "silaba_objetivo": "do",
+    "opciones": [
+      "do",
+      "só",
+      "no"
+    ],
+    "num_silabas": 4,
+    "num_letras": 9,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_007_cótedónu",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "cótedónu",
+    "silaba_objetivo": "có",
+    "opciones": [
+      "có",
+      "so",
+      "dó"
+    ],
+    "num_silabas": 4,
+    "num_letras": 8,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_008_pamiechi",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "pamiechi",
+    "silaba_objetivo": "pa",
+    "opciones": [
+      "pa",
+      "mu",
+      "ni"
+    ],
+    "num_silabas": 3,
+    "num_letras": 8,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_009_tomu",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "tomu",
+    "silaba_objetivo": "to",
+    "opciones": [
+      "ge",
+      "di",
+      "to"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_010_muege",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "muege",
+    "silaba_objetivo": "mue",
+    "opciones": [
+      "cie",
+      "chi",
+      "mue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_011_favarálle",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "favarálle",
+    "silaba_objetivo": "fa",
+    "opciones": [
+      "fa",
+      "ve",
+      "dé"
+    ],
+    "num_silabas": 4,
+    "num_letras": 9,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_012_vapuedo",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "vapuedo",
+    "silaba_objetivo": "va",
+    "opciones": [
+      "có",
+      "pa",
+      "va"
+    ],
+    "num_silabas": 3,
+    "num_letras": 7,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_013_vanigrachi",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "vanigrachi",
+    "silaba_objetivo": "va",
+    "opciones": [
+      "ju",
+      "me",
+      "va"
+    ],
+    "num_silabas": 4,
+    "num_letras": 10,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_014_sonu",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "sonu",
+    "silaba_objetivo": "so",
+    "opciones": [
+      "va",
+      "so",
+      "pe"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_015_vacue",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "vacue",
+    "silaba_objetivo": "va",
+    "opciones": [
+      "fa",
+      "me",
+      "va"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_016_gevomido",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "gevomido",
+    "silaba_objetivo": "ge",
+    "opciones": [
+      "pe",
+      "ge",
+      "ha"
+    ],
+    "num_silabas": 4,
+    "num_letras": 8,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_017_nitiehavo",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "nitiehavo",
+    "silaba_objetivo": "ni",
+    "opciones": [
+      "he",
+      "mi",
+      "ni"
+    ],
+    "num_silabas": 4,
+    "num_letras": 9,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_018_puefasue",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "puefasue",
+    "silaba_objetivo": "pue",
+    "opciones": [
+      "cla",
+      "sie",
+      "pue"
+    ],
+    "num_silabas": 3,
+    "num_letras": 8,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_019_gedóqui",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "gedóqui",
+    "silaba_objetivo": "ge",
+    "opciones": [
+      "do",
+      "sa",
+      "ge"
+    ],
+    "num_silabas": 3,
+    "num_letras": 7,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_020_hedomu",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "hedomu",
+    "silaba_objetivo": "he",
+    "opciones": [
+      "dé",
+      "mu",
+      "he"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_021_hecasacue",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "hecasacue",
+    "silaba_objetivo": "he",
+    "opciones": [
+      "va",
+      "dó",
+      "he"
+    ],
+    "num_silabas": 4,
+    "num_letras": 9,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_022_primue",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "primue",
+    "silaba_objetivo": "pri",
+    "opciones": [
+      "lle",
+      "chi",
+      "pri"
+    ],
+    "num_silabas": 2,
+    "num_letras": 6,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_023_buerá",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "buerá",
+    "silaba_objetivo": "bue",
+    "opciones": [
+      "bue",
+      "pri",
+      "sue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_024_mepa",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "mepa",
+    "silaba_objetivo": "me",
+    "opciones": [
+      "pe",
+      "me",
+      "do"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_025_suemanu",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "suemanu",
+    "silaba_objetivo": "sue",
+    "opciones": [
+      "pro",
+      "sue",
+      "cie"
+    ],
+    "num_silabas": 3,
+    "num_letras": 7,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_026_tevo",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "tevo",
+    "silaba_objetivo": "te",
+    "opciones": [
+      "te",
+      "fa",
+      "no"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_027_nuca",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "nuca",
+    "silaba_objetivo": "nu",
+    "opciones": [
+      "nu",
+      "me",
+      "no"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_028_rácuaho",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "rácuaho",
+    "silaba_objetivo": "rá",
+    "opciones": [
+      "rá",
+      "ca",
+      "sa"
+    ],
+    "num_silabas": 3,
+    "num_letras": 7,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_029_topriho",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "topriho",
+    "silaba_objetivo": "to",
+    "opciones": [
+      "to",
+      "pe",
+      "dó"
+    ],
+    "num_silabas": 3,
+    "num_letras": 7,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_030_devasó",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "devasó",
+    "silaba_objetivo": "de",
+    "opciones": [
+      "so",
+      "de",
+      "vo"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_031_cuamu",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "cuamu",
+    "silaba_objetivo": "cua",
+    "opciones": [
+      "gra",
+      "cua",
+      "cue"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_032_dimiebue",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "dimiebue",
+    "silaba_objetivo": "di",
+    "opciones": [
+      "na",
+      "di",
+      "ve"
+    ],
+    "num_silabas": 3,
+    "num_letras": 8,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_033_soca",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "soca",
+    "silaba_objetivo": "so",
+    "opciones": [
+      "vi",
+      "so",
+      "de"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_034_ráseho",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "ráseho",
+    "silaba_objetivo": "rá",
+    "opciones": [
+      "no",
+      "te",
+      "rá"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_035_clato",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "clato",
+    "silaba_objetivo": "cla",
+    "opciones": [
+      "cla",
+      "cue",
+      "que"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_036_déna",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "déna",
+    "silaba_objetivo": "dé",
+    "opciones": [
+      "po",
+      "ma",
+      "dé"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_037_chigena",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "chigena",
+    "silaba_objetivo": "chi",
+    "opciones": [
+      "sue",
+      "chi",
+      "cuá"
+    ],
+    "num_silabas": 3,
+    "num_letras": 7,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_038_dobuedito",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "dobuedito",
+    "silaba_objetivo": "do",
+    "opciones": [
+      "vo",
+      "dó",
+      "do"
+    ],
+    "num_silabas": 4,
+    "num_letras": 9,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_039_cuavige",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "cuavige",
+    "silaba_objetivo": "cua",
+    "opciones": [
+      "cie",
+      "mue",
+      "cua"
+    ],
+    "num_silabas": 3,
+    "num_letras": 7,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_040_ninacópa",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "ninacópa",
+    "silaba_objetivo": "ni",
+    "opciones": [
+      "no",
+      "va",
+      "ni"
+    ],
+    "num_silabas": 4,
+    "num_letras": 8,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_041_quiso",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "quiso",
+    "silaba_objetivo": "qui",
+    "opciones": [
+      "qui",
+      "mie",
+      "ciu"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_042_rápripede",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "rápripede",
+    "silaba_objetivo": "rá",
+    "opciones": [
+      "se",
+      "rá",
+      "có"
+    ],
+    "num_silabas": 4,
+    "num_letras": 9,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_043_pocue",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "pocue",
+    "silaba_objetivo": "po",
+    "opciones": [
+      "do",
+      "po",
+      "di"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_044_cuefa",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "cuefa",
+    "silaba_objetivo": "cue",
+    "opciones": [
+      "cue",
+      "que",
+      "cua"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_045_vedévono",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "vedévono",
+    "silaba_objetivo": "ve",
+    "opciones": [
+      "vi",
+      "ve",
+      "fa"
+    ],
+    "num_silabas": 4,
+    "num_letras": 8,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_046_diverá",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "diverá",
+    "silaba_objetivo": "di",
+    "opciones": [
+      "fa",
+      "di",
+      "pa"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_047_sará",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "sará",
+    "silaba_objetivo": "sa",
+    "opciones": [
+      "po",
+      "me",
+      "sa"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_048_profarápa",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "profarápa",
+    "silaba_objetivo": "pro",
+    "opciones": [
+      "sie",
+      "pro",
+      "mue"
+    ],
+    "num_silabas": 4,
+    "num_letras": 9,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_049_buemique",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "buemique",
+    "silaba_objetivo": "bue",
+    "opciones": [
+      "que",
+      "bue",
+      "tie"
+    ],
+    "num_silabas": 3,
+    "num_letras": 8,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_050_veha",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "veha",
+    "silaba_objetivo": "ve",
+    "opciones": [
+      "ve",
+      "ma",
+      "va"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_051_vemege",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "vemege",
+    "silaba_objetivo": "ve",
+    "opciones": [
+      "di",
+      "to",
+      "ve"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_052_ráno",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "ráno",
+    "silaba_objetivo": "rá",
+    "opciones": [
+      "so",
+      "pe",
+      "rá"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_053_najuno",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "najuno",
+    "silaba_objetivo": "na",
+    "opciones": [
+      "ha",
+      "na",
+      "te"
+    ],
+    "num_silabas": 3,
+    "num_letras": 6,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_054_vosie",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "vosie",
+    "silaba_objetivo": "vo",
+    "opciones": [
+      "vo",
+      "ge",
+      "dó"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_055_ciege",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "ciege",
+    "silaba_objetivo": "cie",
+    "opciones": [
+      "ciu",
+      "cue",
+      "cie"
+    ],
+    "num_silabas": 2,
+    "num_letras": 5,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_056_numieha",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "numieha",
+    "silaba_objetivo": "nu",
+    "opciones": [
+      "vo",
+      "nu",
+      "me"
+    ],
+    "num_silabas": 3,
+    "num_letras": 7,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_057_madi",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "madi",
+    "silaba_objetivo": "ma",
+    "opciones": [
+      "ma",
+      "só",
+      "di"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_058_clavope",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "clavope",
+    "silaba_objetivo": "cla",
+    "opciones": [
+      "cla",
+      "sue",
+      "cie"
+    ],
+    "num_silabas": 3,
+    "num_letras": 7,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_059_sodé",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "sodé",
+    "silaba_objetivo": "so",
+    "opciones": [
+      "pa",
+      "me",
+      "so"
+    ],
+    "num_silabas": 2,
+    "num_letras": 4,
+    "frecuencia": null,
+    "complejidad_estimulo": "MEDIA",
+    "tipo_prueba": "FONOLOGIA"
+  },
+  {
+    "id": "fono_pseudo_060_ciudódi",
+    "tipo_estimulo": "PSEUDOPALABRA",
+    "fuente": "GENERADOR_LOCAL_TIPO_WUGGY",
+    "palabra": "ciudódi",
+    "silaba_objetivo": "ciu",
+    "opciones": [
+      "chi",
+      "pue",
+      "ciu"
+    ],
+    "num_silabas": 3,
+    "num_letras": 7,
+    "frecuencia": null,
+    "complejidad_estimulo": "ALTA",
+    "tipo_prueba": "FONOLOGIA"
+  }
+]

@@ -1,0 +1,183 @@
+{
+  "dataset_path": "data\\processed\\ml_dataset.csv",
+  "rows_total": 31,
+  "feature_columns": [
+    "tipo_prueba_lectura",
+    "tipo_prueba_fonologia",
+    "tipo_prueba_otro",
+    "total_items",
+    "aciertos_primer_intento",
+    "errores_primer_intento",
+    "error_rate",
+    "taps_erroneos_totales",
+    "taps_rate",
+    "tiempo_promedio_ms",
+    "tiempo_min_ms",
+    "tiempo_max_ms",
+    "tiempo_std_ms",
+    "items_drag_drop",
+    "drag_drop_rate",
+    "tiempo_promedio_drag_drop_ms",
+    "errores_drag_drop",
+    "items_palabra_real",
+    "items_pseudopalabra",
+    "pseudopalabra_rate",
+    "errores_palabra_real",
+    "errores_pseudopalabra",
+    "tiempo_promedio_palabra_real_ms",
+    "tiempo_promedio_pseudopalabra_ms",
+    "total_baja",
+    "total_media",
+    "total_alta",
+    "total_sin_complejidad",
+    "errores_baja",
+    "errores_media",
+    "errores_alta",
+    "errores_sin_complejidad"
+  ],
+  "label_column": "semaforo",
+  "models": {
+    "random_forest": {
+      "path": "ml\\models\\random_forest_model.joblib",
+      "metrics": {
+        "accuracy": 0.875,
+        "classification_report": {
+          "VERDE": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 6.0
+          },
+          "AMARILLO": {
+            "precision": 0.5,
+            "recall": 1.0,
+            "f1-score": 0.6666666666666666,
+            "support": 1.0
+          },
+          "ROJO": {
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1-score": 0.0,
+            "support": 1.0
+          },
+          "accuracy": 0.875,
+          "macro avg": {
+            "precision": 0.5,
+            "recall": 0.6666666666666666,
+            "f1-score": 0.5555555555555555,
+            "support": 8.0
+          },
+          "weighted avg": {
+            "precision": 0.8125,
+            "recall": 0.875,
+            "f1-score": 0.8333333333333334,
+            "support": 8.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            6,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ]
+        ]
+      }
+    },
+    "xgboost": {
+      "trained": true,
+      "path": "ml\\models\\xgboost_model.joblib",
+      "metrics": {
+        "accuracy": 1.0,
+        "classification_report": {
+          "VERDE": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 6.0
+          },
+          "AMARILLO": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 1.0
+          },
+          "ROJO": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 1.0
+          },
+          "accuracy": 1.0,
+          "macro avg": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 8.0
+          },
+          "weighted avg": {
+            "precision": 1.0,
+            "recall": 1.0,
+            "f1-score": 1.0,
+            "support": 8.0
+          }
+        },
+        "confusion_matrix": [
+          [
+            6,
+            0,
+            0
+          ],
+          [
+            0,
+            1,
+            0
+          ],
+          [
+            0,
+            0,
+            1
+          ]
+        ]
+      }
+    }
+  },
+  "warnings": [],
+  "labels_found": [
+    "AMARILLO",
+    "ROJO",
+    "VERDE"
+  ],
+  "label_mapping": {
+    "VERDE": 0,
+    "AMARILLO": 1,
+    "ROJO": 2
+  },
+  "class_counts": {
+    "VERDE": 22,
+    "ROJO": 5,
+    "AMARILLO": 4
+  },
+  "test_type_counts": {
+    "LECTURA": 23,
+    "FONOLOGIA": 8,
+    "OTRO": 0
+  },
+  "stimulus_type_totals": {
+    "items_palabra_real": 71,
+    "items_pseudopalabra": 9
+  },
+  "evaluation_mode": "test_split_stratified",
+  "train_rows": 23,
+  "test_rows": 8,
+  "metadata_path": "ml\\models\\model_metadata.json"
+}

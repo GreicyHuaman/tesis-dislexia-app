@@ -1,0 +1,61 @@
+﻿# Entornos Python
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Variables de entorno y secretos
+.env
+.env.*
+!.env.example
+
+# Docker / base de datos local
+postgres_data/
+pgdata/
+*.db
+*.sqlite
+*.sqlite3
+
+# Flutter / Dart
+mobile/.dart_tool/
+mobile/build/
+mobile/.flutter-plugins
+mobile/.flutter-plugins-dependencies
+mobile/.packages
+mobile/pubspec.lock.bak
+
+# Android / iOS build artifacts
+mobile/android/.gradle/
+mobile/android/app/build/
+mobile/ios/Pods/
+mobile/ios/.symlinks/
+mobile/ios/Flutter/Flutter.framework
+mobile/ios/Flutter/Flutter.podspec
+
+# Archivos generados o pesados de ML
+ml/models/*.joblib
+backend/app/ml_artifacts/*.joblib
+
+# Datasets procesados con posibles datos reales
+data/processed/*.csv
+data/processed/*.xlsx
+data/processed/*.json
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/*
+!.vscode/settings.json
+.idea/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
