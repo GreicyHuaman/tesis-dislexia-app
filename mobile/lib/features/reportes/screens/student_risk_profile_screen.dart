@@ -6,11 +6,13 @@ import '../../../core/services/report_service.dart';
 class StudentRiskProfileScreen extends StatefulWidget {
   final int estudianteId;
   final int? usuarioId;
+  final String? authToken;
 
   const StudentRiskProfileScreen({
     super.key,
     required this.estudianteId,
     required this.usuarioId,
+    required this.authToken,
   });
 
   @override
@@ -40,7 +42,7 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
     try {
       final profile = await _reportService.fetchStudentRiskProfile(
         estudianteId: widget.estudianteId,
-        usuarioId: widget.usuarioId,
+        authToken: widget.authToken,
       );
 
       if (!mounted) return;
@@ -434,3 +436,4 @@ IconData _iconForTest(String tipoPrueba) {
 
   return Icons.assignment_outlined;
 }
+

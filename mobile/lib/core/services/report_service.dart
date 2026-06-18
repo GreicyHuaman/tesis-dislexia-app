@@ -67,17 +67,20 @@ class ReportService {
   }
 
   Future<ReportSummary> fetchResumenSemaforo({
-    int? usuarioId,
+    String? authToken,
     ReportFilters filters = const ReportFilters(),
   }) async {
     final uri = Uri.parse('$baseUrl/api/v1/reportes/resumen-semaforo')
         .replace(
-      queryParameters: filters.toQueryParameters(
-        usuarioId: usuarioId,
-      ),
+      queryParameters: filters.toQueryParameters(),
     );
 
-    final response = await http.get(uri).timeout(
+    final response = await http
+        .get(
+          uri,
+          headers: _headers(authToken),
+        )
+        .timeout(
           const Duration(seconds: 15),
         );
 
@@ -92,49 +95,21 @@ class ReportService {
     return ReportSummary.fromJson(decoded);
   }
 
-  Future<StudentRiskProfile> fetchStudentRiskProfile({
-    required int estudianteId,
-    int? usuarioId,
-  }) async {
-    final params = <String, String>{};
-
-    if (usuarioId != null) {
-      params['usuario_id'] = usuarioId.toString();
-    }
-
-    final uri = Uri.parse(
-      '$baseUrl/api/v1/reportes/estudiantes/$estudianteId/perfil-riesgo',
-    ).replace(
-      queryParameters: params,
-    );
-
-    final response = await http.get(uri).timeout(
-          const Duration(seconds: 15),
-        );
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Error cargando perfil del estudiante: ${response.statusCode}. ${response.body}',
-      );
-    }
-
-    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
-
-    return StudentRiskProfile.fromJson(decoded);
-  }
-
   Future<List<EvaluationReportItem>> fetchEvaluaciones({
-    int? usuarioId,
+    String? authToken,
     ReportFilters filters = const ReportFilters(),
   }) async {
     final uri = Uri.parse('$baseUrl/api/v1/reportes/evaluaciones')
         .replace(
-      queryParameters: filters.toQueryParameters(
-        usuarioId: usuarioId,
-      ),
+      queryParameters: filters.toQueryParameters(),
     );
 
-    final response = await http.get(uri).timeout(
+    final response = await http
+        .get(
+          uri,
+          headers: _headers(authToken),
+        )
+        .timeout(
           const Duration(seconds: 15),
         );
 
@@ -164,5 +139,46 @@ class ReportService {
 
     return items;
   }
-}
 
+  Future<StudentRiskProfile> fetchStudentRiskProfile({
+    required int estudianteId,
+    String? authToken,
+  }) async {
+    final uri = Uri.parse(
+      '$baseUrl/api/v1/reportes/estudiantes/$estudianteId/perfil-riesgo',
+    );
+
+    final response = await http
+        .get(
+          uri,
+          headers: _headers(authToken),
+        )
+        .timeout(
+          const Duration(seconds: 15),
+        );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        'Error cargando perfil del estudiante: ${response.statusCode}. ${response.body}',
+      );
+    }
+
+    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+
+    return StudentRiskProfile.fromJson(decoded);
+  }
+
+  Map<String, String> _headers(String? authToken) {
+    final headers = <String, String>{
+      'Accept': 'application/json',
+    };
+
+    final cleanToken = authToken?.trim();
+
+    if (cleanToken != null && cleanToken.isNotEmpty) {
+      headers['Authorization'] = 'Bearer $cleanToken';
+    }
+
+    return headers;
+  }
+}

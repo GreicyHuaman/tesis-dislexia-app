@@ -6,6 +6,7 @@ $ErrorActionPreference = "Stop"
 
 $BaseUrl = "http://127.0.0.1:8000"
 $Results = @()
+$script:AuthToken = $null
 
 function Add-Result {
   param(
@@ -60,6 +61,8 @@ function Test-AuthLogin {
       -Body $body `
       -TimeoutSec 15
 
+    $script:AuthToken = $login.access_token
+
     if ([string]::IsNullOrWhiteSpace($login.access_token)) {
       Add-Result `
         -Name "Login JWT" `
@@ -85,6 +88,38 @@ function Test-AuthLogin {
       -Name "Login JWT + auth/me" `
       -Status "ERROR" `
       -Details $_.Exception.Message
+  }
+}
+
+function Test-GetProtected {
+  param(
+    [string]$Name,
+    [string]$Path,
+    [bool]$Required = $true
+  )
+
+  try {
+    if ([string]::IsNullOrWhiteSpace($script:AuthToken)) {
+      Add-Result -Name $Name -Status "ERROR" -Details "No existe AuthToken"
+      return
+    }
+
+    $uri = "$BaseUrl$Path"
+    $response = Invoke-RestMethod `
+      -Method Get `
+      -Uri $uri `
+      -Headers @{
+        Authorization = "Bearer $script:AuthToken"
+      } `
+      -TimeoutSec 15
+
+    Add-Result -Name $Name -Status "OK" -Details "Endpoint protegido responde"
+  } catch {
+    if ($Required) {
+      Add-Result -Name $Name -Status "ERROR" -Details $_.Exception.Message
+    } else {
+      Add-Result -Name $Name -Status "ADVERTENCIA" -Details $_.Exception.Message
+    }
   }
 }
 
@@ -202,15 +237,15 @@ Test-AuthLogin
 Test-Get -Name "Debug evaluaciones" -Path "/api/v1/evaluaciones/debug"
 Test-Get -Name "Lista estudiantes" -Path "/api/v1/estudiantes"
 Test-Get -Name "Padrón offline" -Path "/api/v1/estudiantes/offline-cache"
-Test-Get -Name "Reportes evaluaciones" -Path "/api/v1/reportes/evaluaciones"
-Test-Get -Name "Resumen semáforo" -Path "/api/v1/reportes/resumen-semaforo"
-Test-Get -Name "Filtro reportes FONOLOGIA" -Path "/api/v1/reportes/evaluaciones?tipo_prueba=FONOLOGIA"
+Test-GetProtected -Name "Reportes evaluaciones protegidas" -Path "/api/v1/reportes/evaluaciones"
+Test-GetProtected -Name "Resumen semáforo protegido" -Path "/api/v1/reportes/resumen-semaforo"
+Test-GetProtected -Name "Filtro reportes FONOLOGIA protegido" -Path "/api/v1/reportes/evaluaciones?tipo_prueba=FONOLOGIA"
 Test-Get -Name "Dataset ML JSON" -Path "/api/v1/ml/dataset"
 Test-Csv -Name "Dataset ML CSV" -Path "/api/v1/ml/dataset.csv"
 Test-Csv -Name "Reporte evaluaciones CSV" -Path "/api/v1/reportes/evaluaciones.csv"
 
-Test-Get `
-  -Name "Perfil estudiante ID 1" `
+Test-GetProtected `
+  -Name "Perfil estudiante ID 1 protegido" `
   -Path "/api/v1/reportes/estudiantes/1/perfil-riesgo" `
   -Required $false
 
@@ -232,5 +267,6 @@ if ($errors.Count -gt 0) {
 Write-Host ""
 Write-Host "Smoke test backend finalizado correctamente." -ForegroundColor Green
 exit 0
+
 
 

@@ -1,11 +1,12 @@
-﻿from typing import Optional
-import csv
+﻿import csv
 import io
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
 from sqlmodel import Session, select
 
+from app.core.security import get_current_user
 from app.db.session import get_session
 from app.models.evaluation import Evaluacion
 from app.models.prediction import PrediccionModelo
@@ -60,29 +61,16 @@ def _to_report_item(
     )
 
 
-def _get_allowed_section_ids(
-    usuario_id: int | None,
+def _get_allowed_section_ids_for_user(
+    usuario: Usuario,
     session: Session,
 ) -> list[int] | None:
-    if usuario_id is None:
-        return None
-
-    usuario = session.exec(
-        select(Usuario).where(
-            Usuario.id == usuario_id,
-            Usuario.activo == True,  # noqa: E712
-        )
-    ).first()
-
-    if usuario is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Usuario no encontrado o inactivo.",
-        )
-
     rol = usuario.rol.upper()
 
     if rol == "MAESTRO":
+        if usuario.id is None:
+            return []
+
         links = session.exec(
             select(DocenteSeccion).where(
                 DocenteSeccion.usuario_id == usuario.id,
@@ -112,6 +100,25 @@ def _get_allowed_section_ids(
         ]
 
     return []
+
+
+def _get_allowed_section_ids_legacy(
+    usuario_id: int | None,
+    session: Session,
+) -> list[int] | None:
+    """
+    Uso temporal para export CSV abierto desde navegador.
+    Los endpoints JSON ya usan JWT.
+    """
+    if usuario_id is None:
+        return None
+
+    usuario = session.get(Usuario, usuario_id)
+
+    if usuario is None or not usuario.activo:
+        return []
+
+    return _get_allowed_section_ids_for_user(usuario, session)
 
 
 def _normalize_optional_text(value: str | None) -> str | None:
@@ -178,212 +185,6 @@ def _apply_report_filters(
     return statement
 
 
-@router.get("/evaluaciones", response_model=list[EvaluationReportItem])
-def list_evaluaciones_report(
-    usuario_id: int | None = Query(default=None),
-    tipo_prueba: str | None = Query(default=None),
-    semaforo: str | None = Query(default=None),
-    estudiante_id: int | None = Query(default=None),
-    session: Session = Depends(get_session),
-) -> list[EvaluationReportItem]:
-    allowed_section_ids = _get_allowed_section_ids(usuario_id, session)
-
-    if allowed_section_ids == []:
-        return []
-
-    statement = _base_evaluaciones_statement()
-    statement = _apply_section_filter(statement, allowed_section_ids)
-    statement = _apply_report_filters(
-        statement=statement,
-        tipo_prueba=tipo_prueba,
-        semaforo=semaforo,
-        estudiante_id=estudiante_id,
-    )
-    statement = statement.order_by(Evaluacion.fecha_evaluacion.desc())
-
-    rows = session.exec(statement).all()
-
-    return [
-        _to_report_item(evaluacion, estudiante, prediccion)
-        for evaluacion, estudiante, prediccion in rows
-    ]
-
-
-@router.get(
-    "/estudiantes/{estudiante_id}/evaluaciones",
-    response_model=list[EvaluationReportItem],
-)
-def list_evaluaciones_by_estudiante(
-    estudiante_id: int,
-    usuario_id: int | None = Query(default=None),
-    tipo_prueba: str | None = Query(default=None),
-    semaforo: str | None = Query(default=None),
-    session: Session = Depends(get_session),
-) -> list[EvaluationReportItem]:
-    allowed_section_ids = _get_allowed_section_ids(usuario_id, session)
-
-    if allowed_section_ids == []:
-        return []
-
-    statement = _base_evaluaciones_statement()
-    statement = statement.where(Evaluacion.estudiante_id == estudiante_id)
-    statement = _apply_section_filter(statement, allowed_section_ids)
-    statement = _apply_report_filters(
-        statement=statement,
-        tipo_prueba=tipo_prueba,
-        semaforo=semaforo,
-        estudiante_id=None,
-    )
-    statement = statement.order_by(Evaluacion.fecha_evaluacion.desc())
-
-    rows = session.exec(statement).all()
-
-    return [
-        _to_report_item(evaluacion, estudiante, prediccion)
-        for evaluacion, estudiante, prediccion in rows
-    ]
-
-
-@router.get("/resumen-semaforo", response_model=ReportSummaryResponse)
-def get_resumen_semaforo(
-    usuario_id: int | None = Query(default=None),
-    tipo_prueba: str | None = Query(default=None),
-    semaforo: str | None = Query(default=None),
-    estudiante_id: int | None = Query(default=None),
-    session: Session = Depends(get_session),
-) -> ReportSummaryResponse:
-    allowed_section_ids = _get_allowed_section_ids(usuario_id, session)
-
-    if allowed_section_ids == []:
-        return ReportSummaryResponse(
-            total_evaluaciones=0,
-            porcentaje_promedio_riesgo=None,
-            semaforos=[
-                SemaforoSummaryItem(semaforo="VERDE", total=0),
-                SemaforoSummaryItem(semaforo="AMARILLO", total=0),
-                SemaforoSummaryItem(semaforo="ROJO", total=0),
-                SemaforoSummaryItem(semaforo="SIN_RESULTADO", total=0),
-            ],
-        )
-
-    statement = _base_evaluaciones_statement()
-    statement = _apply_section_filter(statement, allowed_section_ids)
-    statement = _apply_report_filters(
-        statement=statement,
-        tipo_prueba=tipo_prueba,
-        semaforo=semaforo,
-        estudiante_id=estudiante_id,
-    )
-
-    rows = session.exec(statement).all()
-
-    evaluaciones = [
-        evaluacion
-        for evaluacion, _estudiante, _prediccion in rows
-    ]
-
-    counts = {
-        "VERDE": 0,
-        "AMARILLO": 0,
-        "ROJO": 0,
-        "SIN_RESULTADO": 0,
-    }
-
-    risk_values: list[float] = []
-
-    for evaluacion in evaluaciones:
-        current_semaforo = evaluacion.semaforo or "SIN_RESULTADO"
-
-        if current_semaforo not in counts:
-            counts[current_semaforo] = 0
-
-        counts[current_semaforo] += 1
-
-        if evaluacion.porcentaje_riesgo is not None:
-            risk_values.append(evaluacion.porcentaje_riesgo)
-
-    porcentaje_promedio = None
-
-    if risk_values:
-        porcentaje_promedio = round(
-            sum(risk_values) / len(risk_values),
-            2,
-        )
-
-    return ReportSummaryResponse(
-        total_evaluaciones=len(evaluaciones),
-        porcentaje_promedio_riesgo=porcentaje_promedio,
-        semaforos=[
-            SemaforoSummaryItem(
-                semaforo=current_semaforo,
-                total=total,
-            )
-            for current_semaforo, total in counts.items()
-        ],
-    )
-
-
-@router.get("/evaluaciones.csv")
-def export_evaluaciones_csv(
-    usuario_id: int | None = Query(default=None),
-    tipo_prueba: str | None = Query(default=None),
-    semaforo: str | None = Query(default=None),
-    estudiante_id: int | None = Query(default=None),
-    session: Session = Depends(get_session),
-) -> Response:
-    allowed_section_ids = _get_allowed_section_ids(usuario_id, session)
-
-    rows = []
-
-    if allowed_section_ids != []:
-        statement = _base_evaluaciones_statement()
-        statement = _apply_section_filter(statement, allowed_section_ids)
-        statement = _apply_report_filters(
-            statement=statement,
-            tipo_prueba=tipo_prueba,
-            semaforo=semaforo,
-            estudiante_id=estudiante_id,
-        )
-        statement = statement.order_by(Evaluacion.fecha_evaluacion.desc())
-
-        rows = session.exec(statement).all()
-
-    output = io.StringIO()
-    fieldnames = list(EvaluationReportItem.model_fields.keys())
-
-    writer = csv.DictWriter(
-        output,
-        fieldnames=fieldnames,
-        extrasaction="ignore",
-    )
-    writer.writeheader()
-
-    for evaluacion, estudiante, prediccion in rows:
-        item = _to_report_item(
-            evaluacion=evaluacion,
-            estudiante=estudiante,
-            prediccion=prediccion,
-        ).model_dump()
-
-        fecha = item.get("fecha_evaluacion")
-
-        if hasattr(fecha, "isoformat"):
-            item["fecha_evaluacion"] = fecha.isoformat()
-
-        writer.writerow(item)
-
-    csv_content = "\ufeff" + output.getvalue()
-
-    return Response(
-        content=csv_content,
-        media_type="text/csv; charset=utf-8",
-        headers={
-            "Content-Disposition": "attachment; filename=reporte_evaluaciones.csv",
-        },
-    )
-
-
-
 def _average_optional(values: list[float | int | None]) -> Optional[float]:
     clean_values = [
         float(value)
@@ -427,13 +228,155 @@ def _latest_evaluation(evaluaciones: list[Evaluacion]) -> Evaluacion | None:
     )[0]
 
 
+@router.get("/evaluaciones", response_model=list[EvaluationReportItem])
+def list_evaluaciones_report(
+    tipo_prueba: str | None = Query(default=None),
+    semaforo: str | None = Query(default=None),
+    estudiante_id: int | None = Query(default=None),
+    current_user: Usuario = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> list[EvaluationReportItem]:
+    allowed_section_ids = _get_allowed_section_ids_for_user(
+        usuario=current_user,
+        session=session,
+    )
+
+    if allowed_section_ids == []:
+        return []
+
+    statement = _base_evaluaciones_statement()
+    statement = _apply_section_filter(statement, allowed_section_ids)
+    statement = _apply_report_filters(
+        statement=statement,
+        tipo_prueba=tipo_prueba,
+        semaforo=semaforo,
+        estudiante_id=estudiante_id,
+    )
+    statement = statement.order_by(Evaluacion.fecha_evaluacion.desc())
+
+    rows = session.exec(statement).all()
+
+    return [
+        _to_report_item(evaluacion, estudiante, prediccion)
+        for evaluacion, estudiante, prediccion in rows
+    ]
+
+
+@router.get(
+    "/estudiantes/{estudiante_id}/evaluaciones",
+    response_model=list[EvaluationReportItem],
+)
+def list_evaluaciones_by_estudiante(
+    estudiante_id: int,
+    tipo_prueba: str | None = Query(default=None),
+    semaforo: str | None = Query(default=None),
+    current_user: Usuario = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> list[EvaluationReportItem]:
+    allowed_section_ids = _get_allowed_section_ids_for_user(
+        usuario=current_user,
+        session=session,
+    )
+
+    if allowed_section_ids == []:
+        return []
+
+    statement = _base_evaluaciones_statement()
+    statement = statement.where(Evaluacion.estudiante_id == estudiante_id)
+    statement = _apply_section_filter(statement, allowed_section_ids)
+    statement = _apply_report_filters(
+        statement=statement,
+        tipo_prueba=tipo_prueba,
+        semaforo=semaforo,
+        estudiante_id=None,
+    )
+    statement = statement.order_by(Evaluacion.fecha_evaluacion.desc())
+
+    rows = session.exec(statement).all()
+
+    return [
+        _to_report_item(evaluacion, estudiante, prediccion)
+        for evaluacion, estudiante, prediccion in rows
+    ]
+
+
+@router.get("/resumen-semaforo", response_model=ReportSummaryResponse)
+def get_resumen_semaforo(
+    tipo_prueba: str | None = Query(default=None),
+    semaforo: str | None = Query(default=None),
+    estudiante_id: int | None = Query(default=None),
+    current_user: Usuario = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> ReportSummaryResponse:
+    allowed_section_ids = _get_allowed_section_ids_for_user(
+        usuario=current_user,
+        session=session,
+    )
+
+    if allowed_section_ids == []:
+        return ReportSummaryResponse(
+            total_evaluaciones=0,
+            porcentaje_promedio_riesgo=None,
+            semaforos=[
+                SemaforoSummaryItem(semaforo="VERDE", total=0),
+                SemaforoSummaryItem(semaforo="AMARILLO", total=0),
+                SemaforoSummaryItem(semaforo="ROJO", total=0),
+                SemaforoSummaryItem(semaforo="SIN_RESULTADO", total=0),
+            ],
+        )
+
+    statement = _base_evaluaciones_statement()
+    statement = _apply_section_filter(statement, allowed_section_ids)
+    statement = _apply_report_filters(
+        statement=statement,
+        tipo_prueba=tipo_prueba,
+        semaforo=semaforo,
+        estudiante_id=estudiante_id,
+    )
+
+    rows = session.exec(statement).all()
+
+    evaluaciones = [
+        evaluacion
+        for evaluacion, _estudiante, _prediccion in rows
+    ]
+
+    counts = _count_semaforos(evaluaciones)
+
+    risk_values = [
+        evaluacion.porcentaje_riesgo
+        for evaluacion in evaluaciones
+        if evaluacion.porcentaje_riesgo is not None
+    ]
+
+    porcentaje_promedio = None
+
+    if risk_values:
+        porcentaje_promedio = round(
+            sum(risk_values) / len(risk_values),
+            2,
+        )
+
+    return ReportSummaryResponse(
+        total_evaluaciones=len(evaluaciones),
+        porcentaje_promedio_riesgo=porcentaje_promedio,
+        semaforos=[
+            SemaforoSummaryItem(
+                semaforo=current_semaforo,
+                total=total,
+            )
+            for current_semaforo, total in counts.items()
+        ],
+    )
+
+
 @router.get(
     "/estudiantes/{estudiante_id}/perfil-riesgo",
     response_model=StudentRiskProfileResponse,
 )
 def get_perfil_riesgo_estudiante(
     estudiante_id: int,
-    usuario_id: int | None = Query(default=None),
+    current_user: Usuario = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> StudentRiskProfileResponse:
     estudiante = session.get(Estudiante, estudiante_id)
@@ -444,7 +387,10 @@ def get_perfil_riesgo_estudiante(
             detail="Estudiante no encontrado.",
         )
 
-    allowed_section_ids = _get_allowed_section_ids(usuario_id, session)
+    allowed_section_ids = _get_allowed_section_ids_for_user(
+        usuario=current_user,
+        session=session,
+    )
 
     if allowed_section_ids == []:
         raise HTTPException(
@@ -549,3 +495,69 @@ def get_perfil_riesgo_estudiante(
         pruebas=perfiles_prueba,
     )
 
+
+@router.get("/evaluaciones.csv")
+def export_evaluaciones_csv(
+    usuario_id: int | None = Query(default=None),
+    tipo_prueba: str | None = Query(default=None),
+    semaforo: str | None = Query(default=None),
+    estudiante_id: int | None = Query(default=None),
+    session: Session = Depends(get_session),
+) -> Response:
+    """
+    Endpoint temporal compatible con descarga desde navegador.
+    En Sprint posterior se reemplazara por descarga autenticada desde Flutter.
+    """
+    allowed_section_ids = _get_allowed_section_ids_legacy(
+        usuario_id=usuario_id,
+        session=session,
+    )
+
+    rows = []
+
+    if allowed_section_ids != []:
+        statement = _base_evaluaciones_statement()
+        statement = _apply_section_filter(statement, allowed_section_ids)
+        statement = _apply_report_filters(
+            statement=statement,
+            tipo_prueba=tipo_prueba,
+            semaforo=semaforo,
+            estudiante_id=estudiante_id,
+        )
+        statement = statement.order_by(Evaluacion.fecha_evaluacion.desc())
+
+        rows = session.exec(statement).all()
+
+    output = io.StringIO()
+    fieldnames = list(EvaluationReportItem.model_fields.keys())
+
+    writer = csv.DictWriter(
+        output,
+        fieldnames=fieldnames,
+        extrasaction="ignore",
+    )
+    writer.writeheader()
+
+    for evaluacion, estudiante, prediccion in rows:
+        item = _to_report_item(
+            evaluacion=evaluacion,
+            estudiante=estudiante,
+            prediccion=prediccion,
+        ).model_dump()
+
+        fecha = item.get("fecha_evaluacion")
+
+        if hasattr(fecha, "isoformat"):
+            item["fecha_evaluacion"] = fecha.isoformat()
+
+        writer.writerow(item)
+
+    csv_content = "\ufeff" + output.getvalue()
+
+    return Response(
+        content=csv_content,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": "attachment; filename=reporte_evaluaciones.csv",
+        },
+    )

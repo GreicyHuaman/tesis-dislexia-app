@@ -65,12 +65,12 @@ class _ReportesScreenState extends State<ReportesScreen> {
       final filters = _currentFilters;
 
       final summary = await _reportService.fetchResumenSemaforo(
-        usuarioId: widget.currentUser.id,
+        authToken: widget.currentUser.accessToken,
         filters: filters,
       );
 
       final evaluaciones = await _reportService.fetchEvaluaciones(
-        usuarioId: widget.currentUser.id,
+        authToken: widget.currentUser.accessToken,
         filters: filters,
       );
 
@@ -108,6 +108,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
         builder: (_) => StudentRiskProfileScreen(
           estudianteId: estudianteId,
           usuarioId: widget.currentUser.id,
+          authToken: widget.currentUser.accessToken,
         ),
       ),
     );
@@ -666,6 +667,7 @@ class _SemaforoChip extends StatelessWidget {
     );
   }
 }
+
 
 
 
