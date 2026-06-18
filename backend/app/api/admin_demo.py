@@ -8,144 +8,201 @@ from app.services.password_service import hash_password
 
 router = APIRouter(
     prefix="/api/v1/admin",
-    tags=["admin"],
+    tags=["admin-demo"],
 )
+
+
+def _get_or_create_section(
+    session: Session,
+    grado: int,
+    nombre: str,
+    turno: str,
+) -> Seccion:
+    section = session.exec(
+        select(Seccion).where(
+            Seccion.grado == grado,
+            Seccion.nombre == nombre,
+        )
+    ).first()
+
+    if section is not None:
+        section.turno = turno
+        section.activo = True
+        session.add(section)
+        session.commit()
+        session.refresh(section)
+        return section
+
+    section = Seccion(
+        grado=grado,
+        nombre=nombre,
+        turno=turno,
+        activo=True,
+    )
+
+    session.add(section)
+    session.commit()
+    session.refresh(section)
+
+    return section
+
+
+def _upsert_user(
+    session: Session,
+    *,
+    nombres: str,
+    apellidos: str,
+    email: str,
+    rol: str,
+    grado_scope: int | None,
+    password: str,
+) -> Usuario:
+    normalized_email = email.strip().lower()
+
+    user = session.exec(
+        select(Usuario).where(
+            Usuario.email == normalized_email,
+        )
+    ).first()
+
+    if user is None:
+        user = Usuario(
+            nombres=nombres,
+            apellidos=apellidos,
+            email=normalized_email,
+            rol=rol,
+            password_hash=hash_password(password),
+            grado_scope=grado_scope,
+            activo=True,
+        )
+    else:
+        user.nombres = nombres
+        user.apellidos = apellidos
+        user.email = normalized_email
+        user.rol = rol
+        user.password_hash = hash_password(password)
+        user.grado_scope = grado_scope
+        user.activo = True
+
+    session.add(user)
+    session.commit()
+    session.refresh(user)
+
+    return user
+
+
+def _ensure_teacher_section_link(
+    session: Session,
+    usuario_id: int,
+    seccion_id: int,
+) -> None:
+    existing = session.exec(
+        select(DocenteSeccion).where(
+            DocenteSeccion.usuario_id == usuario_id,
+            DocenteSeccion.seccion_id == seccion_id,
+        )
+    ).first()
+
+    if existing is not None:
+        return
+
+    link = DocenteSeccion(
+        usuario_id=usuario_id,
+        seccion_id=seccion_id,
+    )
+
+    session.add(link)
+    session.commit()
 
 
 @router.post("/seed-demo")
 def seed_demo_data(
     session: Session = Depends(get_session),
 ):
-    secciones_demo = [
-        {
-            "grado": 3,
-            "nombre": "3A",
-            "turno": "MAÑANA",
-        },
-        {
-            "grado": 3,
-            "nombre": "3B",
-            "turno": "MAÑANA",
-        },
-    ]
-
-    created_sections = []
-
-    for item in secciones_demo:
-        existing = session.exec(
-            select(Seccion).where(
-                Seccion.grado == item["grado"],
-                Seccion.nombre == item["nombre"],
-            )
-        ).first()
-
-        if existing is None:
-            seccion = Seccion(**item)
-            session.add(seccion)
-            session.commit()
-            session.refresh(seccion)
-            created_sections.append(seccion)
-        else:
-            created_sections.append(existing)
-
-    users_demo = [
-        {
-            "nombres": "María",
-            "apellidos": "Docente 3A",
-            "email": "maestra3a@demo.com",
-            "rol": "MAESTRO",
-            "password": "123456",
-            "grado_scope": None,
-        },
-        {
-            "nombres": "Rosa",
-            "apellidos": "Psicóloga",
-            "email": "psicologa@demo.com",
-            "rol": "PSICOLOGA",
-            "password": "123456",
-            "grado_scope": 3,
-        },
-        {
-            "nombres": "Elena",
-            "apellidos": "Directora",
-            "email": "directora@demo.com",
-            "rol": "DIRECTORA",
-            "password": "123456",
-            "grado_scope": 3,
-        },
-    ]
-
-    created_users = []
-
-    for item in users_demo:
-        email = item["email"].strip().lower()
-
-        existing_user = session.exec(
-            select(Usuario).where(
-                Usuario.email == email,
-            )
-        ).first()
-
-        if existing_user is None:
-            usuario = Usuario(
-                nombres=item["nombres"],
-                apellidos=item["apellidos"],
-                email=email,
-                rol=item["rol"],
-                password_hash=hash_password(item["password"]),
-                grado_scope=item["grado_scope"],
-                activo=True,
-            )
-            session.add(usuario)
-            session.commit()
-            session.refresh(usuario)
-            created_users.append(usuario)
-        else:
-            created_users.append(existing_user)
-
-    maestra = next(
-        usuario for usuario in created_users if usuario.rol == "MAESTRO"
+    section_3a = _get_or_create_section(
+        session=session,
+        grado=3,
+        nombre="A",
+        turno="MAÑANA",
     )
 
-    seccion_3a = next(
-        seccion for seccion in created_sections if seccion.nombre == "3A"
+    section_3b = _get_or_create_section(
+        session=session,
+        grado=3,
+        nombre="B",
+        turno="MAÑANA",
     )
 
-    existing_link = session.exec(
-        select(DocenteSeccion).where(
-            DocenteSeccion.usuario_id == maestra.id,
-            DocenteSeccion.seccion_id == seccion_3a.id,
-        )
-    ).first()
+    teacher = _upsert_user(
+        session=session,
+        nombres="María",
+        apellidos="Docente Demo",
+        email="maestra3a@demo.com",
+        rol="MAESTRO",
+        grado_scope=None,
+        password="123456",
+    )
 
-    if existing_link is None:
-        link = DocenteSeccion(
-            usuario_id=maestra.id or 0,
-            seccion_id=seccion_3a.id or 0,
+    psychologist = _upsert_user(
+        session=session,
+        nombres="Lucía",
+        apellidos="Psicóloga Demo",
+        email="psicologa@demo.com",
+        rol="PSICOLOGA",
+        grado_scope=3,
+        password="123456",
+    )
+
+    director = _upsert_user(
+        session=session,
+        nombres="Rosa",
+        apellidos="Directora Demo",
+        email="directora@demo.com",
+        rol="DIRECTORA",
+        grado_scope=3,
+        password="123456",
+    )
+
+    if teacher.id is not None and section_3a.id is not None:
+        _ensure_teacher_section_link(
+            session=session,
+            usuario_id=teacher.id,
+            seccion_id=section_3a.id,
         )
-        session.add(link)
-        session.commit()
 
     return {
         "status": "ok",
-        "message": "Datos demo creados o ya existentes.",
-        "usuarios": [
+        "message": "Datos demo creados o actualizados.",
+        "credentials": [
             {
-                "id": usuario.id,
-                "email": usuario.email,
-                "rol": usuario.rol,
-                "password_demo": "123456",
-                "grado_scope": usuario.grado_scope,
-            }
-            for usuario in created_users
+                "email": teacher.email,
+                "password": "123456",
+                "rol": teacher.rol,
+                "seccion_id": section_3a.id,
+            },
+            {
+                "email": psychologist.email,
+                "password": "123456",
+                "rol": psychologist.rol,
+                "grado_scope": psychologist.grado_scope,
+            },
+            {
+                "email": director.email,
+                "password": "123456",
+                "rol": director.rol,
+                "grado_scope": director.grado_scope,
+            },
         ],
-        "secciones": [
+        "sections": [
             {
-                "id": seccion.id,
-                "grado": seccion.grado,
-                "nombre": seccion.nombre,
-                "turno": seccion.turno,
-            }
-            for seccion in created_sections
+                "id": section_3a.id,
+                "grado": section_3a.grado,
+                "nombre": section_3a.nombre,
+            },
+            {
+                "id": section_3b.id,
+                "grado": section_3b.grado,
+                "nombre": section_3b.nombre,
+            },
         ],
     }

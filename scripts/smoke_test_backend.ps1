@@ -46,6 +46,48 @@ function Test-Get {
   }
 }
 
+function Test-AuthLogin {
+  try {
+    $body = @{
+      email = "maestra3a@demo.com"
+      password = "123456"
+    } | ConvertTo-Json
+
+    $login = Invoke-RestMethod `
+      -Method Post `
+      -Uri "$BaseUrl/api/v1/auth/login" `
+      -ContentType "application/json" `
+      -Body $body `
+      -TimeoutSec 15
+
+    if ([string]::IsNullOrWhiteSpace($login.access_token)) {
+      Add-Result `
+        -Name "Login JWT" `
+        -Status "ERROR" `
+        -Details "No devolvio access_token"
+      return
+    }
+
+    $me = Invoke-RestMethod `
+      -Method Get `
+      -Uri "$BaseUrl/api/v1/auth/me" `
+      -Headers @{
+        Authorization = "Bearer $($login.access_token)"
+      } `
+      -TimeoutSec 15
+
+    Add-Result `
+      -Name "Login JWT + auth/me" `
+      -Status "OK" `
+      -Details "Usuario autenticado: $($me.email)"
+  } catch {
+    Add-Result `
+      -Name "Login JWT + auth/me" `
+      -Status "ERROR" `
+      -Details $_.Exception.Message
+  }
+}
+
 function Test-Csv {
   param(
     [string]$Name,
@@ -156,6 +198,7 @@ Write-Host ""
 
 Test-Get -Name "Health check" -Path "/health"
 Test-Get -Name "Estado modelo ML" -Path "/api/v1/evaluaciones/model-status"
+Test-AuthLogin
 Test-Get -Name "Debug evaluaciones" -Path "/api/v1/evaluaciones/debug"
 Test-Get -Name "Lista estudiantes" -Path "/api/v1/estudiantes"
 Test-Get -Name "Padrón offline" -Path "/api/v1/estudiantes/offline-cache"
@@ -189,4 +232,5 @@ if ($errors.Count -gt 0) {
 Write-Host ""
 Write-Host "Smoke test backend finalizado correctamente." -ForegroundColor Green
 exit 0
+
 
