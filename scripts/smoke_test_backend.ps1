@@ -123,6 +123,39 @@ function Test-GetProtected {
   }
 }
 
+function Test-CsvProtected {
+  param(
+    [string]$Name,
+    [string]$Path
+  )
+
+  try {
+    if ([string]::IsNullOrWhiteSpace($script:AuthToken)) {
+      Add-Result -Name $Name -Status "ERROR" -Details "No existe AuthToken"
+      return
+    }
+
+    $uri = "$BaseUrl$Path"
+
+    $response = Invoke-WebRequest `
+      -UseBasicParsing `
+      -Method Get `
+      -Uri $uri `
+      -Headers @{
+        Authorization = "Bearer $script:AuthToken"
+      } `
+      -TimeoutSec 15
+
+    if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 300) {
+      Add-Result -Name $Name -Status "OK" -Details "CSV protegido responde con HTTP $($response.StatusCode)"
+    } else {
+      Add-Result -Name $Name -Status "ERROR" -Details "HTTP $($response.StatusCode)"
+    }
+  } catch {
+    Add-Result -Name $Name -Status "ERROR" -Details $_.Exception.Message
+  }
+}
+
 function Test-Csv {
   param(
     [string]$Name,
@@ -242,7 +275,7 @@ Test-GetProtected -Name "Resumen semáforo protegido" -Path "/api/v1/reportes/re
 Test-GetProtected -Name "Filtro reportes FONOLOGIA protegido" -Path "/api/v1/reportes/evaluaciones?tipo_prueba=FONOLOGIA"
 Test-Get -Name "Dataset ML JSON" -Path "/api/v1/ml/dataset"
 Test-Csv -Name "Dataset ML CSV" -Path "/api/v1/ml/dataset.csv"
-Test-Csv -Name "Reporte evaluaciones CSV" -Path "/api/v1/reportes/evaluaciones.csv"
+Test-CsvProtected -Name "Reporte evaluaciones CSV protegido" -Path "/api/v1/reportes/evaluaciones.csv"
 
 Test-GetProtected `
   -Name "Perfil estudiante ID 1 protegido" `
@@ -267,6 +300,7 @@ if ($errors.Count -gt 0) {
 Write-Host ""
 Write-Host "Smoke test backend finalizado correctamente." -ForegroundColor Green
 exit 0
+
 
 
 

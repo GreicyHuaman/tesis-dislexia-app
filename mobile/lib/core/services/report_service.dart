@@ -22,14 +22,8 @@ class ReportFilters {
         estudianteId != null;
   }
 
-  Map<String, String> toQueryParameters({
-    int? usuarioId,
-  }) {
+  Map<String, String> toQueryParameters() {
     final params = <String, String>{};
-
-    if (usuarioId != null) {
-      params['usuario_id'] = usuarioId.toString();
-    }
 
     if (tipoPrueba != null && tipoPrueba!.trim().isNotEmpty) {
       params['tipo_prueba'] = tipoPrueba!.trim().toUpperCase();
@@ -47,24 +41,22 @@ class ReportFilters {
   }
 }
 
+class ReportCsvDownloadResult {
+  final String filename;
+  final List<int> bytes;
+
+  const ReportCsvDownloadResult({
+    required this.filename,
+    required this.bytes,
+  });
+}
+
 class ReportService {
   final String baseUrl;
 
   const ReportService({
     this.baseUrl = 'http://127.0.0.1:8000',
   });
-
-  Uri buildEvaluacionesCsvUri({
-    int? usuarioId,
-    ReportFilters filters = const ReportFilters(),
-  }) {
-    return Uri.parse('$baseUrl/api/v1/reportes/evaluaciones.csv')
-        .replace(
-      queryParameters: filters.toQueryParameters(
-        usuarioId: usuarioId,
-      ),
-    );
-  }
 
   Future<ReportSummary> fetchResumenSemaforo({
     String? authToken,
@@ -78,7 +70,10 @@ class ReportService {
     final response = await http
         .get(
           uri,
-          headers: _headers(authToken),
+          headers: _headers(
+            authToken: authToken,
+            accept: 'application/json',
+          ),
         )
         .timeout(
           const Duration(seconds: 15),
@@ -107,7 +102,10 @@ class ReportService {
     final response = await http
         .get(
           uri,
-          headers: _headers(authToken),
+          headers: _headers(
+            authToken: authToken,
+            accept: 'application/json',
+          ),
         )
         .timeout(
           const Duration(seconds: 15),
@@ -151,7 +149,10 @@ class ReportService {
     final response = await http
         .get(
           uri,
-          headers: _headers(authToken),
+          headers: _headers(
+            authToken: authToken,
+            accept: 'application/json',
+          ),
         )
         .timeout(
           const Duration(seconds: 15),
@@ -168,9 +169,53 @@ class ReportService {
     return StudentRiskProfile.fromJson(decoded);
   }
 
-  Map<String, String> _headers(String? authToken) {
+  Future<ReportCsvDownloadResult> downloadEvaluacionesCsv({
+    String? authToken,
+    ReportFilters filters = const ReportFilters(),
+  }) async {
+    final cleanToken = authToken?.trim();
+
+    if (cleanToken == null || cleanToken.isEmpty) {
+      throw Exception('No hay token de autenticación para exportar CSV.');
+    }
+
+    final uri = Uri.parse('$baseUrl/api/v1/reportes/evaluaciones.csv')
+        .replace(
+      queryParameters: filters.toQueryParameters(),
+    );
+
+    final response = await http
+        .get(
+          uri,
+          headers: _headers(
+            authToken: cleanToken,
+            accept: 'text/csv',
+          ),
+        )
+        .timeout(
+          const Duration(seconds: 30),
+        );
+
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw Exception(
+        'Error exportando CSV: ${response.statusCode}. ${response.body}',
+      );
+    }
+
+    final filename = _buildCsvFilename(filters);
+
+    return ReportCsvDownloadResult(
+      filename: filename,
+      bytes: response.bodyBytes,
+    );
+  }
+
+  Map<String, String> _headers({
+    required String? authToken,
+    required String accept,
+  }) {
     final headers = <String, String>{
-      'Accept': 'application/json',
+      'Accept': accept,
     };
 
     final cleanToken = authToken?.trim();
@@ -180,5 +225,39 @@ class ReportService {
     }
 
     return headers;
+  }
+
+  String _buildCsvFilename(ReportFilters filters) {
+    final now = DateTime.now();
+    final timestamp = '${now.year}'
+        '${_two(now.month)}'
+        '${_two(now.day)}_'
+        '${_two(now.hour)}'
+        '${_two(now.minute)}'
+        '${_two(now.second)}';
+
+    final parts = <String>[
+      'reporte_evaluaciones',
+    ];
+
+    if (filters.tipoPrueba != null) {
+      parts.add(filters.tipoPrueba!.toLowerCase());
+    }
+
+    if (filters.semaforo != null) {
+      parts.add(filters.semaforo!.toLowerCase());
+    }
+
+    if (filters.estudianteId != null) {
+      parts.add('estudiante_${filters.estudianteId}');
+    }
+
+    parts.add(timestamp);
+
+    return '${parts.join('_')}.csv';
+  }
+
+  String _two(int value) {
+    return value.toString().padLeft(2, '0');
   }
 }

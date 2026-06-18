@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/models/auth_user.dart';
 import '../../../core/models/report_models.dart';
 import '../../../core/services/report_service.dart';
+import '../../../core/utils/csv_exporter.dart';
 import 'student_risk_profile_screen.dart';
 
 class ReportesScreen extends StatefulWidget {
@@ -125,20 +125,30 @@ class _ReportesScreenState extends State<ReportesScreen> {
   }
 
   Future<void> _exportCsv() async {
-    final uri = _reportService.buildEvaluacionesCsvUri(
-      usuarioId: widget.currentUser.id,
-      filters: _currentFilters,
-    );
+    try {
+      final result = await _reportService.downloadEvaluacionesCsv(
+        authToken: widget.currentUser.accessToken,
+        filters: _currentFilters,
+      );
 
-    final launched = await launchUrl(
-      uri,
-      webOnlyWindowName: '_blank',
-    );
+      final savedPath = await saveCsvFile(
+        bytes: result.bytes,
+        filename: result.filename,
+      );
 
-    if (!launched && mounted) {
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('No se pudo abrir el CSV: $uri'),
+          content: Text('CSV exportado: $savedPath'),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('No se pudo exportar CSV: $error'),
         ),
       );
     }
@@ -667,6 +677,8 @@ class _SemaforoChip extends StatelessWidget {
     );
   }
 }
+
+
 
 
 

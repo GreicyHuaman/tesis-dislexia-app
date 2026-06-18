@@ -498,18 +498,17 @@ def get_perfil_riesgo_estudiante(
 
 @router.get("/evaluaciones.csv")
 def export_evaluaciones_csv(
-    usuario_id: int | None = Query(default=None),
     tipo_prueba: str | None = Query(default=None),
     semaforo: str | None = Query(default=None),
     estudiante_id: int | None = Query(default=None),
+    current_user: Usuario = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> Response:
     """
-    Endpoint temporal compatible con descarga desde navegador.
-    En Sprint posterior se reemplazara por descarga autenticada desde Flutter.
+    Endpoint protegido con JWT para exportar reportes CSV.
     """
-    allowed_section_ids = _get_allowed_section_ids_legacy(
-        usuario_id=usuario_id,
+    allowed_section_ids = _get_allowed_section_ids_for_user(
+        usuario=current_user,
         session=session,
     )
 
@@ -561,3 +560,4 @@ def export_evaluaciones_csv(
             "Content-Disposition": "attachment; filename=reporte_evaluaciones.csv",
         },
     )
+
