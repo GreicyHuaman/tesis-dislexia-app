@@ -6,6 +6,7 @@ import '../../../core/repositories/auth_session_storage.dart';
 import '../../../core/models/report_models.dart';
 import '../../../core/services/report_service.dart';
 import '../../auth/screens/pin_login_screen.dart';
+import '../../admin/screens/admin_panel_screen.dart';
 import '../../../core/utils/csv_exporter.dart';
 import 'student_risk_profile_screen.dart';
 
@@ -124,6 +125,16 @@ class _ReportesScreenState extends State<ReportesScreen> {
     );
   }
 
+  void _openAdminPanel() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => AdminPanelScreen(
+          currentUser: widget.currentUser,
+        ),
+      ),
+    );
+  }
+
   Future<void> _logoutStaff() async {
     await AuthSessionStorage.clearSession();
 
@@ -190,6 +201,12 @@ class _ReportesScreenState extends State<ReportesScreen> {
             icon: const Icon(Icons.refresh),
             tooltip: 'Actualizar',
           ),
+          if (widget.currentUser.rol.toUpperCase() == 'DIRECTORA')
+            IconButton(
+              onPressed: _openAdminPanel,
+              icon: const Icon(Icons.admin_panel_settings_outlined),
+              tooltip: 'Panel administrativo',
+            ),
           IconButton(
             onPressed: _logoutStaff,
             icon: const Icon(Icons.logout),
@@ -705,6 +722,7 @@ class _SemaforoChip extends StatelessWidget {
     );
   }
 }
+
 
 
 
