@@ -50,7 +50,7 @@ function Test-Get {
 function Test-AuthLogin {
   try {
     $body = @{
-      email = "maestra3a@demo.com"
+      email = "directora@demo.com"
       password = "123456"
     } | ConvertTo-Json
 
@@ -265,16 +265,16 @@ Write-Host "Ejecutando smoke test backend en $BaseUrl"
 Write-Host ""
 
 Test-Get -Name "Health check" -Path "/health"
-Test-Get -Name "Estado modelo ML" -Path "/api/v1/evaluaciones/model-status"
 Test-AuthLogin
-Test-Get -Name "Debug evaluaciones" -Path "/api/v1/evaluaciones/debug"
+Test-GetProtected -Name "Estado modelo ML protegido" -Path "/api/v1/evaluaciones/model-status"
+Test-GetProtected -Name "Debug evaluaciones protegido" -Path "/api/v1/evaluaciones/debug"
 Test-Get -Name "Lista estudiantes" -Path "/api/v1/estudiantes"
 Test-Get -Name "Padrón offline" -Path "/api/v1/estudiantes/offline-cache"
 Test-GetProtected -Name "Reportes evaluaciones protegidas" -Path "/api/v1/reportes/evaluaciones"
 Test-GetProtected -Name "Resumen semáforo protegido" -Path "/api/v1/reportes/resumen-semaforo"
 Test-GetProtected -Name "Filtro reportes FONOLOGIA protegido" -Path "/api/v1/reportes/evaluaciones?tipo_prueba=FONOLOGIA"
-Test-Get -Name "Dataset ML JSON" -Path "/api/v1/ml/dataset"
-Test-Csv -Name "Dataset ML CSV" -Path "/api/v1/ml/dataset.csv"
+Test-GetProtected -Name "Dataset ML JSON protegido" -Path "/api/v1/ml/dataset"
+Test-CsvProtected -Name "Dataset ML CSV protegido" -Path "/api/v1/ml/dataset.csv"
 Test-CsvProtected -Name "Reporte evaluaciones CSV protegido" -Path "/api/v1/reportes/evaluaciones.csv"
 
 Test-GetProtected `
@@ -289,7 +289,7 @@ if ($CreateTestEvaluation) {
 Write-Host ""
 $Results | Format-Table -AutoSize
 
-$errors = $Results | Where-Object { $_.Estado -eq "ERROR" }
+$errors = @($Results | Where-Object { $_.Estado -eq "ERROR" })
 
 if ($errors.Count -gt 0) {
   Write-Host ""
@@ -300,6 +300,8 @@ if ($errors.Count -gt 0) {
 Write-Host ""
 Write-Host "Smoke test backend finalizado correctamente." -ForegroundColor Green
 exit 0
+
+
 
 
 

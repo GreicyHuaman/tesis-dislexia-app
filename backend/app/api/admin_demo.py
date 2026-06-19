@@ -1,9 +1,10 @@
-﻿from fastapi import APIRouter, Depends
+﻿from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlmodel import Session, select
 
 from app.db.session import get_session
 from app.models.section import DocenteSeccion, Seccion
 from app.models.user import Usuario
+from app.services.jwt_service import JwtDecodeError, decode_access_token
 from app.services.password_service import hash_password
 
 router = APIRouter(
@@ -115,10 +116,63 @@ def _ensure_teacher_section_link(
     session.commit()
 
 
+def _validate_seed_access(
+    session: Session,
+    authorization: str | None,
+) -> None:
+    active_users = session.exec(
+        select(Usuario).where(
+            Usuario.activo == True,  # noqa: E712
+        )
+    ).all()
+
+    # Bootstrap inicial: si no existe ningun usuario activo,
+    # permitimos crear los usuarios demo.
+    if len(active_users) == 0:
+        return
+
+    if authorization is None or not authorization.lower().startswith("bearer "):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token requerido para actualizar datos demo.",
+        )
+
+    token = authorization.split(" ", 1)[1].strip()
+
+    try:
+        payload = decode_access_token(token)
+        user_id = int(payload.get("sub"))
+    except (JwtDecodeError, TypeError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token invalido.",
+        )
+
+    user = session.get(Usuario, user_id)
+
+    if user is None or not user.activo:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Usuario no valido.",
+        )
+
+    if user.rol.upper() != "DIRECTORA":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Solo DIRECTORA puede actualizar datos demo.",
+        )
+
+
 @router.post("/seed-demo")
 def seed_demo_data(
+    authorization: str | None = Header(default=None),
     session: Session = Depends(get_session),
 ):
+    _validate_seed_access(
+        session=session,
+        authorization=authorization,
+    )
+
     section_3a = _get_or_create_section(
         session=session,
         grado=3,

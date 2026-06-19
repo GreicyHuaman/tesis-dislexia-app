@@ -4,6 +4,7 @@ from collections import defaultdict
 from fastapi import APIRouter, Depends
 from sqlmodel import Session, select
 
+from app.core.security import require_roles
 from app.db.session import get_session
 from app.models.evaluation import DetalleEvaluacion, Evaluacion
 from app.models.prediction import PrediccionModelo
@@ -163,7 +164,7 @@ def sync_evaluaciones(
     )
 
 
-@router.get("/debug")
+@router.get("/debug", dependencies=[Depends(require_roles("PSICOLOGA", "DIRECTORA"))])
 def list_evaluaciones(
     session: Session = Depends(get_session),
 ):
@@ -181,6 +182,7 @@ def list_evaluaciones(
     }
 
 
-@router.get("/model-status")
+@router.get("/model-status", dependencies=[Depends(require_roles("PSICOLOGA", "DIRECTORA"))])
 def model_status():
     return get_model_status()
+

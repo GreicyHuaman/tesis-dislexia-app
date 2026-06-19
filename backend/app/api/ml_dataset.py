@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import Response
 from sqlmodel import Session, select
 
+from app.core.security import require_roles
 from app.db.session import get_session
 from app.models.evaluation import DetalleEvaluacion, Evaluacion
 from app.models.student import Estudiante
@@ -248,14 +249,14 @@ def _build_dataset(session: Session) -> list[MlDatasetItem]:
     return dataset
 
 
-@router.get("/dataset", response_model=list[MlDatasetItem])
+@router.get("/dataset", response_model=list[MlDatasetItem], dependencies=[Depends(require_roles("PSICOLOGA", "DIRECTORA"))])
 def get_ml_dataset(
     session: Session = Depends(get_session),
 ) -> list[MlDatasetItem]:
     return _build_dataset(session)
 
 
-@router.get("/dataset.csv")
+@router.get("/dataset.csv", dependencies=[Depends(require_roles("PSICOLOGA", "DIRECTORA"))])
 def get_ml_dataset_csv(
     session: Session = Depends(get_session),
 ) -> Response:
@@ -277,3 +278,4 @@ def get_ml_dataset_csv(
             "Content-Disposition": "attachment; filename=ml_dataset.csv",
         },
     )
+
