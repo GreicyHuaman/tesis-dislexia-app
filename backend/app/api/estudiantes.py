@@ -1,6 +1,7 @@
 ﻿from fastapi import APIRouter, Depends, HTTPException
 from sqlmodel import Session, select
 
+from app.core.security import require_roles
 from app.db.session import get_session
 from app.models.student import Estudiante
 from app.schemas.student_schema import (
@@ -23,7 +24,7 @@ def _validate_pin(pin_corto: str) -> None:
         )
 
 
-@router.post("", response_model=StudentPublic)
+@router.post("", response_model=StudentPublic, dependencies=[Depends(require_roles("PSICOLOGA", "DIRECTORA"))])
 def create_estudiante(
     payload: StudentCreate,
     session: Session = Depends(get_session),
@@ -58,7 +59,7 @@ def create_estudiante(
     return StudentPublic.model_validate(estudiante)
 
 
-@router.get("", response_model=list[StudentPublic])
+@router.get("", response_model=list[StudentPublic], dependencies=[Depends(require_roles("MAESTRO", "PSICOLOGA", "DIRECTORA"))])
 def list_estudiantes(
     session: Session = Depends(get_session),
 ) -> list[StudentPublic]:
@@ -72,7 +73,7 @@ def list_estudiantes(
     ]
 
 
-@router.get("/offline-cache", response_model=list[StudentOfflineCacheItem])
+@router.get("/offline-cache", response_model=list[StudentOfflineCacheItem], dependencies=[Depends(require_roles("MAESTRO", "PSICOLOGA", "DIRECTORA"))])
 def list_estudiantes_for_offline_cache(
     session: Session = Depends(get_session),
 ) -> list[StudentOfflineCacheItem]:
@@ -127,3 +128,4 @@ def get_estudiante_by_pin(
         )
 
     return StudentPublic.model_validate(estudiante)
+

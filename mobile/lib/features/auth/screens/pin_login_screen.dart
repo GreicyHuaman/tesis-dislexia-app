@@ -5,6 +5,7 @@ import '../../../core/repositories/local_student_cache.dart';
 import '../../../core/services/student_service.dart';
 import '../../../core/widgets/auto_sync_status_banner.dart';
 import '../../home/screens/test_selection_screen.dart';
+import '../widgets/offline_cache_setup_dialog.dart';
 import 'staff_login_screen.dart';
 
 class PinLoginScreen extends StatefulWidget {
@@ -45,18 +46,19 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
 
     setState(() {
       _isCachingStudents = true;
-      _message = 'Descargando padrón para modo offline...';
+      _message = null;
       _isSuccessMessage = false;
     });
 
-    final result = await _studentService.refreshOfflineCache();
+    await showOfflineCacheSetupDialog(
+      context: context,
+      studentService: _studentService,
+    );
 
     if (!mounted) return;
 
     setState(() {
       _isCachingStudents = false;
-      _message = result.message;
-      _isSuccessMessage = result.success;
       _refreshCacheCount();
     });
   }
@@ -182,8 +184,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                   ),
                   const SizedBox(height: 18),
                   ElevatedButton.icon(
-                    onPressed:
-                        (_isLoading || _isCachingStudents) ? null : _searchStudent,
+                    onPressed: (_isLoading || _isCachingStudents)
+                        ? null
+                        : _searchStudent,
                     icon: _isLoading
                         ? const SizedBox(
                             width: 18,
@@ -215,8 +218,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton.icon(
-                    onPressed:
-                        (_isLoading || _isCachingStudents) ? null : _openStaffLogin,
+                    onPressed: (_isLoading || _isCachingStudents)
+                        ? null
+                        : _openStaffLogin,
                     icon: const Icon(Icons.admin_panel_settings_outlined),
                     label: const Text('Ingresar como personal'),
                   ),
@@ -246,4 +250,3 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     );
   }
 }
-

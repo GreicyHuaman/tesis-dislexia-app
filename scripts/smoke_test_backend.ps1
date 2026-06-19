@@ -268,8 +268,8 @@ Test-Get -Name "Health check" -Path "/health"
 Test-AuthLogin
 Test-GetProtected -Name "Estado modelo ML protegido" -Path "/api/v1/evaluaciones/model-status"
 Test-GetProtected -Name "Debug evaluaciones protegido" -Path "/api/v1/evaluaciones/debug"
-Test-Get -Name "Lista estudiantes" -Path "/api/v1/estudiantes"
-Test-Get -Name "Padrón offline" -Path "/api/v1/estudiantes/offline-cache"
+Test-GetProtected -Name "Lista estudiantes protegida" -Path "/api/v1/estudiantes"
+Test-GetProtected -Name "Padrón offline protegido" -Path "/api/v1/estudiantes/offline-cache"
 Test-GetProtected -Name "Reportes evaluaciones protegidas" -Path "/api/v1/reportes/evaluaciones"
 Test-GetProtected -Name "Resumen semáforo protegido" -Path "/api/v1/reportes/resumen-semaforo"
 Test-GetProtected -Name "Filtro reportes FONOLOGIA protegido" -Path "/api/v1/reportes/evaluaciones?tipo_prueba=FONOLOGIA"
@@ -300,6 +300,7 @@ if ($errors.Count -gt 0) {
 Write-Host ""
 Write-Host "Smoke test backend finalizado correctamente." -ForegroundColor Green
 exit 0
+
 
 
 

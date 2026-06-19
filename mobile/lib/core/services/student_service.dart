@@ -32,6 +32,18 @@ class StudentCacheRefreshResult {
   });
 }
 
+class _StaffLoginResult {
+  final bool success;
+  final String? token;
+  final String message;
+
+  const _StaffLoginResult({
+    required this.success,
+    required this.token,
+    required this.message,
+  });
+}
+
 class StudentService {
   final String baseUrl;
 
@@ -62,6 +74,15 @@ class StudentService {
       final response = await http.get(uri).timeout(
             const Duration(seconds: 10),
           );
+
+      if (response.statusCode == 403) {
+        return const StudentLookupResult(
+          success: false,
+          student: null,
+          message:
+              'El estudiante no tiene autorización activa. No puede iniciar evaluación.',
+        );
+      }
 
       if (response.statusCode == 404) {
         return const StudentLookupResult(
@@ -100,7 +121,10 @@ class StudentService {
     }
   }
 
-  Future<StudentCacheRefreshResult> refreshOfflineCache() async {
+  Future<StudentCacheRefreshResult> refreshOfflineCache({
+    String? staffEmail,
+    String? staffPassword,
+  }) async {
     try {
       final healthOk = await _checkBackendHealth();
 
@@ -113,11 +137,39 @@ class StudentService {
         );
       }
 
+      final loginResult = await _loginStaffForOfflineCache(
+        email: staffEmail,
+        password: staffPassword,
+      );
+
+      if (!loginResult.success || loginResult.token == null) {
+        return StudentCacheRefreshResult(
+          success: false,
+          savedStudents: 0,
+          message: loginResult.message,
+        );
+      }
+
       final uri = Uri.parse('$baseUrl/api/v1/estudiantes/offline-cache');
 
-      final response = await http.get(uri).timeout(
-            const Duration(seconds: 15),
-          );
+      final response = await http.get(
+        uri,
+        headers: {
+          'Accept': 'application/json',
+          'Authorization': 'Bearer ${loginResult.token}',
+        },
+      ).timeout(
+        const Duration(seconds: 15),
+      );
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        return const StudentCacheRefreshResult(
+          success: false,
+          savedStudents: 0,
+          message:
+              'No autorizado. Ingresa credenciales de personal académico autorizado.',
+        );
+      }
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
         return StudentCacheRefreshResult(
@@ -157,6 +209,101 @@ class StudentService {
         success: false,
         savedStudents: 0,
         message: 'Error descargando padrón offline: $error',
+      );
+    }
+  }
+
+  Future<_StaffLoginResult> _loginStaffForOfflineCache({
+    String? email,
+    String? password,
+  }) async {
+    final cleanEmail = email?.trim().toLowerCase() ?? '';
+    final cleanPassword = password ?? '';
+
+    if (cleanEmail.isEmpty || cleanPassword.isEmpty) {
+      return const _StaffLoginResult(
+        success: false,
+        token: null,
+        message:
+            'Para preparar el modo offline debes ingresar credenciales del personal académico.',
+      );
+    }
+
+    try {
+      final uri = Uri.parse('$baseUrl/api/v1/auth/login');
+
+      final response = await http
+          .post(
+            uri,
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+            body: jsonEncode({
+              'email': cleanEmail,
+              'password': cleanPassword,
+            }),
+          )
+          .timeout(const Duration(seconds: 15));
+
+      if (response.statusCode == 401 || response.statusCode == 403) {
+        return const _StaffLoginResult(
+          success: false,
+          token: null,
+          message: 'Credenciales académicas inválidas.',
+        );
+      }
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return _StaffLoginResult(
+          success: false,
+          token: null,
+          message: 'Error del servidor autenticando: ${response.statusCode}.',
+        );
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final token = decoded['access_token']?.toString();
+
+      if (token == null || token.trim().isEmpty) {
+        return const _StaffLoginResult(
+          success: false,
+          token: null,
+          message: 'El backend no devolvió token de autenticación.',
+        );
+      }
+
+      final rawUser = decoded['user'];
+
+      if (rawUser is Map) {
+        final rol = rawUser['rol']?.toString().toUpperCase();
+
+        if (!{'MAESTRO', 'PSICOLOGA', 'DIRECTORA'}.contains(rol)) {
+          return const _StaffLoginResult(
+            success: false,
+            token: null,
+            message:
+                'El usuario autenticado no tiene permiso para preparar modo offline.',
+          );
+        }
+      }
+
+      return _StaffLoginResult(
+        success: true,
+        token: token,
+        message: 'Personal académico autenticado.',
+      );
+    } on TimeoutException {
+      return const _StaffLoginResult(
+        success: false,
+        token: null,
+        message: 'Tiempo de espera agotado autenticando personal académico.',
+      );
+    } catch (error) {
+      return _StaffLoginResult(
+        success: false,
+        token: null,
+        message: 'Error autenticando personal académico: $error',
       );
     }
   }
