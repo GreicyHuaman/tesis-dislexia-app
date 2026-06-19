@@ -1,5 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 
+import '../../../core/models/auth_user.dart';
+import '../../../core/repositories/auth_session_storage.dart';
 import '../../../core/services/auth_service.dart';
 import '../../reportes/screens/reportes_screen.dart';
 
@@ -11,6 +13,8 @@ class StaffLoginScreen extends StatefulWidget {
 }
 
 class _StaffLoginScreenState extends State<StaffLoginScreen> {
+  final AuthService _authService = const AuthService();
+
   final TextEditingController _emailController = TextEditingController(
     text: 'maestra3a@demo.com',
   );
@@ -18,16 +22,53 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
     text: '123456',
   );
 
-  final AuthService _authService = const AuthService();
-
   bool _isLoading = false;
+  bool _isCheckingSession = true;
   String? _message;
+
+  @override
+  void initState() {
+    super.initState();
+    _tryResumeSession();
+  }
 
   @override
   void dispose() {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  Future<void> _tryResumeSession() async {
+    final savedUser = AuthSessionStorage.getCurrentUserIfValid();
+
+    if (savedUser == null || savedUser.accessToken == null) {
+      if (!mounted) return;
+
+      setState(() {
+        _isCheckingSession = false;
+      });
+      return;
+    }
+
+    final verifiedUser = await _authService.fetchCurrentUser(
+      accessToken: savedUser.accessToken!,
+    );
+
+    if (!mounted) return;
+
+    if (verifiedUser == null) {
+      await AuthSessionStorage.clearSession();
+
+      if (!mounted) return;
+
+      setState(() {
+        _isCheckingSession = false;
+      });
+      return;
+    }
+
+    _openReports(verifiedUser);
   }
 
   Future<void> _login() async {
@@ -53,28 +94,47 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
       return;
     }
 
+    await AuthSessionStorage.saveSession(
+      user: result.user!,
+      expiresInMinutes: result.expiresInMinutes,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+      _message = result.message;
+    });
+
+    _openReports(result.user!);
+  }
+
+  void _openReports(AuthUser user) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (_) => ReportesScreen(
-          currentUser: result.user!,
+          currentUser: user,
         ),
       ),
     );
   }
 
-  void _useDemoCredential(String email) {
-    setState(() {
-      _emailController.text = email;
-      _passwordController.text = '123456';
-      _message = null;
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
+    if (_isCheckingSession) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('Ingreso de personal'),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Acceso del personal'),
+        title: const Text('Ingreso de personal'),
       ),
       body: SafeArea(
         child: Center(
@@ -89,22 +149,22 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
                     Icons.admin_panel_settings_outlined,
                     size: 72,
                   ),
-                  const SizedBox(height: 18),
+                  const SizedBox(height: 20),
                   Text(
-                    'Ingreso a reportes',
+                    'Portal académico',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineSmall,
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   const Text(
-                    'El acceso se filtra según el rol del usuario.',
+                    'Ingresa con una cuenta de maestra, psicóloga o directora para revisar reportes.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 24),
                   TextField(
                     controller: _emailController,
-                    enabled: !_isLoading,
                     keyboardType: TextInputType.emailAddress,
+                    enabled: !_isLoading,
                     decoration: const InputDecoration(
                       labelText: 'Correo',
                       border: OutlineInputBorder(),
@@ -113,8 +173,8 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
                   const SizedBox(height: 14),
                   TextField(
                     controller: _passwordController,
-                    enabled: !_isLoading,
                     obscureText: true,
+                    enabled: !_isLoading,
                     decoration: const InputDecoration(
                       labelText: 'Contraseña',
                       border: OutlineInputBorder(),
@@ -132,61 +192,25 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
                           )
                         : const Icon(Icons.login),
                     label: Text(
-                      _isLoading ? 'Ingresando...' : 'Ingresar',
+                      _isLoading ? 'Validando...' : 'Ingresar',
                     ),
                   ),
                   if (_message != null) ...[
-                    const SizedBox(height: 14),
+                    const SizedBox(height: 16),
                     Text(
                       _message!,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.red,
+                      style: TextStyle(
+                        color: _message == 'Sesión iniciada correctamente.'
+                            ? Colors.green
+                            : Colors.red,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                   ],
                   const SizedBox(height: 24),
                   const Text(
-                    'Credenciales demo',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    alignment: WrapAlignment.center,
-                    children: [
-                      OutlinedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () => _useDemoCredential(
-                                  'maestra3a@demo.com',
-                                ),
-                        child: const Text('Maestra 3A'),
-                      ),
-                      OutlinedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () => _useDemoCredential(
-                                  'psicologa@demo.com',
-                                ),
-                        child: const Text('Psicóloga'),
-                      ),
-                      OutlinedButton(
-                        onPressed: _isLoading
-                            ? null
-                            : () => _useDemoCredential(
-                                  'directora@demo.com',
-                                ),
-                        child: const Text('Directora'),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  const Text(
-                    'Contraseña demo para todos: 123456',
+                    'Credenciales demo: maestra3a@demo.com / 123456',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 13),
                   ),

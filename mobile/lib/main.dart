@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
+import 'core/repositories/auth_session_storage.dart';
 import 'core/repositories/local_evaluation_storage.dart';
 import 'core/repositories/local_student_cache.dart';
 import 'core/services/auto_sync_service.dart';
@@ -12,6 +13,7 @@ Future<void> main() async {
   await Hive.initFlutter();
   await LocalEvaluationStorage.init();
   await LocalStudentCache.init();
+  await AuthSessionStorage.init();
 
   await AutoSyncService.instance.start();
 

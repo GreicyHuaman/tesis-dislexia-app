@@ -2,8 +2,10 @@
 import 'package:flutter/services.dart';
 
 import '../../../core/models/auth_user.dart';
+import '../../../core/repositories/auth_session_storage.dart';
 import '../../../core/models/report_models.dart';
 import '../../../core/services/report_service.dart';
+import '../../auth/screens/pin_login_screen.dart';
 import '../../../core/utils/csv_exporter.dart';
 import 'student_risk_profile_screen.dart';
 
@@ -84,8 +86,16 @@ class _ReportesScreenState extends State<ReportesScreen> {
     } catch (error) {
       if (!mounted) return;
 
+      final errorText = error.toString();
+
+      if (errorText.contains('401')) {
+        await AuthSessionStorage.clearSession();
+      }
+
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = errorText.contains('401')
+            ? 'Sesión vencida o no autorizada. Cierra sesión e ingresa nuevamente.'
+            : errorText;
         _isLoading = false;
       });
     }
@@ -111,6 +121,19 @@ class _ReportesScreenState extends State<ReportesScreen> {
           authToken: widget.currentUser.accessToken,
         ),
       ),
+    );
+  }
+
+  Future<void> _logoutStaff() async {
+    await AuthSessionStorage.clearSession();
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(
+        builder: (_) => const PinLoginScreen(),
+      ),
+      (route) => false,
     );
   }
 
@@ -166,6 +189,11 @@ class _ReportesScreenState extends State<ReportesScreen> {
             onPressed: _isLoading ? null : _loadReportes,
             icon: const Icon(Icons.refresh),
             tooltip: 'Actualizar',
+          ),
+          IconButton(
+            onPressed: _logoutStaff,
+            icon: const Icon(Icons.logout),
+            tooltip: 'Cerrar sesión',
           ),
         ],
       ),
@@ -677,6 +705,8 @@ class _SemaforoChip extends StatelessWidget {
     );
   }
 }
+
+
 
 
 
