@@ -2,14 +2,16 @@
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.admin_demo import router as admin_demo_router
+from app.api.admin_usuarios import router as admin_usuarios_router
 from app.api.auth import router as auth_router
+from app.api.docente_seccion import router as docente_seccion_router
 from app.api.estudiantes import router as estudiantes_router
 from app.api.evaluaciones import router as evaluaciones_router
 from app.api.ml_dataset import router as ml_dataset_router
 from app.api.reportes import router as reportes_router
+from app.api.secciones import router as secciones_router
 from app.db.session import create_db_and_tables
 
-# Importamos modelos para que SQLModel registre las tablas.
 from app.models.evaluation import DetalleEvaluacion, Evaluacion  # noqa: F401
 from app.models.prediction import PrediccionModelo  # noqa: F401
 from app.models.section import DocenteSeccion, Seccion  # noqa: F401
@@ -57,6 +59,9 @@ def health_check():
 
 app.include_router(auth_router)
 app.include_router(admin_demo_router)
+app.include_router(admin_usuarios_router)
+app.include_router(docente_seccion_router)
+app.include_router(secciones_router)
 app.include_router(estudiantes_router)
 app.include_router(evaluaciones_router)
 app.include_router(reportes_router)

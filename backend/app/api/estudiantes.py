@@ -5,9 +5,11 @@ from app.core.security import require_roles
 from app.db.session import get_session
 from app.models.student import Estudiante
 from app.schemas.student_schema import (
+    StudentAdminPublic,
     StudentCreate,
     StudentOfflineCacheItem,
     StudentPublic,
+    StudentUpdate,
 )
 
 router = APIRouter(
@@ -24,7 +26,11 @@ def _validate_pin(pin_corto: str) -> None:
         )
 
 
-@router.post("", response_model=StudentPublic, dependencies=[Depends(require_roles("PSICOLOGA", "DIRECTORA"))])
+@router.post(
+    "",
+    response_model=StudentPublic,
+    dependencies=[Depends(require_roles("PSICOLOGA", "DIRECTORA"))],
+)
 def create_estudiante(
     payload: StudentCreate,
     session: Session = Depends(get_session),
@@ -59,12 +65,16 @@ def create_estudiante(
     return StudentPublic.model_validate(estudiante)
 
 
-@router.get("", response_model=list[StudentPublic], dependencies=[Depends(require_roles("MAESTRO", "PSICOLOGA", "DIRECTORA"))])
+@router.get(
+    "",
+    response_model=list[StudentPublic],
+    dependencies=[Depends(require_roles("MAESTRO", "PSICOLOGA", "DIRECTORA"))],
+)
 def list_estudiantes(
     session: Session = Depends(get_session),
 ) -> list[StudentPublic]:
     estudiantes = session.exec(
-        select(Estudiante).order_by(Estudiante.id)
+        select(Estudiante).order_by(Estudiante.apellidos, Estudiante.nombres)
     ).all()
 
     return [
@@ -73,7 +83,29 @@ def list_estudiantes(
     ]
 
 
-@router.get("/offline-cache", response_model=list[StudentOfflineCacheItem], dependencies=[Depends(require_roles("MAESTRO", "PSICOLOGA", "DIRECTORA"))])
+@router.get(
+    "/admin/list",
+    response_model=list[StudentAdminPublic],
+    dependencies=[Depends(require_roles("PSICOLOGA", "DIRECTORA"))],
+)
+def list_estudiantes_admin(
+    session: Session = Depends(get_session),
+) -> list[StudentAdminPublic]:
+    estudiantes = session.exec(
+        select(Estudiante).order_by(Estudiante.apellidos, Estudiante.nombres)
+    ).all()
+
+    return [
+        StudentAdminPublic.model_validate(estudiante)
+        for estudiante in estudiantes
+    ]
+
+
+@router.get(
+    "/offline-cache",
+    response_model=list[StudentOfflineCacheItem],
+    dependencies=[Depends(require_roles("MAESTRO", "PSICOLOGA", "DIRECTORA"))],
+)
 def list_estudiantes_for_offline_cache(
     session: Session = Depends(get_session),
 ) -> list[StudentOfflineCacheItem]:
@@ -107,6 +139,64 @@ def list_estudiantes_for_offline_cache(
     return result
 
 
+@router.patch(
+    "/{estudiante_id}",
+    response_model=StudentAdminPublic,
+    dependencies=[Depends(require_roles("PSICOLOGA", "DIRECTORA"))],
+)
+def update_estudiante(
+    estudiante_id: int,
+    payload: StudentUpdate,
+    session: Session = Depends(get_session),
+) -> StudentAdminPublic:
+    estudiante = session.get(Estudiante, estudiante_id)
+
+    if estudiante is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Estudiante no encontrado.",
+        )
+
+    if payload.pin_corto is not None:
+        _validate_pin(payload.pin_corto)
+
+        existing_student = session.exec(
+            select(Estudiante).where(
+                Estudiante.pin_corto == payload.pin_corto,
+                Estudiante.id != estudiante_id,
+            )
+        ).first()
+
+        if existing_student is not None:
+            raise HTTPException(
+                status_code=400,
+                detail="Ya existe otro estudiante con ese PIN.",
+            )
+
+        estudiante.pin_corto = payload.pin_corto
+
+    if payload.nombres is not None:
+        estudiante.nombres = payload.nombres.strip()
+
+    if payload.apellidos is not None:
+        estudiante.apellidos = payload.apellidos.strip()
+
+    if payload.fecha_nacimiento is not None:
+        estudiante.fecha_nacimiento = payload.fecha_nacimiento
+
+    if payload.seccion_id is not None:
+        estudiante.seccion_id = payload.seccion_id
+
+    if payload.activo is not None:
+        estudiante.activo = payload.activo
+
+    session.add(estudiante)
+    session.commit()
+    session.refresh(estudiante)
+
+    return StudentAdminPublic.model_validate(estudiante)
+
+
 @router.get("/pin/{pin_corto}", response_model=StudentPublic)
 def get_estudiante_by_pin(
     pin_corto: str,
@@ -128,4 +218,3 @@ def get_estudiante_by_pin(
         )
 
     return StudentPublic.model_validate(estudiante)
-
