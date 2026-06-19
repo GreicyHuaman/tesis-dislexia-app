@@ -5,9 +5,11 @@ import '../../../core/models/auth_user.dart';
 import '../../../core/repositories/auth_session_storage.dart';
 import '../../../core/models/report_models.dart';
 import '../../../core/services/report_service.dart';
+import '../../../core/services/pdf_report_builder.dart';
 import '../../auth/screens/pin_login_screen.dart';
 import '../../admin/screens/admin_panel_screen.dart';
 import '../../../core/utils/csv_exporter.dart';
+import '../../../core/utils/pdf_exporter.dart';
 import 'student_risk_profile_screen.dart';
 
 class ReportesScreen extends StatefulWidget {
@@ -24,6 +26,7 @@ class ReportesScreen extends StatefulWidget {
 
 class _ReportesScreenState extends State<ReportesScreen> {
   final ReportService _reportService = const ReportService();
+  final PdfReportBuilder _pdfReportBuilder = const PdfReportBuilder();
   final TextEditingController _studentIdController = TextEditingController();
 
   bool _isLoading = true;
@@ -158,6 +161,51 @@ class _ReportesScreenState extends State<ReportesScreen> {
     _loadReportes();
   }
 
+  Future<void> _exportPdf() async {
+    if (_isLoading) return;
+
+    if (_summary == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Primero carga los reportes antes de exportar PDF.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final result = await _pdfReportBuilder.buildEvaluationsReport(
+        currentUser: widget.currentUser,
+        summary: _summary,
+        evaluations: _evaluaciones,
+      );
+
+      final savedPath = await savePdfFile(
+        bytes: result.bytes,
+        filename: result.filename,
+      );
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('PDF generado: $savedPath'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error exportando PDF: $error'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   Future<void> _exportCsv() async {
     try {
       final result = await _reportService.downloadEvaluacionesCsv(
@@ -200,6 +248,11 @@ class _ReportesScreenState extends State<ReportesScreen> {
             onPressed: _isLoading ? null : _loadReportes,
             icon: const Icon(Icons.refresh),
             tooltip: 'Actualizar',
+          ),
+          IconButton(
+            onPressed: _isLoading ? null : _exportPdf,
+            icon: const Icon(Icons.picture_as_pdf_outlined),
+            tooltip: 'Exportar PDF',
           ),
           if (widget.currentUser.rol.toUpperCase() == 'DIRECTORA')
             IconButton(
@@ -722,6 +775,10 @@ class _SemaforoChip extends StatelessWidget {
     );
   }
 }
+
+
+
+
 
 
 
