@@ -1,0 +1,3 @@
+﻿model_name,status,accuracy,precision_macro,recall_macro,f1_macro,f1_weighted,validation_mode,model_path,note
+Random Forest,OK,0.9091,0.8333,0.8333,0.7778,0.9091,holdout_70_30_estratificado,ml\models\random_forest_validated.joblib,
+XGBoost,OK,0.8182,0.6296,0.5,0.5359,0.8057,holdout_70_30_estratificado,ml\models\xgboost_validated.joblib,
