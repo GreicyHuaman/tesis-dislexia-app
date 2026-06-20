@@ -1,6 +1,6 @@
 # Evidencia experimental del dataset
 
-Documento generado el 19/06/2026 18:05.
+Documento generado el 20/06/2026 11:06.
 
 ## 1. Alcance
 
