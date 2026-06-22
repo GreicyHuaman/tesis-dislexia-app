@@ -5,6 +5,7 @@ import 'core/repositories/auth_session_storage.dart';
 import 'core/repositories/local_evaluation_storage.dart';
 import 'core/repositories/local_student_cache.dart';
 import 'core/services/auto_sync_service.dart';
+import 'core/theme/app_theme.dart';
 import 'features/auth/screens/pin_login_screen.dart';
 
 Future<void> main() async {
@@ -28,12 +29,7 @@ class DyslexiaScreeningApp extends StatelessWidget {
     return MaterialApp(
       title: 'Tamizaje de riesgo de dislexia',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
-        ),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.light(),
       home: const PinLoginScreen(),
     );
   }

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import '../../../core/repositories/local_student_cache.dart';
 import '../../../core/services/student_service.dart';
 import '../../../core/widgets/auto_sync_status_banner.dart';
+import '../../../core/widgets/notice_card.dart';
 import '../../home/screens/test_selection_screen.dart';
 import '../widgets/offline_cache_setup_dialog.dart';
 import 'staff_login_screen.dart';
@@ -146,6 +147,13 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                   const Text(
                     'El PIN tiene 4 dígitos y permite asociar la evaluación al estudiante correcto.',
                     textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 12),
+                  const NoticeCard(
+                    icon: Icons.info_outline,
+                    title: 'Tamizaje educativo',
+                    message:
+                        'La app estima riesgo de forma orientativa. No reemplaza una evaluación profesional ni emite diagnóstico clínico.',
                   ),
                   const SizedBox(height: 12),
                   Text(
