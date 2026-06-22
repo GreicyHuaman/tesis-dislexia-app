@@ -3,6 +3,8 @@
 import '../../../core/services/report_service.dart';
 import '../../../core/services/student_pdf_report_builder.dart';
 import '../../../core/utils/pdf_exporter.dart';
+import '../../../core/widgets/app_status_view.dart';
+import '../../../core/widgets/risk_badge.dart';
 
 class StudentRiskProfileScreen extends StatefulWidget {
   final int estudianteId;
@@ -248,15 +250,6 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
     return '${twoDigits(parsed.day)}/${twoDigits(parsed.month)}/${parsed.year}';
   }
 
-  Color _semaforoColor(Object? value) {
-    final text = value?.toString().toUpperCase();
-
-    if (text == 'ROJO') return Colors.red;
-    if (text == 'AMARILLO') return Colors.orange;
-    if (text == 'VERDE') return Colors.green;
-
-    return Colors.grey;
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -289,27 +282,23 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
+      return const AppStatusView.loading(
+        title: 'Cargando perfil',
+        message: 'Consultando información del estudiante...',
       );
     }
 
     if (_errorMessage != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            _errorMessage!,
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.red),
-          ),
-        ),
+      return AppStatusView.error(
+        message: _errorMessage!,
+        onRetry: _loadProfile,
       );
     }
 
     if (_profile == null) {
-      return const Center(
-        child: Text('No se encontró perfil para este estudiante.'),
+      return const AppStatusView.empty(
+        title: 'Perfil no encontrado',
+        message: 'No se encontró información de riesgo para este estudiante.',
       );
     }
 
@@ -394,14 +383,7 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
-                Chip(
-                  label: Text(ultimoSemaforo.toString()),
-                  backgroundColor: _semaforoColor(ultimoSemaforo)
-                      .withValues(alpha: 0.15),
-                  side: BorderSide(
-                    color: _semaforoColor(ultimoSemaforo),
-                  ),
-                ),
+                RiskBadge(value: ultimoSemaforo),
               ],
             ),
             _InfoRow(
@@ -532,14 +514,7 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
                     style: TextStyle(fontWeight: FontWeight.w600),
                   ),
                 ),
-                Chip(
-                  label: Text(ultimoSemaforo.toString()),
-                  backgroundColor: _semaforoColor(ultimoSemaforo)
-                      .withValues(alpha: 0.15),
-                  side: BorderSide(
-                    color: _semaforoColor(ultimoSemaforo),
-                  ),
-                ),
+                RiskBadge(value: ultimoSemaforo),
               ],
             ),
             _InfoRow(
@@ -604,3 +579,4 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
+
