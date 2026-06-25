@@ -256,7 +256,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
           IconButton(
             onPressed: _prepareOfflineModeFromPortal,
             icon: const Icon(Icons.offline_pin_outlined),
-            tooltip: 'Preparar modo offline',
+            tooltip: 'Actualizar padrón offline',
           ),
 
           IconButton(
@@ -784,6 +784,7 @@ class _SemaforoChip extends StatelessWidget {
     );
   }
 }
+
 
 
 

@@ -59,3 +59,9 @@ logs/
 # Sistema operativo
 .DS_Store
 Thumbs.db
+# Archivos generados para distribucion
+dist/
+*.apk
+*.aab
+# Backups locales
+*.backup.dart

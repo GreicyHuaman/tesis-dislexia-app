@@ -27,7 +27,7 @@ Future<void> showOfflineCacheSetupDialog({
       );
 
       return AlertDialog(
-        title: const Text('Preparar modo offline'),
+        title: const Text('Actualizar padrón offline'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -102,3 +102,4 @@ Future<void> showOfflineCacheSetupDialog({
     ),
   );
 }
+
