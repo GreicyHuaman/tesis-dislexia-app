@@ -1,4 +1,6 @@
 ﻿import 'package:flutter/material.dart';
+
+import '../../../core/services/student_service.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/models/auth_user.dart';
@@ -7,6 +9,7 @@ import '../../../core/models/report_models.dart';
 import '../../../core/services/report_service.dart';
 import '../../../core/services/pdf_report_builder.dart';
 import '../../auth/screens/pin_login_screen.dart';
+import '../../auth/widgets/offline_cache_setup_dialog.dart';
 import '../../admin/screens/admin_panel_screen.dart';
 import '../../../core/utils/csv_exporter.dart';
 import '../../../core/utils/pdf_exporter.dart';
@@ -25,6 +28,13 @@ class ReportesScreen extends StatefulWidget {
 }
 
 class _ReportesScreenState extends State<ReportesScreen> {
+
+  Future<void> _prepareOfflineModeFromPortal() async {
+    await showOfflineCacheSetupDialog(
+      context: context,
+      studentService: StudentService(),
+    );
+  }
   final ReportService _reportService = const ReportService();
   final PdfReportBuilder _pdfReportBuilder = const PdfReportBuilder();
   final TextEditingController _studentIdController = TextEditingController();
@@ -235,7 +245,6 @@ class _ReportesScreenState extends State<ReportesScreen> {
       );
     }
   }
-
   @override
   Widget build(BuildContext context) {
     final summary = _summary;
@@ -244,6 +253,12 @@ class _ReportesScreenState extends State<ReportesScreen> {
       appBar: AppBar(
         title: const Text('Reporte docente'),
         actions: [
+          IconButton(
+            onPressed: _prepareOfflineModeFromPortal,
+            icon: const Icon(Icons.offline_pin_outlined),
+            tooltip: 'Preparar modo offline',
+          ),
+
           IconButton(
             onPressed: _isLoading ? null : _loadReportes,
             icon: const Icon(Icons.refresh),
@@ -419,7 +434,6 @@ class _FilterCard extends StatelessWidget {
     required this.onClear,
     required this.onExport,
   });
-
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -534,7 +548,6 @@ class _UserScopeCard extends StatelessWidget {
   const _UserScopeCard({
     required this.user,
   });
-
   @override
   Widget build(BuildContext context) {
     final gradeText = user.gradoScope == null
@@ -564,7 +577,6 @@ class _SummaryCard extends StatelessWidget {
   const _SummaryCard({
     required this.summary,
   });
-
   @override
   Widget build(BuildContext context) {
     final promedio = summary.porcentajePromedioRiesgo;
@@ -638,7 +650,6 @@ class _EvaluationCard extends StatelessWidget {
     required this.evaluacion,
     this.onOpenProfile,
   });
-
   @override
   Widget build(BuildContext context) {
     final semaforo = evaluacion.semaforo?.toUpperCase() ?? 'SIN_RESULTADO';
@@ -729,7 +740,6 @@ class _MetricRow extends StatelessWidget {
     required this.label,
     required this.value,
   });
-
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -757,7 +767,6 @@ class _SemaforoChip extends StatelessWidget {
     required this.total,
     required this.color,
   });
-
   @override
   Widget build(BuildContext context) {
     return Chip(
@@ -775,6 +784,8 @@ class _SemaforoChip extends StatelessWidget {
     );
   }
 }
+
+
 
 
 
