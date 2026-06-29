@@ -177,6 +177,23 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       if (!mounted) return;
 
       if (!result.success || result.student == null) {
+        final message = result.message.toLowerCase();
+
+        if (message.contains('jornada activa') ||
+            message.contains('seccion') && message.contains('jornada')) {
+          await LocalClassroomModeStorage.clear();
+          await _loadClassroomMode();
+
+          if (!mounted) return;
+
+          setState(() {
+            _isLoading = false;
+            _message = result.message;
+            _isSuccessMessage = false;
+          });
+          return;
+        }
+
         final guardResult = await LocalPinAttemptGuard.registerFailure(
           mode.pinGuardContextKey,
         );

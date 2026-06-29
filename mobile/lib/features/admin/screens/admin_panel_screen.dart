@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../../core/models/admin_models.dart';
 import '../../../core/models/auth_user.dart';
 import '../../../core/models/jornada_evaluacion.dart';
+import '../../../core/models/student.dart';
 import '../../../core/repositories/local_classroom_mode_storage.dart';
+import '../../../core/repositories/local_student_cache.dart';
 import '../../../core/services/admin_service.dart';
 import '../../../core/services/jornada_service.dart';
 import '../../auth/screens/pin_login_screen.dart';
@@ -456,6 +458,8 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         jornada: jornada,
         sectionDisplayName: sectionName,
       );
+
+      await _refreshOfflineCacheForSection(seccionId);
 
       if (!mounted) return;
 
@@ -1291,6 +1295,48 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         seccionId: selectedSectionId!,
       );
     });
+  }
+
+  Future<int> _refreshOfflineCacheForSection(int seccionId) async {
+    final students = await _adminService.fetchStudents(authToken: _token);
+    var cachedCount = 0;
+
+    for (final student in students) {
+      final pin = student.pinCorto?.trim();
+
+      if (pin == null || pin.isEmpty) {
+        continue;
+      }
+
+      if (student.seccionId != seccionId) {
+        continue;
+      }
+
+      if (!student.activo || !student.consentimientoFirmado) {
+        continue;
+      }
+
+      await LocalStudentCache.saveStudentByPin(
+        pin: pin,
+        student: Student.fromJson({
+          'id': student.id,
+          'codigo_estudiante': student.codigoEstudiante,
+          'nombres': student.nombres,
+          'apellidos': student.apellidos,
+          'fecha_nacimiento': student.fechaNacimiento,
+          'pin_corto': student.pinCorto,
+          'seccion_id': student.seccionId,
+          'consentimiento_firmado': student.consentimientoFirmado,
+          'nivel_lectura': student.nivelLectura,
+          'nivel_fonologia': student.nivelFonologia,
+          'activo': student.activo,
+        }),
+      );
+
+      cachedCount++;
+    }
+
+    return cachedCount;
   }
 
   String _todayIsoDate() {
