@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart' as fp;
 import 'package:flutter/material.dart';
 
 import '../../../core/models/admin_models.dart';
@@ -24,6 +25,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   final JornadaService _jornadaService = const JornadaService();
 
   bool _isLoading = true;
+  bool _isImportingStudents = false;
   String? _errorMessage;
 
   List<AdminStudent> _students = [];
@@ -548,43 +550,81 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Widget _buildStudentsTab() {
-    return _buildTabWithAction(
-      actionLabel: 'Nuevo estudiante',
-      actionIcon: Icons.person_add_alt,
-      onAction: _activeSections.isEmpty ? null : () => _showStudentDialog(),
-      child: ListView.separated(
-        itemCount: _students.length,
-        separatorBuilder: (context, index) => const Divider(height: 1),
-        itemBuilder: (context, index) {
-          final student = _students[index];
-
-          return ListTile(
-            title: Text(student.nombreCompleto),
-            subtitle: Text(
-              'PIN: ${student.pinCorto ?? "-"} - ${_sectionName(student.seccionId)}\n'
-              'Consentimiento: ${student.consentimientoFirmado ? "SI" : "NO"}',
-            ),
-            isThreeLine: true,
-            trailing: Wrap(
-              spacing: 8,
-              crossAxisAlignment: WrapCrossAlignment.center,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(12),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
               children: [
-                Chip(label: Text(student.activo ? 'Activo' : 'Inactivo')),
-                IconButton(
-                  onPressed: () => _showStudentDialog(student: student),
-                  icon: const Icon(Icons.edit_outlined),
-                  tooltip: 'Editar',
+                ElevatedButton.icon(
+                  onPressed: _activeSections.isEmpty
+                      ? null
+                      : () => _showStudentDialog(),
+                  icon: const Icon(Icons.person_add_alt),
+                  label: const Text('Nuevo estudiante'),
                 ),
-                IconButton(
-                  onPressed: () => _regeneratePin(student),
-                  icon: const Icon(Icons.password_outlined),
-                  tooltip: 'Regenerar PIN',
+                OutlinedButton.icon(
+                  onPressed: _isImportingStudents
+                      ? null
+                      : _importStudentsFromFile,
+                  icon: _isImportingStudents
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.upload_file_outlined),
+                  label: Text(
+                    _isImportingStudents
+                        ? 'Importando...'
+                        : 'Importar CSV/XLSX',
+                  ),
                 ),
               ],
             ),
-          );
-        },
-      ),
+          ),
+        ),
+        const Divider(height: 1),
+        Expanded(
+          child: ListView.separated(
+            itemCount: _students.length,
+            separatorBuilder: (context, index) => const Divider(height: 1),
+            itemBuilder: (context, index) {
+              final student = _students[index];
+
+              return ListTile(
+                title: Text(student.nombreCompleto),
+                subtitle: Text(
+                  'PIN: ${student.pinCorto ?? "-"} - ${_sectionName(student.seccionId)}\n'
+                  'Consentimiento: ${student.consentimientoFirmado ? "SI" : "NO"}',
+                ),
+                isThreeLine: true,
+                trailing: Wrap(
+                  spacing: 8,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    Chip(label: Text(student.activo ? 'Activo' : 'Inactivo')),
+                    IconButton(
+                      onPressed: () => _showStudentDialog(student: student),
+                      icon: const Icon(Icons.edit_outlined),
+                      tooltip: 'Editar',
+                    ),
+                    IconButton(
+                      onPressed: () => _regeneratePin(student),
+                      icon: const Icon(Icons.password_outlined),
+                      tooltip: 'Regenerar PIN',
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
@@ -712,6 +752,127 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         const Divider(height: 1),
         Expanded(child: child),
       ],
+    );
+  }
+
+  Future<void> _importStudentsFromFile() async {
+    final messenger = ScaffoldMessenger.of(context);
+
+    final picked = await fp.FilePicker.platform.pickFiles(
+      type: fp.FileType.custom,
+      allowedExtensions: ['csv', 'xlsx'],
+      withData: false,
+    );
+
+    if (picked == null || picked.files.isEmpty) {
+      return;
+    }
+
+    final filePath = picked.files.single.path;
+
+    if (filePath == null || filePath.trim().isEmpty) {
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('No se pudo leer la ruta del archivo seleccionado.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isImportingStudents = true;
+    });
+
+    try {
+      final result = await _adminService.importStudentsFile(
+        authToken: _token,
+        filePath: filePath,
+      );
+
+      await _loadAdminData();
+
+      if (!mounted) return;
+
+      await _showImportResultDialog(result);
+    } catch (error) {
+      if (!mounted) return;
+
+      messenger.showSnackBar(
+        SnackBar(content: Text(error.toString()), backgroundColor: Colors.red),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isImportingStudents = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _showImportResultDialog(StudentImportResponse result) async {
+    final errors = result.results.where((item) => item.isError).toList();
+
+    await showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Resultado de importacion'),
+          content: SizedBox(
+            width: 520,
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('Archivo: ${result.filename}'),
+                  const SizedBox(height: 8),
+                  Text('Filas leidas: ${result.totalRows}'),
+                  Text('Creados: ${result.createdCount}'),
+                  Text('Actualizados: ${result.updatedCount}'),
+                  Text('Omitidos: ${result.skippedCount}'),
+                  Text('Errores: ${result.errorCount}'),
+                  if (errors.isNotEmpty) ...[
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Errores encontrados:',
+                      style: TextStyle(fontWeight: FontWeight.w800),
+                    ),
+                    const SizedBox(height: 8),
+                    ...errors
+                        .take(8)
+                        .map(
+                          (item) => Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Text(
+                              'Fila ${item.rowNumber}: ${item.message}',
+                              style: TextStyle(
+                                color: Theme.of(context).colorScheme.error,
+                              ),
+                            ),
+                          ),
+                        ),
+                    if (errors.length > 8)
+                      Text('Y ${errors.length - 8} errores mas...'),
+                  ],
+                  if (result.errorCount == 0) ...[
+                    const SizedBox(height: 14),
+                    const Text(
+                      'Importacion completada. Los estudiantes con consentimiento firmado ya tienen PIN generado automaticamente.',
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
     );
   }
 

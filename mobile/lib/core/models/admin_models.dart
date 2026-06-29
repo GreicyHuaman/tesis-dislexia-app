@@ -142,6 +142,91 @@ class TeacherSectionLink {
   }
 }
 
+class StudentImportRowResult {
+  final int rowNumber;
+  final String status;
+  final String message;
+  final int? estudianteId;
+  final String? codigoEstudiante;
+  final String? nombres;
+  final String? apellidos;
+  final int? seccionId;
+  final String? pinCorto;
+
+  const StudentImportRowResult({
+    required this.rowNumber,
+    required this.status,
+    required this.message,
+    required this.estudianteId,
+    required this.codigoEstudiante,
+    required this.nombres,
+    required this.apellidos,
+    required this.seccionId,
+    required this.pinCorto,
+  });
+
+  factory StudentImportRowResult.fromJson(Map<String, dynamic> json) {
+    return StudentImportRowResult(
+      rowNumber: _asInt(json['row_number']),
+      status: json['status']?.toString() ?? '',
+      message: json['message']?.toString() ?? '',
+      estudianteId: _asNullableInt(json['estudiante_id']),
+      codigoEstudiante: json['codigo_estudiante']?.toString(),
+      nombres: json['nombres']?.toString(),
+      apellidos: json['apellidos']?.toString(),
+      seccionId: _asNullableInt(json['seccion_id']),
+      pinCorto: json['pin_corto']?.toString(),
+    );
+  }
+
+  bool get isError => status.toLowerCase() == 'error';
+}
+
+class StudentImportResponse {
+  final String filename;
+  final int totalRows;
+  final int createdCount;
+  final int updatedCount;
+  final int skippedCount;
+  final int errorCount;
+  final List<StudentImportRowResult> results;
+
+  const StudentImportResponse({
+    required this.filename,
+    required this.totalRows,
+    required this.createdCount,
+    required this.updatedCount,
+    required this.skippedCount,
+    required this.errorCount,
+    required this.results,
+  });
+
+  factory StudentImportResponse.fromJson(Map<String, dynamic> json) {
+    final rawResults = json['results'];
+
+    return StudentImportResponse(
+      filename: json['filename']?.toString() ?? '',
+      totalRows: _asInt(json['total_rows']),
+      createdCount: _asInt(json['created_count']),
+      updatedCount: _asInt(json['updated_count']),
+      skippedCount: _asInt(json['skipped_count']),
+      errorCount: _asInt(json['error_count']),
+      results: rawResults is List
+          ? rawResults
+                .whereType<Map>()
+                .map(
+                  (item) => StudentImportRowResult.fromJson(
+                    item.map(
+                      (key, dynamic value) => MapEntry(key.toString(), value),
+                    ),
+                  ),
+                )
+                .toList()
+          : const [],
+    );
+  }
+}
+
 int _asInt(dynamic value) {
   if (value is int) return value;
   if (value is num) return value.toInt();

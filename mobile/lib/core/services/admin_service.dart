@@ -100,6 +100,29 @@ class AdminService {
     return AdminStudent.fromJson(json);
   }
 
+  Future<StudentImportResponse> importStudentsFile({
+    required String? authToken,
+    required String filePath,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/v1/estudiantes/importar');
+    final request = http.MultipartRequest('POST', uri);
+
+    request.headers.addAll(_multipartHeaders(authToken));
+    request.files.add(await http.MultipartFile.fromPath('file', filePath));
+
+    final streamedResponse = await request.send().timeout(
+      const Duration(seconds: 45),
+    );
+
+    final response = await http.Response.fromStream(streamedResponse);
+
+    _ensureSuccess(response);
+
+    return StudentImportResponse.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
   Future<List<AdminSection>> fetchSections({required String? authToken}) async {
     final list = await _getList(
       path: '/api/v1/secciones',
@@ -341,6 +364,16 @@ class AdminService {
     output.removeWhere((_, value) => value == null);
 
     return output;
+  }
+
+  Map<String, String> _multipartHeaders(String? authToken) {
+    final token = authToken?.trim();
+
+    if (token == null || token.isEmpty) {
+      throw Exception('No existe token de sesion academica.');
+    }
+
+    return {'Accept': 'application/json', 'Authorization': 'Bearer $token'};
   }
 
   Map<String, String> _headers(String? authToken) {
