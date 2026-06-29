@@ -1,6 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'dart:async';
+
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/repositories/local_pin_attempt_guard.dart';
 import '../../../core/services/student_service.dart';
 import '../../home/screens/test_selection_screen.dart';
 import 'staff_login_screen.dart';
@@ -13,6 +16,8 @@ class PinLoginScreen extends StatefulWidget {
 }
 
 class _PinLoginScreenState extends State<PinLoginScreen> {
+  static const String _pinGuardContextKey = 'student_pin_login_global';
+
   final TextEditingController _pinController = TextEditingController();
   final StudentService _studentService = StudentService();
 
@@ -21,24 +26,99 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   String? _message;
   bool _isSuccessMessage = false;
 
+  PinAttemptState? _attemptState;
+  Timer? _blockTimer;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAttemptState();
+  }
+
   @override
   void dispose() {
+    _blockTimer?.cancel();
     _pinController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadAttemptState() async {
+    final state = await LocalPinAttemptGuard.getState(_pinGuardContextKey);
+
+    if (!mounted) return;
+
+    setState(() {
+      _attemptState = state;
+    });
+
+    _configureBlockTimer();
+  }
+
+  void _configureBlockTimer() {
+    _blockTimer?.cancel();
+
+    final state = _attemptState;
+
+    if (state == null || !state.isTemporarilyBlocked) {
+      return;
+    }
+
+    _blockTimer = Timer.periodic(const Duration(seconds: 1), (_) async {
+      final current = await LocalPinAttemptGuard.getState(_pinGuardContextKey);
+
+      if (!mounted) return;
+
+      setState(() {
+        _attemptState = current;
+      });
+
+      if (!current.isTemporarilyBlocked) {
+        _blockTimer?.cancel();
+      }
+    });
+  }
+
+  PinAttemptState get _currentAttemptState {
+    return _attemptState ?? PinAttemptState.empty();
+  }
+
+  bool get _isPinInputLocked {
+    final state = _currentAttemptState;
+
+    return state.requiresTeacherUnlock || state.isTemporarilyBlocked;
   }
 
   Future<void> _submitPin() async {
     if (_isLoading) return;
 
+    final state = await LocalPinAttemptGuard.getState(_pinGuardContextKey);
+
+    if (state.requiresTeacherUnlock) {
+      _setMessage(
+        'El ingreso está bloqueado. Pide a tu docente o directora que lo desbloquee.',
+        isSuccess: false,
+      );
+      await _loadAttemptState();
+      return;
+    }
+
+    if (state.isTemporarilyBlocked) {
+      _setMessage(
+        'Demasiados intentos. Espera ${_formatDuration(state.remainingBlockDuration)} antes de volver a intentar.',
+        isSuccess: false,
+      );
+      await _loadAttemptState();
+      return;
+    }
+
     final pin = _pinController.text.trim();
 
     if (pin.length != 4) {
-      _setMessage(
-        'Ingrese los 4 números de su PIN.',
-        isSuccess: false,
-      );
+      _setMessage('Ingrese los 4 números de su PIN.', isSuccess: false);
       return;
     }
+
+    if (!mounted) return;
 
     FocusScope.of(context).unfocus();
 
@@ -53,19 +133,29 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       if (!mounted) return;
 
       if (!result.success || result.student == null) {
+        final guardResult = await LocalPinAttemptGuard.registerFailure(
+          _pinGuardContextKey,
+        );
+
+        await _loadAttemptState();
+
+        if (!mounted) return;
+
         setState(() {
           _isLoading = false;
-          _message = result.message.isNotEmpty
-              ? result.message
-              : 'No encontramos ese PIN. Revise los números o pida ayuda a su docente.';
+          _message = guardResult.message;
           _isSuccessMessage = false;
         });
         return;
       }
 
+      await LocalPinAttemptGuard.registerSuccess(_pinGuardContextKey);
+
       final student = result.student!;
-      final studentDisplayName =
-          '${student.nombres} ${student.apellidos}'.trim();
+      final studentDisplayName = '${student.nombres} ${student.apellidos}'
+          .trim();
+
+      if (!mounted) return;
 
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -75,32 +165,162 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
           ),
         ),
       );
-    } catch (error) {
+    } catch (_) {
+      final guardResult = await LocalPinAttemptGuard.registerFailure(
+        _pinGuardContextKey,
+      );
+
+      await _loadAttemptState();
+
       if (!mounted) return;
 
       setState(() {
         _isLoading = false;
-        _message =
-            'No se pudo ingresar. Revise el PIN o pida ayuda a su docente.';
+        _message = guardResult.message;
         _isSuccessMessage = false;
       });
+    }
+  }
+
+  Future<void> _showTeacherUnlockDialog() async {
+    final emailController = TextEditingController();
+    final passwordController = TextEditingController();
+
+    final unlocked = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        var dialogLoading = false;
+        String? dialogMessage;
+
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Desbloqueo por personal educativo'),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Ingrese credenciales de docente o dirección para desbloquear el ingreso por PIN.',
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: emailController,
+                      enabled: !dialogLoading,
+                      keyboardType: TextInputType.emailAddress,
+                      decoration: const InputDecoration(
+                        labelText: 'Correo',
+                        prefixIcon: Icon(Icons.email_outlined),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: passwordController,
+                      enabled: !dialogLoading,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'Contraseña',
+                        prefixIcon: Icon(Icons.lock_outline),
+                      ),
+                    ),
+                    if (dialogMessage != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        dialogMessage!,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: dialogLoading
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton.icon(
+                  onPressed: dialogLoading
+                      ? null
+                      : () async {
+                          setDialogState(() {
+                            dialogLoading = true;
+                            dialogMessage = null;
+                          });
+
+                          final navigator = Navigator.of(dialogContext);
+
+                          final result = await _studentService
+                              .validateStaffCredentialsForPinUnlock(
+                                email: emailController.text,
+                                password: passwordController.text,
+                              );
+
+                          if (!mounted) return;
+
+                          if (!result.success) {
+                            setDialogState(() {
+                              dialogLoading = false;
+                              dialogMessage = result.message;
+                            });
+                            return;
+                          }
+
+                          await LocalPinAttemptGuard.unlockByStaff(
+                            _pinGuardContextKey,
+                          );
+
+                          if (!mounted) return;
+
+                          navigator.pop(true);
+                        },
+                  icon: dialogLoading
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.lock_open_outlined),
+                  label: Text(dialogLoading ? 'Validando...' : 'Desbloquear'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    emailController.dispose();
+    passwordController.dispose();
+
+    if (unlocked == true) {
+      await _loadAttemptState();
+
+      if (!mounted) return;
+
+      _pinController.clear();
+
+      _setMessage(
+        'Ingreso desbloqueado. El estudiante puede intentar nuevamente.',
+        isSuccess: true,
+      );
     }
   }
 
   void _openStaffLogin() {
     if (_isLoading) return;
 
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const StaffLoginScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const StaffLoginScreen()));
   }
 
-  void _setMessage(
-    String message, {
-    required bool isSuccess,
-  }) {
+  void _setMessage(String message, {required bool isSuccess}) {
     setState(() {
       _message = message;
       _isSuccessMessage = isSuccess;
@@ -115,6 +335,22 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     return Theme.of(context).colorScheme.error;
   }
 
+  String _formatDuration(Duration duration) {
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+
+    return '$minutes:$seconds';
+  }
+
+  bool get _shouldShowSecurityStatus {
+    final state = _currentAttemptState;
+
+    return state.failedAttempts > 0 ||
+        state.temporaryBlockCount > 0 ||
+        state.requiresTeacherUnlock ||
+        state.isTemporarilyBlocked;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -123,10 +359,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 22,
-              vertical: 18,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 460),
               child: Column(
@@ -137,6 +370,10 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                   _buildPinCard(theme),
                   const SizedBox(height: 14),
                   if (_message != null) _buildMessageCard(theme),
+                  if (_shouldShowSecurityStatus) ...[
+                    const SizedBox(height: 14),
+                    _buildSecurityStatusCard(theme),
+                  ],
                   const SizedBox(height: 18),
                   _buildStaffAccessCard(theme),
                   const SizedBox(height: 16),
@@ -188,6 +425,8 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   }
 
   Widget _buildPinCard(ThemeData theme) {
+    final locked = _isPinInputLocked;
+
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(22),
@@ -196,7 +435,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
           children: [
             TextField(
               controller: _pinController,
-              enabled: !_isLoading,
+              enabled: !_isLoading && !locked,
               textAlign: TextAlign.center,
               keyboardType: TextInputType.number,
               maxLength: 4,
@@ -223,11 +462,13 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                         ? Icons.visibility_outlined
                         : Icons.visibility_off_outlined,
                   ),
-                  onPressed: () {
-                    setState(() {
-                      _obscurePin = !_obscurePin;
-                    });
-                  },
+                  onPressed: locked
+                      ? null
+                      : () {
+                          setState(() {
+                            _obscurePin = !_obscurePin;
+                          });
+                        },
                 ),
               ),
               onChanged: (_) => setState(() {}),
@@ -237,16 +478,32 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
             _buildPinDots(theme),
             const SizedBox(height: 22),
             FilledButton.icon(
-              onPressed: _isLoading ? null : _submitPin,
+              onPressed: _isLoading || locked ? null : _submitPin,
               icon: _isLoading
                   ? const SizedBox(
                       width: 18,
                       height: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
+                  : locked
+                  ? const Icon(Icons.lock_outline)
                   : const Icon(Icons.arrow_forward_rounded),
-              label: Text(_isLoading ? 'Ingresando...' : 'Empezar'),
+              label: Text(
+                _isLoading
+                    ? 'Ingresando...'
+                    : locked
+                    ? 'Acceso bloqueado'
+                    : 'Empezar',
+              ),
             ),
+            if (_currentAttemptState.requiresTeacherUnlock) ...[
+              const SizedBox(height: 12),
+              OutlinedButton.icon(
+                onPressed: _showTeacherUnlockDialog,
+                icon: const Icon(Icons.admin_panel_settings_outlined),
+                label: const Text('Desbloquear con personal educativo'),
+              ),
+            ],
           ],
         ),
       ),
@@ -301,6 +558,50 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                   color: color,
                   height: 1.3,
                   fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSecurityStatusCard(ThemeData theme) {
+    final state = _currentAttemptState;
+    final color = state.requiresTeacherUnlock || state.isTemporarilyBlocked
+        ? theme.colorScheme.error
+        : theme.colorScheme.primary;
+
+    String text;
+
+    if (state.requiresTeacherUnlock) {
+      text =
+          'Ingreso bloqueado. Se requiere desbloqueo por docente o dirección.';
+    } else if (state.isTemporarilyBlocked) {
+      text =
+          'Bloqueo temporal activo. Tiempo restante: ${_formatDuration(state.remainingBlockDuration)}.';
+    } else {
+      text =
+          'Intentos fallidos: ${state.failedAttempts}/5. Bloqueos temporales: ${state.temporaryBlockCount}/3.';
+    }
+
+    return Card(
+      color: color.withValues(alpha: 0.08),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(Icons.security_outlined, color: color),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: color,
+                  height: 1.35,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),

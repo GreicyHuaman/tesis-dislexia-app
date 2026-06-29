@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -32,6 +32,16 @@ class StudentCacheRefreshResult {
   });
 }
 
+class StaffCredentialValidationResult {
+  final bool success;
+  final String message;
+
+  const StaffCredentialValidationResult({
+    required this.success,
+    required this.message,
+  });
+}
+
 class _StaffLoginResult {
   final bool success;
   final String? token;
@@ -47,9 +57,7 @@ class _StaffLoginResult {
 class StudentService {
   final String baseUrl;
 
-  const StudentService({
-    this.baseUrl = 'http://127.0.0.1:8000',
-  });
+  const StudentService({this.baseUrl = 'http://127.0.0.1:8000'});
 
   Future<StudentLookupResult> findByPin(String pin) async {
     final cleanPin = pin.trim();
@@ -71,9 +79,7 @@ class StudentService {
 
       final uri = Uri.parse('$baseUrl/api/v1/estudiantes/pin/$cleanPin');
 
-      final response = await http.get(uri).timeout(
-            const Duration(seconds: 10),
-          );
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 403) {
         return const StudentLookupResult(
@@ -103,10 +109,7 @@ class StudentService {
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       final student = Student.fromJson(decoded);
 
-      await LocalStudentCache.saveStudentByPin(
-        pin: cleanPin,
-        student: student,
-      );
+      await LocalStudentCache.saveStudentByPin(pin: cleanPin, student: student);
 
       return StudentLookupResult(
         success: true,
@@ -140,6 +143,9 @@ class StudentService {
       final loginResult = await _loginStaffForOfflineCache(
         email: staffEmail,
         password: staffPassword,
+        allowedRoles: const {'MAESTRO', 'PSICOLOGA', 'DIRECTORA'},
+        invalidRoleMessage:
+            'El usuario autenticado no tiene permiso para preparar modo offline.',
       );
 
       if (!loginResult.success || loginResult.token == null) {
@@ -152,15 +158,15 @@ class StudentService {
 
       final uri = Uri.parse('$baseUrl/api/v1/estudiantes/offline-cache');
 
-      final response = await http.get(
-        uri,
-        headers: {
-          'Accept': 'application/json',
-          'Authorization': 'Bearer ${loginResult.token}',
-        },
-      ).timeout(
-        const Duration(seconds: 15),
-      );
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'Accept': 'application/json',
+              'Authorization': 'Bearer ${loginResult.token}',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
 
       if (response.statusCode == 401 || response.statusCode == 403) {
         return const StudentCacheRefreshResult(
@@ -213,9 +219,39 @@ class StudentService {
     }
   }
 
+  Future<StaffCredentialValidationResult> validateStaffCredentialsForPinUnlock({
+    required String email,
+    required String password,
+  }) async {
+    final healthOk = await _checkBackendHealth();
+
+    if (!healthOk) {
+      return const StaffCredentialValidationResult(
+        success: false,
+        message:
+            'No se pudo verificar al personal educativo porque el backend no está disponible.',
+      );
+    }
+
+    final result = await _loginStaffForOfflineCache(
+      email: email,
+      password: password,
+      allowedRoles: const {'MAESTRO', 'DIRECTORA'},
+      invalidRoleMessage:
+          'Solo docente o dirección puede desbloquear el ingreso por PIN.',
+    );
+
+    return StaffCredentialValidationResult(
+      success: result.success,
+      message: result.message,
+    );
+  }
+
   Future<_StaffLoginResult> _loginStaffForOfflineCache({
     String? email,
     String? password,
+    required Set<String> allowedRoles,
+    required String invalidRoleMessage,
   }) async {
     final cleanEmail = email?.trim().toLowerCase() ?? '';
     final cleanPassword = password ?? '';
@@ -225,7 +261,7 @@ class StudentService {
         success: false,
         token: null,
         message:
-            'Para preparar el modo offline debes ingresar credenciales del personal académico.',
+            'Para continuar debes ingresar credenciales del personal académico.',
       );
     }
 
@@ -239,10 +275,7 @@ class StudentService {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            body: jsonEncode({
-              'email': cleanEmail,
-              'password': cleanPassword,
-            }),
+            body: jsonEncode({'email': cleanEmail, 'password': cleanPassword}),
           )
           .timeout(const Duration(seconds: 15));
 
@@ -278,19 +311,18 @@ class StudentService {
       if (rawUser is Map) {
         final rol = rawUser['rol']?.toString().toUpperCase();
 
-        if (!{'MAESTRO', 'PSICOLOGA', 'DIRECTORA'}.contains(rol)) {
-          return const _StaffLoginResult(
+        if (!allowedRoles.contains(rol)) {
+          return _StaffLoginResult(
             success: false,
             token: null,
-            message:
-                'El usuario autenticado no tiene permiso para preparar modo offline.',
+            message: invalidRoleMessage,
           );
         }
       }
 
-      return _StaffLoginResult(
+      return const _StaffLoginResult(
         success: true,
-        token: token,
+        token: 'ok',
         message: 'Personal académico autenticado.',
       );
     } on TimeoutException {
@@ -316,7 +348,7 @@ class StudentService {
         success: false,
         student: null,
         message:
-            'El backend no está disponible y este PIN no existe en la caché local. Primero usa "Preparar modo offline" con backend activo.',
+            'El backend no está disponible y este PIN no existe en la caché local. Primero actualiza el padrón offline con backend activo.',
         fromCache: true,
       );
     }
@@ -334,9 +366,7 @@ class StudentService {
     try {
       final uri = Uri.parse('$baseUrl/health');
 
-      final response = await http.get(uri).timeout(
-            const Duration(seconds: 5),
-          );
+      final response = await http.get(uri).timeout(const Duration(seconds: 5));
 
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (_) {

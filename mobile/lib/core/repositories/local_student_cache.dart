@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:hive_flutter/hive_flutter.dart';
 
@@ -24,9 +24,14 @@ class LocalStudentCache {
       return;
     }
 
+    if (!student.activo || !student.consentimientoFirmado) {
+      return;
+    }
+
     final payload = {
       'pin_corto': cleanPin,
       'id': student.id,
+      'codigo_estudiante': student.codigoEstudiante,
       'nombres': student.nombres,
       'apellidos': student.apellidos,
       'fecha_nacimiento': student.fechaNacimiento
@@ -34,6 +39,9 @@ class LocalStudentCache {
           .split('T')
           .first,
       'seccion_id': student.seccionId,
+      'consentimiento_firmado': student.consentimientoFirmado,
+      'nivel_lectura': student.nivelLectura,
+      'nivel_fonologia': student.nivelFonologia,
       'activo': student.activo,
       'cached_at': now,
     };
@@ -63,14 +71,11 @@ class LocalStudentCache {
 
       final student = Student.fromJson(map);
 
-      if (!student.activo) {
+      if (!student.activo || !student.consentimientoFirmado) {
         continue;
       }
 
-      await saveStudentByPin(
-        pin: pin,
-        student: student,
-      );
+      await saveStudentByPin(pin: pin, student: student);
 
       saved++;
     }
@@ -89,7 +94,7 @@ class LocalStudentCache {
 
     final student = Student.fromJson(map);
 
-    if (!student.activo) {
+    if (!student.activo || !student.consentimientoFirmado) {
       return null;
     }
 
