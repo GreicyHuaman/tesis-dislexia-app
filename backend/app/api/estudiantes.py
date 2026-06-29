@@ -1,6 +1,10 @@
-﻿from datetime import datetime
+﻿import csv
+import io
+import re
+import unicodedata
+from datetime import date, datetime
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile, status
 from sqlmodel import Session, select
 
 from app.core.security import get_current_user
@@ -9,6 +13,7 @@ from app.models.jornada import JornadaEvaluacion
 from app.models.section import DocenteSeccion, Seccion
 from app.models.student import Estudiante
 from app.models.user import Usuario
+from app.schemas.student_import_schema import StudentImportResponse, StudentImportRowResult
 from app.schemas.student_schema import (
     StudentAdminPublic,
     StudentCreate,
@@ -215,6 +220,390 @@ def _apply_student_filters_for_user(
     )
 
 
+_REQUIRED_IMPORT_COLUMNS = {
+    "codigo_estudiante",
+    "nombres",
+    "apellidos",
+    "fecha_nacimiento",
+    "grado",
+    "seccion",
+    "consentimiento_firmado",
+    "fecha_consentimiento",
+    "activo",
+}
+
+_TRUE_VALUES = {"1", "true", "si", "s?", "s", "x", "yes", "y", "firmado"}
+_FALSE_VALUES = {"0", "false", "no", "n", ""}
+
+
+def _normalize_import_key(value: object) -> str:
+    text = "" if value is None else str(value)
+    text = text.strip().lower()
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    text = re.sub(r"[^a-z0-9]+", "_", text)
+    text = text.strip("_")
+
+    aliases = {
+        "codigo": "codigo_estudiante",
+        "cod_estudiante": "codigo_estudiante",
+        "codigo_alumno": "codigo_estudiante",
+        "fecha_nac": "fecha_nacimiento",
+        "nacimiento": "fecha_nacimiento",
+        "seccion_nombre": "seccion",
+        "secci?n": "seccion",
+        "consentimiento": "consentimiento_firmado",
+        "consentimiento_apoderado": "consentimiento_firmado",
+        "fecha_consent": "fecha_consentimiento",
+        "estado": "activo",
+    }
+
+    return aliases.get(text, text)
+
+
+def _normalize_import_row(row: dict[object, object]) -> dict[str, object]:
+    return {
+        _normalize_import_key(key): value
+        for key, value in row.items()
+    }
+
+
+def _validate_import_headers(headers: set[str]) -> None:
+    missing = sorted(_REQUIRED_IMPORT_COLUMNS - headers)
+
+    if missing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Faltan columnas obligatorias: {', '.join(missing)}",
+        )
+
+
+def _clean_optional_text(value: object) -> str | None:
+    if value is None:
+        return None
+
+    text = str(value).strip()
+
+    if not text:
+        return None
+
+    return text
+
+
+def _required_text(
+    row: dict[str, object],
+    key: str,
+    row_number: int,
+) -> str:
+    value = _clean_optional_text(row.get(key))
+
+    if value is None:
+        raise ValueError(f"Fila {row_number}: falta el campo {key}.")
+
+    return value
+
+
+def _parse_import_bool(
+    value: object,
+    *,
+    default: bool,
+    field_name: str,
+    row_number: int,
+) -> bool:
+    if value is None:
+        return default
+
+    if isinstance(value, bool):
+        return value
+
+    if isinstance(value, (int, float)):
+        return value != 0
+
+    text = str(value).strip().lower()
+
+    if text in _TRUE_VALUES:
+        return True
+
+    if text in _FALSE_VALUES:
+        return False
+
+    raise ValueError(
+        f"Fila {row_number}: valor invalido para {field_name}. Use SI/NO."
+    )
+
+
+def _parse_import_int(
+    value: object,
+    *,
+    field_name: str,
+    row_number: int,
+) -> int:
+    if value is None:
+        raise ValueError(f"Fila {row_number}: falta el campo {field_name}.")
+
+    if isinstance(value, int):
+        return value
+
+    if isinstance(value, float):
+        return int(value)
+
+    text = str(value).strip()
+
+    if not text:
+        raise ValueError(f"Fila {row_number}: falta el campo {field_name}.")
+
+    try:
+        return int(float(text))
+    except ValueError as exc:
+        raise ValueError(
+            f"Fila {row_number}: {field_name} debe ser numerico."
+        ) from exc
+
+
+def _parse_import_date(
+    value: object,
+    *,
+    field_name: str,
+    row_number: int,
+) -> date | None:
+    if value is None:
+        return None
+
+    if isinstance(value, datetime):
+        return value.date()
+
+    if isinstance(value, date):
+        return value
+
+    text = str(value).strip()
+
+    if not text:
+        return None
+
+    for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%d-%m-%Y"):
+        try:
+            return datetime.strptime(text, fmt).date()
+        except ValueError:
+            continue
+
+    raise ValueError(
+        f"Fila {row_number}: {field_name} debe tener formato YYYY-MM-DD."
+    )
+
+
+def _find_section_for_import(
+    *,
+    grado: int,
+    seccion_nombre: str,
+    session: Session,
+) -> Seccion | None:
+    nombre = seccion_nombre.strip().upper()
+
+    seccion = session.exec(
+        select(Seccion).where(
+            Seccion.grado == grado,
+            Seccion.nombre == nombre,
+            Seccion.activo == True,  # noqa: E712
+        )
+    ).first()
+
+    if seccion is not None:
+        return seccion
+
+    # Soporta casos como "3A" cuando en BD la seccion esta como "A".
+    if nombre.startswith(str(grado)):
+        nombre_sin_grado = nombre[len(str(grado)):].strip()
+
+        if nombre_sin_grado:
+            return session.exec(
+                select(Seccion).where(
+                    Seccion.grado == grado,
+                    Seccion.nombre == nombre_sin_grado,
+                    Seccion.activo == True,  # noqa: E712
+                )
+            ).first()
+
+    return None
+
+
+def _find_existing_student_for_import(
+    *,
+    codigo_estudiante: str | None,
+    nombres: str,
+    apellidos: str,
+    seccion_id: int,
+    session: Session,
+) -> Estudiante | None:
+    if codigo_estudiante:
+        existing = session.exec(
+            select(Estudiante).where(
+                Estudiante.codigo_estudiante == codigo_estudiante,
+            )
+        ).first()
+
+        if existing is not None:
+            return existing
+
+    candidates = session.exec(
+        select(Estudiante).where(
+            Estudiante.seccion_id == seccion_id,
+        )
+    ).all()
+
+    nombres_norm = nombres.strip().lower()
+    apellidos_norm = apellidos.strip().lower()
+
+    for candidate in candidates:
+        if (
+            candidate.nombres.strip().lower() == nombres_norm
+            and candidate.apellidos.strip().lower() == apellidos_norm
+        ):
+            return candidate
+
+    return None
+
+
+async def _read_student_import_rows(
+    file: UploadFile,
+) -> list[tuple[int, dict[str, object]]]:
+    filename = (file.filename or "").lower()
+    contents = await file.read()
+
+    if not contents:
+        raise HTTPException(
+            status_code=400,
+            detail="El archivo esta vacio.",
+        )
+
+    if filename.endswith(".csv"):
+        try:
+            text = contents.decode("utf-8-sig")
+        except UnicodeDecodeError:
+            text = contents.decode("latin-1")
+
+        reader = csv.DictReader(io.StringIO(text))
+
+        if reader.fieldnames is None:
+            raise HTTPException(
+                status_code=400,
+                detail="El CSV no tiene encabezados.",
+            )
+
+        headers = {
+            _normalize_import_key(header)
+            for header in reader.fieldnames
+        }
+        _validate_import_headers(headers)
+
+        rows: list[tuple[int, dict[str, object]]] = []
+
+        for row_number, row in enumerate(reader, start=2):
+            normalized = _normalize_import_row(row)
+
+            if all(
+                _clean_optional_text(value) is None
+                for value in normalized.values()
+            ):
+                continue
+
+            rows.append((row_number, normalized))
+
+        return rows
+
+    if filename.endswith(".xlsx"):
+        try:
+            from openpyxl import load_workbook
+        except ImportError as exc:
+            raise HTTPException(
+                status_code=500,
+                detail="Falta instalar openpyxl para leer archivos XLSX.",
+            ) from exc
+
+        workbook = load_workbook(io.BytesIO(contents), read_only=True, data_only=True)
+        sheet = workbook.active
+
+        raw_headers = [
+            cell.value
+            for cell in next(sheet.iter_rows(min_row=1, max_row=1))
+        ]
+
+        headers = [
+            _normalize_import_key(header)
+            for header in raw_headers
+        ]
+
+        _validate_import_headers(set(headers))
+
+        rows = []
+
+        for row_number, excel_row in enumerate(
+            sheet.iter_rows(min_row=2, values_only=True),
+            start=2,
+        ):
+            raw_values = list(excel_row)
+
+            if all(_clean_optional_text(value) is None for value in raw_values):
+                continue
+
+            normalized = {
+                headers[index]: raw_values[index]
+                for index in range(min(len(headers), len(raw_values)))
+            }
+
+            rows.append((row_number, normalized))
+
+        return rows
+
+    raise HTTPException(
+        status_code=400,
+        detail="Formato no soportado. Use CSV o XLSX.",
+    )
+
+
+def _apply_import_to_student(
+    *,
+    estudiante: Estudiante,
+    codigo_estudiante: str | None,
+    nombres: str,
+    apellidos: str,
+    fecha_nacimiento: date | None,
+    seccion_id: int,
+    consentimiento_firmado: bool,
+    fecha_consentimiento: date | None,
+    activo: bool,
+    session: Session,
+) -> None:
+    estudiante.codigo_estudiante = codigo_estudiante
+    estudiante.nombres = nombres.strip()
+    estudiante.apellidos = apellidos.strip()
+    estudiante.fecha_nacimiento = fecha_nacimiento
+    estudiante.seccion_id = seccion_id
+    estudiante.consentimiento_firmado = consentimiento_firmado
+    estudiante.fecha_consentimiento = (
+        fecha_consentimiento
+        if consentimiento_firmado
+        else None
+    )
+    estudiante.activo = activo and consentimiento_firmado
+
+    if not consentimiento_firmado:
+        estudiante.pin_corto = None
+        return
+
+    if estudiante.pin_corto:
+        _ensure_pin_is_unique(
+            pin_corto=estudiante.pin_corto,
+            session=session,
+            exclude_student_id=estudiante.id,
+        )
+    else:
+        estudiante.pin_corto = _generate_pin_for_student(
+            session=session,
+            exclude_student_id=estudiante.id,
+        )
+
+
+
 @router.post(
     "",
     response_model=StudentAdminPublic,
@@ -390,6 +779,210 @@ def list_estudiantes_for_offline_cache(
         )
 
     return result
+
+
+@router.post(
+    "/importar",
+    response_model=StudentImportResponse,
+)
+async def import_estudiantes(
+    file: UploadFile = File(...),
+    current_user: Usuario = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> StudentImportResponse:
+    if current_user.rol.upper() not in {"DIRECTORA", "MAESTRO"}:
+        _raise_forbidden()
+
+    rows = await _read_student_import_rows(file)
+
+    created_count = 0
+    updated_count = 0
+    skipped_count = 0
+    error_count = 0
+    results: list[StudentImportRowResult] = []
+
+    for row_number, row in rows:
+        try:
+            codigo_estudiante = _clean_optional_text(
+                row.get("codigo_estudiante")
+            )
+            nombres = _required_text(row, "nombres", row_number)
+            apellidos = _required_text(row, "apellidos", row_number)
+            fecha_nacimiento = _parse_import_date(
+                row.get("fecha_nacimiento"),
+                field_name="fecha_nacimiento",
+                row_number=row_number,
+            )
+            grado = _parse_import_int(
+                row.get("grado"),
+                field_name="grado",
+                row_number=row_number,
+            )
+            seccion_nombre = _required_text(row, "seccion", row_number)
+
+            consentimiento_firmado = _parse_import_bool(
+                row.get("consentimiento_firmado"),
+                default=False,
+                field_name="consentimiento_firmado",
+                row_number=row_number,
+            )
+            fecha_consentimiento = _parse_import_date(
+                row.get("fecha_consentimiento"),
+                field_name="fecha_consentimiento",
+                row_number=row_number,
+            )
+            activo = _parse_import_bool(
+                row.get("activo"),
+                default=True,
+                field_name="activo",
+                row_number=row_number,
+            )
+
+            if consentimiento_firmado and fecha_consentimiento is None:
+                raise ValueError(
+                    f"Fila {row_number}: debe registrar fecha_consentimiento."
+                )
+
+            seccion = _find_section_for_import(
+                grado=grado,
+                seccion_nombre=seccion_nombre,
+                session=session,
+            )
+
+            if seccion is None or seccion.id is None:
+                raise ValueError(
+                    f"Fila {row_number}: no existe seccion activa "
+                    f"para grado={grado}, seccion={seccion_nombre}."
+                )
+
+            _ensure_user_can_manage_section(
+                usuario=current_user,
+                seccion_id=seccion.id,
+                session=session,
+            )
+
+            existing = _find_existing_student_for_import(
+                codigo_estudiante=codigo_estudiante,
+                nombres=nombres,
+                apellidos=apellidos,
+                seccion_id=seccion.id,
+                session=session,
+            )
+
+            if existing is not None:
+                if existing.seccion_id is not None:
+                    _ensure_user_can_manage_section(
+                        usuario=current_user,
+                        seccion_id=existing.seccion_id,
+                        session=session,
+                    )
+
+                _apply_import_to_student(
+                    estudiante=existing,
+                    codigo_estudiante=codigo_estudiante,
+                    nombres=nombres,
+                    apellidos=apellidos,
+                    fecha_nacimiento=fecha_nacimiento,
+                    seccion_id=seccion.id,
+                    consentimiento_firmado=consentimiento_firmado,
+                    fecha_consentimiento=fecha_consentimiento,
+                    activo=activo,
+                    session=session,
+                )
+
+                session.add(existing)
+                session.commit()
+                session.refresh(existing)
+
+                updated_count += 1
+
+                results.append(
+                    StudentImportRowResult(
+                        row_number=row_number,
+                        status="updated",
+                        message="Estudiante actualizado.",
+                        estudiante_id=existing.id,
+                        codigo_estudiante=existing.codigo_estudiante,
+                        nombres=existing.nombres,
+                        apellidos=existing.apellidos,
+                        seccion_id=existing.seccion_id,
+                        pin_corto=existing.pin_corto,
+                    )
+                )
+
+                continue
+
+            estudiante = Estudiante(
+                codigo_estudiante=codigo_estudiante,
+                nombres=nombres.strip(),
+                apellidos=apellidos.strip(),
+                fecha_nacimiento=fecha_nacimiento,
+                pin_corto=None,
+                seccion_id=seccion.id,
+                consentimiento_firmado=consentimiento_firmado,
+                fecha_consentimiento=(
+                    fecha_consentimiento
+                    if consentimiento_firmado
+                    else None
+                ),
+                nivel_lectura=1,
+                nivel_fonologia=1,
+                activo=activo and consentimiento_firmado,
+            )
+
+            if consentimiento_firmado:
+                estudiante.pin_corto = _generate_pin_for_student(session)
+
+            session.add(estudiante)
+            session.commit()
+            session.refresh(estudiante)
+
+            created_count += 1
+
+            results.append(
+                StudentImportRowResult(
+                    row_number=row_number,
+                    status="created",
+                    message="Estudiante creado.",
+                    estudiante_id=estudiante.id,
+                    codigo_estudiante=estudiante.codigo_estudiante,
+                    nombres=estudiante.nombres,
+                    apellidos=estudiante.apellidos,
+                    seccion_id=estudiante.seccion_id,
+                    pin_corto=estudiante.pin_corto,
+                )
+            )
+        except HTTPException as exc:
+            session.rollback()
+            error_count += 1
+            results.append(
+                StudentImportRowResult(
+                    row_number=row_number,
+                    status="error",
+                    message=str(exc.detail),
+                )
+            )
+        except Exception as exc:
+            session.rollback()
+            error_count += 1
+            results.append(
+                StudentImportRowResult(
+                    row_number=row_number,
+                    status="error",
+                    message=str(exc),
+                )
+            )
+
+    return StudentImportResponse(
+        filename=file.filename or "archivo",
+        total_rows=len(rows),
+        created_count=created_count,
+        updated_count=updated_count,
+        skipped_count=skipped_count,
+        error_count=error_count,
+        results=results,
+    )
+
 
 
 @router.patch(
@@ -575,7 +1168,7 @@ def get_estudiante_by_pin_for_modo_aula(
     if jornada is None:
         raise HTTPException(
             status_code=403,
-            detail="No hay jornada activa para esta secci?n.",
+            detail="No hay jornada activa para esta seccion.",
         )
 
     estudiante = session.exec(
@@ -590,7 +1183,7 @@ def get_estudiante_by_pin_for_modo_aula(
     if estudiante is None:
         raise HTTPException(
             status_code=404,
-            detail="No se encontr? estudiante activo con consentimiento firmado para esta secci?n y PIN.",
+            detail="No se encontro estudiante activo con consentimiento firmado para esta seccion y PIN.",
         )
 
     return StudentPublic.model_validate(estudiante)

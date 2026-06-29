@@ -1,0 +1,4 @@
+﻿codigo_estudiante,nombres,apellidos,fecha_nacimiento,grado,seccion,consentimiento_firmado,fecha_consentimiento,activo
+STU-3A-001,Mariana,Lopez Perez,2016-05-12,3,A,SI,2026-06-29,SI
+STU-3A-002,Diego,Quispe Ramos,2016-09-21,3,A,SI,2026-06-29,SI
+STU-3A-003,Valeria,Flores Soto,2016-03-08,3,A,NO,,NO
