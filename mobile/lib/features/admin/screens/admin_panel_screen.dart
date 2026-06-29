@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../../core/models/admin_models.dart';
 import '../../../core/models/auth_user.dart';
 import '../../../core/models/jornada_evaluacion.dart';
+import '../../../core/repositories/auth_session_storage.dart';
 import '../../../core/models/student.dart';
 import '../../../core/repositories/local_classroom_mode_storage.dart';
 import '../../../core/repositories/local_student_cache.dart';
@@ -210,6 +211,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               onPressed: _isLoading ? null : _loadAdminData,
               icon: const Icon(Icons.refresh),
               tooltip: 'Actualizar',
+            ),
+            IconButton(
+              onPressed: _logoutStaffSession,
+              icon: const Icon(Icons.logout_outlined),
+              tooltip: 'Cerrar sesi?n',
             ),
           ],
           bottom: TabBar(isScrollable: true, tabs: tabs),
@@ -539,6 +545,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Modo aula local desactivado.')),
+    );
+  }
+
+  Future<void> _logoutStaffSession() async {
+    await AuthSessionStorage.clearSession();
+
+    if (!mounted) return;
+
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const PinLoginScreen()),
+      (route) => false,
     );
   }
 
@@ -939,9 +956,19 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: fechaNacimientoController,
-                      decoration: const InputDecoration(
-                        labelText: 'Fecha nacimiento YYYY-MM-DD',
-                        border: OutlineInputBorder(),
+                      keyboardType: TextInputType.datetime,
+                      decoration: InputDecoration(
+                        labelText: 'Fecha nacimiento',
+                        helperText: 'Use YYYY-MM-DD o DD/MM/YYYY',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.calendar_month_outlined),
+                          onPressed: () => _pickDateIntoController(
+                            controller: fechaNacimientoController,
+                            firstDate: DateTime(2000),
+                            lastDate: DateTime.now(),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -972,9 +999,19 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     const SizedBox(height: 12),
                     TextField(
                       controller: fechaConsentimientoController,
-                      decoration: const InputDecoration(
-                        labelText: 'Fecha consentimiento YYYY-MM-DD',
-                        border: OutlineInputBorder(),
+                      keyboardType: TextInputType.datetime,
+                      decoration: InputDecoration(
+                        labelText: 'Fecha consentimiento',
+                        helperText: 'Use YYYY-MM-DD o DD/MM/YYYY',
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.calendar_month_outlined),
+                          onPressed: () => _pickDateIntoController(
+                            controller: fechaConsentimientoController,
+                            firstDate: DateTime(2020),
+                            lastDate: DateTime.now(),
+                          ),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -1037,8 +1074,33 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     final codigo = codigoController.text.trim();
     final nombres = nombresController.text.trim();
     final apellidos = apellidosController.text.trim();
-    final fechaNacimiento = fechaNacimientoController.text.trim();
-    final fechaConsentimiento = fechaConsentimientoController.text.trim();
+
+    String? fechaNacimiento;
+    String? fechaConsentimiento;
+
+    try {
+      fechaNacimiento = _normalizeDateInput(
+        fechaNacimientoController.text,
+        fieldLabel: 'Fecha de nacimiento',
+      );
+      fechaConsentimiento = _normalizeDateInput(
+        fechaConsentimientoController.text,
+        fieldLabel: 'Fecha de consentimiento',
+      );
+
+      if (consentimientoFirmado && fechaConsentimiento == null) {
+        throw Exception(
+          'Debe registrar fecha de consentimiento si el consentimiento esta firmado.',
+        );
+      }
+    } catch (error) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(error.toString()), backgroundColor: Colors.red),
+      );
+      return;
+    }
 
     await _runAction(() async {
       if (student == null) {
@@ -1047,12 +1109,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           codigoEstudiante: codigo.isEmpty ? null : codigo,
           nombres: nombres,
           apellidos: apellidos,
-          fechaNacimiento: fechaNacimiento.isEmpty ? null : fechaNacimiento,
+          fechaNacimiento: fechaNacimiento,
           seccionId: selectedSectionId,
           consentimientoFirmado: consentimientoFirmado,
-          fechaConsentimiento: fechaConsentimiento.isEmpty
-              ? null
-              : fechaConsentimiento,
+          fechaConsentimiento: fechaConsentimiento,
           activo: activo,
         );
       } else {
@@ -1062,12 +1122,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           codigoEstudiante: codigo.isEmpty ? null : codigo,
           nombres: nombres,
           apellidos: apellidos,
-          fechaNacimiento: fechaNacimiento.isEmpty ? null : fechaNacimiento,
+          fechaNacimiento: fechaNacimiento,
           seccionId: selectedSectionId,
           consentimientoFirmado: consentimientoFirmado,
-          fechaConsentimiento: fechaConsentimiento.isEmpty
-              ? null
-              : fechaConsentimiento,
+          fechaConsentimiento: fechaConsentimiento,
           activo: activo,
         );
       }
@@ -1199,10 +1257,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
     final emailController = TextEditingController(text: user?.email ?? '');
     final passwordController = TextEditingController();
-    final gradoScopeController = TextEditingController(
-      text: user?.gradoScope?.toString() ?? '',
-    );
-
     String rol = user?.rol.toUpperCase() ?? 'MAESTRO';
     bool activo = user?.activo ?? true;
 
@@ -1282,15 +1336,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         border: const OutlineInputBorder(),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: gradoScopeController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Grado scope opcional',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
                     const SizedBox(height: 8),
                     SwitchListTile(
                       value: activo,
@@ -1324,8 +1369,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     apellidosController.dispose();
     emailController.dispose();
     passwordController.dispose();
-    gradoScopeController.dispose();
-
     if (saved != true) {
       return;
     }
@@ -1334,7 +1377,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     final apellidos = apellidosController.text.trim();
     final email = emailController.text.trim();
     final password = passwordController.text;
-    final gradoScope = int.tryParse(gradoScopeController.text.trim());
+    final gradoScope = user?.gradoScope;
 
     await _runAction(() async {
       if (user == null) {
@@ -1498,6 +1541,119 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     }
 
     return cachedCount;
+  }
+
+  Future<void> _pickDateIntoController({
+    required TextEditingController controller,
+    required DateTime firstDate,
+    required DateTime lastDate,
+  }) async {
+    var initialDate = _tryParseDateInput(controller.text) ?? DateTime.now();
+
+    if (initialDate.isBefore(firstDate)) {
+      initialDate = firstDate;
+    }
+
+    if (initialDate.isAfter(lastDate)) {
+      initialDate = lastDate;
+    }
+
+    final selected = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: firstDate,
+      lastDate: lastDate,
+    );
+
+    if (selected == null) {
+      return;
+    }
+
+    controller.text = _toIsoDate(selected);
+  }
+
+  String? _normalizeDateInput(String raw, {required String fieldLabel}) {
+    final text = raw.trim();
+
+    if (text.isEmpty) {
+      return null;
+    }
+
+    final parsed = _tryParseDateInput(text);
+
+    if (parsed == null) {
+      throw Exception(
+        '$fieldLabel debe tener formato YYYY-MM-DD o DD/MM/YYYY.',
+      );
+    }
+
+    final today = DateTime.now();
+    final parsedOnly = DateTime(parsed.year, parsed.month, parsed.day);
+    final todayOnly = DateTime(today.year, today.month, today.day);
+
+    if (parsedOnly.isAfter(todayOnly)) {
+      throw Exception('$fieldLabel no puede ser futura.');
+    }
+
+    return _toIsoDate(parsed);
+  }
+
+  DateTime? _tryParseDateInput(String raw) {
+    final text = raw.trim();
+
+    if (text.isEmpty) {
+      return null;
+    }
+
+    final isoMatch = RegExp(
+      r'^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$',
+    ).firstMatch(text);
+
+    if (isoMatch != null) {
+      final year = int.tryParse(isoMatch.group(1)!);
+      final month = int.tryParse(isoMatch.group(2)!);
+      final day = int.tryParse(isoMatch.group(3)!);
+
+      return _buildValidDate(year, month, day);
+    }
+
+    final localMatch = RegExp(
+      r'^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$',
+    ).firstMatch(text);
+
+    if (localMatch != null) {
+      final day = int.tryParse(localMatch.group(1)!);
+      final month = int.tryParse(localMatch.group(2)!);
+      final year = int.tryParse(localMatch.group(3)!);
+
+      return _buildValidDate(year, month, day);
+    }
+
+    return null;
+  }
+
+  DateTime? _buildValidDate(int? year, int? month, int? day) {
+    if (year == null || month == null || day == null) {
+      return null;
+    }
+
+    if (year < 1900 || month < 1 || month > 12 || day < 1 || day > 31) {
+      return null;
+    }
+
+    final date = DateTime(year, month, day);
+
+    if (date.year != year || date.month != month || date.day != day) {
+      return null;
+    }
+
+    return date;
+  }
+
+  String _toIsoDate(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
   }
 
   String _todayIsoDate() {

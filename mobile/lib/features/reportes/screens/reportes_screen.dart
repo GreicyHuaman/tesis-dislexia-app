@@ -143,6 +143,92 @@ class _ReportesScreenState extends State<ReportesScreen> {
     );
   }
 
+  bool get _canOpenManagementPanel {
+    final role = widget.currentUser.rol.toUpperCase();
+
+    return role == 'DIRECTORA' || role == 'MAESTRO';
+  }
+
+  bool get _isTeacherRole {
+    return widget.currentUser.rol.toUpperCase() == 'MAESTRO';
+  }
+
+  String get _managementPanelTooltip {
+    return _isTeacherRole ? 'Panel docente' : 'Panel administrativo';
+  }
+
+  String get _managementPanelTitle {
+    return _isTeacherRole
+        ? 'Panel docente / Modo aula'
+        : 'Panel administrativo';
+  }
+
+  String get _managementPanelDescription {
+    return _isTeacherRole
+        ? 'Activa jornada de aula, prepara el modo PIN y revisa estudiantes de tus secciones asignadas.'
+        : 'Gestiona estudiantes, secciones, usuarios, asignaciones e importaci?n.';
+  }
+
+  IconData get _managementPanelIcon {
+    return _isTeacherRole
+        ? Icons.meeting_room_outlined
+        : Icons.admin_panel_settings_outlined;
+  }
+
+  Widget _buildManagementPanelShortcut() {
+    if (!_canOpenManagementPanel) {
+      return const SizedBox.shrink();
+    }
+
+    return Card(
+      color: Theme.of(
+        context,
+      ).colorScheme.primaryContainer.withValues(alpha: 0.30),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              _managementPanelIcon,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _managementPanelTitle,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    _managementPanelDescription,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(height: 1.35),
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: _openAdminPanel,
+                      icon: Icon(_managementPanelIcon),
+                      label: Text(_managementPanelTooltip),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Future<void> _logoutStaff() async {
     await AuthSessionStorage.clearSession();
 
@@ -259,11 +345,11 @@ class _ReportesScreenState extends State<ReportesScreen> {
             icon: const Icon(Icons.picture_as_pdf_outlined),
             tooltip: 'Exportar PDF',
           ),
-          if (widget.currentUser.rol.toUpperCase() == 'DIRECTORA')
+          if (_canOpenManagementPanel)
             IconButton(
               onPressed: _openAdminPanel,
-              icon: const Icon(Icons.admin_panel_settings_outlined),
-              tooltip: 'Panel administrativo',
+              icon: Icon(_managementPanelIcon),
+              tooltip: _managementPanelTooltip,
             ),
           IconButton(
             onPressed: _logoutStaff,
@@ -317,6 +403,10 @@ class _ReportesScreenState extends State<ReportesScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           _UserScopeCard(user: widget.currentUser),
+          if (_canOpenManagementPanel) ...[
+            const SizedBox(height: 14),
+            _buildManagementPanelShortcut(),
+          ],
           const SizedBox(height: 14),
           _FilterCard(
             selectedTipoPrueba: _selectedTipoPrueba,

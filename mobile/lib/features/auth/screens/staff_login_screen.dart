@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../../core/models/auth_user.dart';
 import '../../../core/repositories/auth_session_storage.dart';
 import '../../../core/services/auth_service.dart';
 import '../../reportes/screens/reportes_screen.dart';
@@ -23,6 +24,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
   bool _isCheckingSession = true;
   bool _obscurePassword = true;
   String? _message;
+  AuthUser? _cachedUser;
 
   @override
   void initState() {
@@ -46,6 +48,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
 
       if (cachedUser == null || token == null) {
         setState(() {
+          _cachedUser = null;
           _isCheckingSession = false;
         });
         return;
@@ -57,16 +60,41 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
 
       if (!mounted) return;
 
-      _openReportes(verifiedUser);
+      setState(() {
+        _cachedUser = verifiedUser ?? cachedUser;
+        _isCheckingSession = false;
+      });
     } catch (_) {
       await AuthSessionStorage.clearSession();
 
       if (!mounted) return;
 
       setState(() {
+        _cachedUser = null;
         _isCheckingSession = false;
       });
     }
+  }
+
+  Future<void> _switchAccount() async {
+    await AuthSessionStorage.clearSession();
+
+    if (!mounted) return;
+
+    setState(() {
+      _cachedUser = null;
+      _message = null;
+      _emailController.clear();
+      _passwordController.clear();
+    });
+  }
+
+  void _continueCachedSession() {
+    final user = _cachedUser;
+
+    if (user == null) return;
+
+    _openStaffHome(user);
   }
 
   Future<void> _login() async {
@@ -111,7 +139,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
 
       if (!mounted) return;
 
-      _openReportes(result.user!);
+      _openStaffHome(result.user!);
     } catch (_) {
       if (!mounted) return;
 
@@ -123,10 +151,20 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
     }
   }
 
-  void _openReportes(dynamic user) {
+  void _openStaffHome(AuthUser user) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => ReportesScreen(currentUser: user)),
     );
+  }
+
+  String _roleLabel(AuthUser user) {
+    final role = user.rol.toUpperCase();
+
+    if (role == 'DIRECTORA') return 'Directora';
+    if (role == 'MAESTRO') return 'Maestro';
+    if (role == 'PSICOLOGA') return 'Psicología';
+
+    return user.rol;
   }
 
   @override
@@ -180,7 +218,10 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
                 children: [
                   _buildHeader(theme),
                   const SizedBox(height: 24),
-                  _buildLoginCard(theme),
+                  if (_cachedUser != null)
+                    _buildCachedSessionCard(theme)
+                  else
+                    _buildLoginCard(theme),
                   const SizedBox(height: 14),
                   if (_message != null) _buildMessageCard(theme),
                   const SizedBox(height: 18),
@@ -220,7 +261,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Acceda con sus credenciales para revisar reportes y actualizar el padrón offline.',
+          'Acceda con sus credenciales para revisar reportes, activar modo aula o actualizar el padrón offline.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
@@ -228,6 +269,55 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildCachedSessionCard(ThemeData theme) {
+    final user = _cachedUser!;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(22),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Icon(
+              Icons.account_circle_outlined,
+              size: 42,
+              color: theme.colorScheme.primary,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Sesión guardada',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '${user.nombreCompleto}\n${user.email}\nRol: ${_roleLabel(user)}',
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                height: 1.35,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: _continueCachedSession,
+              icon: const Icon(Icons.arrow_forward_rounded),
+              label: const Text('Continuar con esta sesión'),
+            ),
+            const SizedBox(height: 10),
+            OutlinedButton.icon(
+              onPressed: _switchAccount,
+              icon: const Icon(Icons.switch_account_outlined),
+              label: const Text('Cambiar usuario'),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -255,6 +345,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
               controller: _passwordController,
               enabled: !_isLoading,
               obscureText: _obscurePassword,
+              obscuringCharacter: '*',
               textInputAction: TextInputAction.done,
               autofillHints: const [AutofillHints.password],
               decoration: InputDecoration(
@@ -339,7 +430,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Acceso exclusivo para docentes, psicología y dirección.',
+                'Directora: administración completa. Docente: modo aula y estudiantes asignados. Psicología: reportes y seguimiento.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   height: 1.35,
