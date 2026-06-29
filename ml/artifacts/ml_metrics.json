@@ -1,0 +1,105 @@
+{
+  "dataset": {
+    "total_records": 160,
+    "train_records": 112,
+    "test_records": 48,
+    "label_distribution_total": {
+      "VERDE": 96,
+      "AMARILLO": 40,
+      "ROJO": 24
+    },
+    "label_distribution_train": {
+      "VERDE": 67,
+      "AMARILLO": 28,
+      "ROJO": 17
+    },
+    "label_distribution_test": {
+      "VERDE": 29,
+      "AMARILLO": 12,
+      "ROJO": 7
+    },
+    "features": [
+      "age_months",
+      "reading_items",
+      "phonology_items",
+      "reading_correct_first_attempt",
+      "phonology_correct_first_attempt",
+      "reading_error_rate",
+      "phonology_error_rate",
+      "avg_response_time_ms",
+      "wrong_taps_total",
+      "drag_drop_errors",
+      "high_complexity_errors"
+    ],
+    "note": "Synthetic/pilot technical-validation dataset. Not clinical validation."
+  },
+  "classification": {
+    "RandomForest": {
+      "model": "RandomForest",
+      "accuracy": 0.875,
+      "precision_macro": 0.8535,
+      "recall_macro": 0.8298,
+      "f1_macro": 0.8392,
+      "f1_weighted": 0.8707,
+      "confusion_matrix_labels": [
+        "VERDE",
+        "AMARILLO",
+        "ROJO"
+      ],
+      "confusion_matrix": [
+        [
+          28,
+          1,
+          0
+        ],
+        [
+          3,
+          8,
+          1
+        ],
+        [
+          0,
+          1,
+          6
+        ]
+      ]
+    },
+    "XGBoost": {
+      "model": "XGBoost",
+      "accuracy": 0.7917,
+      "precision_macro": 0.7825,
+      "recall_macro": 0.6988,
+      "f1_macro": 0.7235,
+      "f1_weighted": 0.7724,
+      "confusion_matrix_labels": [
+        "VERDE",
+        "AMARILLO",
+        "ROJO"
+      ],
+      "confusion_matrix": [
+        [
+          28,
+          1,
+          0
+        ],
+        [
+          6,
+          5,
+          1
+        ],
+        [
+          1,
+          1,
+          5
+        ]
+      ]
+    }
+  },
+  "regression": {
+    "RandomForestRegressor": {
+      "target": "risk_percentage",
+      "mae": 6.6554,
+      "r2": 0.6882
+    }
+  }
+}

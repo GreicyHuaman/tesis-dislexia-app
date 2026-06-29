@@ -1,0 +1,12 @@
+{
+  "label_to_id": {
+    "VERDE": 0,
+    "AMARILLO": 1,
+    "ROJO": 2
+  },
+  "id_to_label": {
+    "0": "VERDE",
+    "1": "AMARILLO",
+    "2": "ROJO"
+  }
+}

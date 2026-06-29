@@ -1,0 +1,13 @@
+[
+  "age_months",
+  "reading_items",
+  "phonology_items",
+  "reading_correct_first_attempt",
+  "phonology_correct_first_attempt",
+  "reading_error_rate",
+  "phonology_error_rate",
+  "avg_response_time_ms",
+  "wrong_taps_total",
+  "drag_drop_errors",
+  "high_complexity_errors"
+]

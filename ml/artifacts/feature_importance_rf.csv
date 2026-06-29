@@ -1,0 +1,12 @@
+feature,importance
+wrong_taps_total,0.17738965999408526
+phonology_error_rate,0.15923398929262012
+reading_error_rate,0.14061834509927598
+reading_correct_first_attempt,0.12100622466798039
+phonology_correct_first_attempt,0.11684418548393567
+drag_drop_errors,0.10381346130293159
+high_complexity_errors,0.08163812580155935
+avg_response_time_ms,0.05470827736256179
+age_months,0.044747730995049896
+phonology_items,0.0
+reading_items,0.0

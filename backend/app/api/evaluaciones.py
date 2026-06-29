@@ -19,6 +19,7 @@ from app.services.ml_predictor import (
     predict_risk_from_sync,
 )
 from app.services.risk_calculator import calculate_risk_from_session
+from app.services.ml_risk_predictor import predict_risk_with_ml
 
 router = APIRouter(
     prefix="/api/v1/evaluaciones",
@@ -50,35 +51,48 @@ def sync_evaluaciones(
             [],
         )
 
-        ml_prediction = predict_risk_from_sync(
+        features = build_features_from_sync(
             local_session=local_session,
             local_details=local_details,
         )
 
-        if ml_prediction is None:
-            porcentaje_riesgo, semaforo = calculate_risk_from_session(
-                total_items=local_session.total_items,
-                aciertos_primer_intento=local_session.aciertos_primer_intento,
-                taps_erroneos_totales=local_session.taps_erroneos_totales,
-                tiempo_promedio_ms=local_session.tiempo_promedio_ms,
-            )
+        try:
+            ml_result = predict_risk_with_ml(features)
 
-            fuente_prediccion = "HEURISTICA"
-            modelo_nombre = "risk_calculator_v0.1"
-            modelo_version = "v0.1-demo"
+            porcentaje_riesgo = ml_result["porcentaje_riesgo"]
+            semaforo = ml_result["semaforo"]
+            fuente_prediccion = ml_result["fuente_prediccion"]
+            modelo_nombre = ml_result["modelo_nombre"]
+            modelo_version = ml_result["modelo_version"]
             probabilidades = {}
-            features = build_features_from_sync(
+        except Exception as exc:
+            print(f"[ML_RANDOM_FOREST] fallback activated: {exc}")
+
+            ml_prediction = predict_risk_from_sync(
                 local_session=local_session,
                 local_details=local_details,
             )
-        else:
-            porcentaje_riesgo = ml_prediction.porcentaje_riesgo
-            semaforo = ml_prediction.semaforo
-            fuente_prediccion = ml_prediction.fuente_prediccion
-            modelo_nombre = ml_prediction.modelo_nombre
-            modelo_version = ml_prediction.modelo_version
-            probabilidades = ml_prediction.probabilidades
-            features = ml_prediction.features
+
+            if ml_prediction is None:
+                porcentaje_riesgo, semaforo = calculate_risk_from_session(
+                    total_items=local_session.total_items,
+                    aciertos_primer_intento=local_session.aciertos_primer_intento,
+                    taps_erroneos_totales=local_session.taps_erroneos_totales,
+                    tiempo_promedio_ms=local_session.tiempo_promedio_ms,
+                )
+
+                fuente_prediccion = "HEURISTICA"
+                modelo_nombre = "risk_calculator_v0.1"
+                modelo_version = "v0.1-demo"
+                probabilidades = {}
+            else:
+                porcentaje_riesgo = ml_prediction.porcentaje_riesgo
+                semaforo = ml_prediction.semaforo
+                fuente_prediccion = ml_prediction.fuente_prediccion
+                modelo_nombre = ml_prediction.modelo_nombre
+                modelo_version = ml_prediction.modelo_version
+                probabilidades = ml_prediction.probabilidades
+                features = ml_prediction.features
 
         evaluacion = Evaluacion(
             estudiante_id=local_session.estudiante_id,
