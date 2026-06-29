@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/services/student_service.dart';
 import 'package:flutter/services.dart';
@@ -18,23 +18,20 @@ import 'student_risk_profile_screen.dart';
 class ReportesScreen extends StatefulWidget {
   final AuthUser currentUser;
 
-  const ReportesScreen({
-    super.key,
-    required this.currentUser,
-  });
+  const ReportesScreen({super.key, required this.currentUser});
 
   @override
   State<ReportesScreen> createState() => _ReportesScreenState();
 }
 
 class _ReportesScreenState extends State<ReportesScreen> {
-
   Future<void> _prepareOfflineModeFromPortal() async {
     await showOfflineCacheSetupDialog(
       context: context,
       studentService: StudentService(),
     );
   }
+
   final ReportService _reportService = const ReportService();
   final PdfReportBuilder _pdfReportBuilder = const PdfReportBuilder();
   final TextEditingController _studentIdController = TextEditingController();
@@ -141,9 +138,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
   void _openAdminPanel() {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => AdminPanelScreen(
-          currentUser: widget.currentUser,
-        ),
+        builder: (_) => AdminPanelScreen(currentUser: widget.currentUser),
       ),
     );
   }
@@ -154,9 +149,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
     if (!mounted) return;
 
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => const PinLoginScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const PinLoginScreen()),
       (route) => false,
     );
   }
@@ -230,21 +223,18 @@ class _ReportesScreenState extends State<ReportesScreen> {
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('CSV exportado: $savedPath'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('CSV exportado: $savedPath')));
     } catch (error) {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('No se pudo exportar CSV: $error'),
-        ),
+        SnackBar(content: Text('No se pudo exportar CSV: $error')),
       );
     }
   }
+
   @override
   Widget build(BuildContext context) {
     final summary = _summary;
@@ -282,17 +272,13 @@ class _ReportesScreenState extends State<ReportesScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: _buildBody(summary),
-      ),
+      body: SafeArea(child: _buildBody(summary)),
     );
   }
 
   Widget _buildBody(ReportSummary? summary) {
     if (_isLoading && summary == null) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_errorMessage != null && summary == null) {
@@ -302,11 +288,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 56,
-                color: Colors.red,
-              ),
+              const Icon(Icons.error_outline, size: 56, color: Colors.red),
               const SizedBox(height: 16),
               Text(
                 _errorMessage!,
@@ -326,9 +308,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
     }
 
     if (summary == null) {
-      return const Center(
-        child: Text('No hay datos de reporte.'),
-      );
+      return const Center(child: Text('No hay datos de reporte.'));
     }
 
     return RefreshIndicator(
@@ -358,8 +338,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
             onExport: _exportCsv,
           ),
           const SizedBox(height: 14),
-          if (_isLoading)
-            const LinearProgressIndicator(),
+          if (_isLoading) const LinearProgressIndicator(),
           if (_errorMessage != null) ...[
             const SizedBox(height: 8),
             Text(
@@ -443,10 +422,7 @@ class _FilterCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Filtros',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text('Filtros', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: selectedTipoPrueba,
@@ -455,10 +431,7 @@ class _FilterCard extends StatelessWidget {
                 border: OutlineInputBorder(),
               ),
               items: const [
-                DropdownMenuItem<String>(
-                  value: null,
-                  child: Text('Todas'),
-                ),
+                DropdownMenuItem<String>(value: null, child: Text('Todas')),
                 DropdownMenuItem<String>(
                   value: 'LECTURA',
                   child: Text('Lectura'),
@@ -478,22 +451,13 @@ class _FilterCard extends StatelessWidget {
                 border: OutlineInputBorder(),
               ),
               items: const [
-                DropdownMenuItem<String>(
-                  value: null,
-                  child: Text('Todos'),
-                ),
-                DropdownMenuItem<String>(
-                  value: 'VERDE',
-                  child: Text('Verde'),
-                ),
+                DropdownMenuItem<String>(value: null, child: Text('Todos')),
+                DropdownMenuItem<String>(value: 'VERDE', child: Text('Verde')),
                 DropdownMenuItem<String>(
                   value: 'AMARILLO',
                   child: Text('Amarillo'),
                 ),
-                DropdownMenuItem<String>(
-                  value: 'ROJO',
-                  child: Text('Rojo'),
-                ),
+                DropdownMenuItem<String>(value: 'ROJO', child: Text('Rojo')),
               ],
               onChanged: isLoading ? null : onSemaforoChanged,
             ),
@@ -502,13 +466,12 @@ class _FilterCard extends StatelessWidget {
               controller: studentIdController,
               enabled: !isLoading,
               keyboardType: TextInputType.number,
-              inputFormatters: [
-                FilteringTextInputFormatter.digitsOnly,
-              ],
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
               decoration: const InputDecoration(
                 labelText: 'Estudiante ID opcional',
                 border: OutlineInputBorder(),
-                helperText: 'Déjalo vacío para ver todos los estudiantes permitidos.',
+                helperText:
+                    'Déjalo vacío para ver todos los estudiantes permitidos.',
               ),
               onSubmitted: (_) => onApply(),
             ),
@@ -545,9 +508,7 @@ class _FilterCard extends StatelessWidget {
 class _UserScopeCard extends StatelessWidget {
   final AuthUser user;
 
-  const _UserScopeCard({
-    required this.user,
-  });
+  const _UserScopeCard({required this.user});
   @override
   Widget build(BuildContext context) {
     final gradeText = user.gradoScope == null
@@ -556,16 +517,12 @@ class _UserScopeCard extends StatelessWidget {
 
     return Card(
       child: ListTile(
-        leading: const CircleAvatar(
-          child: Icon(Icons.person_outline),
-        ),
+        leading: const CircleAvatar(child: Icon(Icons.person_outline)),
         title: Text(
           user.nombreCompleto,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        subtitle: Text(
-          '${user.rolTexto} | $gradeText\n${user.email}',
-        ),
+        subtitle: Text('${user.rolTexto} | $gradeText\n${user.email}'),
       ),
     );
   }
@@ -574,9 +531,7 @@ class _UserScopeCard extends StatelessWidget {
 class _SummaryCard extends StatelessWidget {
   final ReportSummary summary;
 
-  const _SummaryCard({
-    required this.summary,
-  });
+  const _SummaryCard({required this.summary});
   @override
   Widget build(BuildContext context) {
     final promedio = summary.porcentajePromedioRiesgo;
@@ -646,10 +601,7 @@ class _EvaluationCard extends StatelessWidget {
   final EvaluationReportItem evaluacion;
   final VoidCallback? onOpenProfile;
 
-  const _EvaluationCard({
-    required this.evaluacion,
-    this.onOpenProfile,
-  });
+  const _EvaluationCard({required this.evaluacion, this.onOpenProfile});
   @override
   Widget build(BuildContext context) {
     final semaforo = evaluacion.semaforo?.toUpperCase() ?? 'SIN_RESULTADO';
@@ -663,10 +615,7 @@ class _EvaluationCard extends StatelessWidget {
           onTap: onOpenProfile,
           leading: CircleAvatar(
             backgroundColor: color.withValues(alpha: 0.15),
-            child: Icon(
-              _iconForSemaforo(semaforo),
-              color: color,
-            ),
+            child: Icon(_iconForSemaforo(semaforo), color: color),
           ),
           title: Text(
             evaluacion.estudianteTexto,
@@ -695,10 +644,7 @@ class _EvaluationCard extends StatelessWidget {
             children: [
               Text(
                 riesgo == null ? 'N/D' : '${riesgo.toStringAsFixed(1)}%',
-                style: TextStyle(
-                  color: color,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(color: color, fontWeight: FontWeight.bold),
               ),
               Text(
                 semaforo,
@@ -736,10 +682,7 @@ class _MetricRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _MetricRow({
-    required this.label,
-    required this.value,
-  });
+  const _MetricRow({required this.label, required this.value});
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -747,10 +690,7 @@ class _MetricRow extends StatelessWidget {
       child: Row(
         children: [
           Expanded(child: Text(label)),
-          Text(
-            value,
-            style: const TextStyle(fontWeight: FontWeight.bold),
-          ),
+          Text(value, style: const TextStyle(fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -774,29 +714,10 @@ class _SemaforoChip extends StatelessWidget {
         backgroundColor: color,
         child: Text(
           '$total',
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 12,
-          ),
+          style: const TextStyle(color: Colors.white, fontSize: 12),
         ),
       ),
       label: Text(label),
     );
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-﻿class AdminStudent {
+class AdminStudent {
   final int id;
   final String nombres;
   final String apellidos;
@@ -139,10 +139,7 @@ int? _asNullableInt(dynamic value) {
   return int.tryParse(value.toString());
 }
 
-bool _asBool(
-  dynamic value, {
-  required bool defaultValue,
-}) {
+bool _asBool(dynamic value, {required bool defaultValue}) {
   if (value is bool) return value;
   if (value is num) return value != 0;
 

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/services/report_service.dart';
 import '../../../core/services/student_pdf_report_builder.dart';
@@ -250,15 +250,14 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
     return '${twoDigits(parsed.day)}/${twoDigits(parsed.month)}/${parsed.year}';
   }
 
-
   @override
   Widget build(BuildContext context) {
     final title = _profile == null
         ? 'Perfil de riesgo'
         : (_readValue(_profile, 'estudianteNombre') ??
-                _readValue(_profile, 'estudiante_nombre') ??
-                'Perfil de riesgo')
-            .toString();
+                  _readValue(_profile, 'estudiante_nombre') ??
+                  'Perfil de riesgo')
+              .toString();
 
     return Scaffold(
       appBar: AppBar(
@@ -318,35 +317,43 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
   }
 
   Widget _buildGeneralCard() {
-    final estudianteNombre = _readValue(_profile, 'estudianteNombre') ??
+    final estudianteNombre =
+        _readValue(_profile, 'estudianteNombre') ??
         _readValue(_profile, 'estudiante_nombre') ??
         'Estudiante';
 
-    final estudianteId = _readValue(_profile, 'estudianteId') ??
+    final estudianteId =
+        _readValue(_profile, 'estudianteId') ??
         _readValue(_profile, 'estudiante_id') ??
         widget.estudianteId;
 
-    final seccionId = _readValue(_profile, 'seccionId') ??
+    final seccionId =
+        _readValue(_profile, 'seccionId') ??
         _readValue(_profile, 'seccion_id') ??
         '-';
 
-    final totalEvaluaciones = _readValue(_profile, 'totalEvaluaciones') ??
+    final totalEvaluaciones =
+        _readValue(_profile, 'totalEvaluaciones') ??
         _readValue(_profile, 'total_evaluaciones') ??
         '0';
 
-    final promedioGeneral = _readValue(_profile, 'porcentajePromedioGeneral') ??
+    final promedioGeneral =
+        _readValue(_profile, 'porcentajePromedioGeneral') ??
         _readValue(_profile, 'porcentaje_promedio_general') ??
         '-';
 
-    final ultimoRiesgo = _readValue(_profile, 'ultimoPorcentajeRiesgoGeneral') ??
+    final ultimoRiesgo =
+        _readValue(_profile, 'ultimoPorcentajeRiesgoGeneral') ??
         _readValue(_profile, 'ultimo_porcentaje_riesgo_general') ??
         '-';
 
-    final ultimoSemaforo = _readValue(_profile, 'ultimoSemaforoGeneral') ??
+    final ultimoSemaforo =
+        _readValue(_profile, 'ultimoSemaforoGeneral') ??
         _readValue(_profile, 'ultimo_semaforo_general') ??
         '-';
 
-    final ultimaFecha = _readValue(_profile, 'ultimaFechaGeneral') ??
+    final ultimaFecha =
+        _readValue(_profile, 'ultimaFechaGeneral') ??
         _readValue(_profile, 'ultima_fecha_general');
 
     return Card(
@@ -386,10 +393,7 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
                 RiskBadge(value: ultimoSemaforo),
               ],
             ),
-            _InfoRow(
-              label: 'Última fecha',
-              value: _formatDate(ultimaFecha),
-            ),
+            _InfoRow(label: 'Última fecha', value: _formatDate(ultimaFecha)),
           ],
         ),
       ),
@@ -440,48 +444,56 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
   }
 
   Widget _buildTestCard(dynamic item) {
-    final tipoPrueba = _readValue(item, 'tipoPrueba') ??
+    final tipoPrueba =
+        _readValue(item, 'tipoPrueba') ??
         _readValue(item, 'tipo_prueba') ??
         '-';
 
-    final totalEvaluaciones = _readValue(item, 'totalEvaluaciones') ??
+    final totalEvaluaciones =
+        _readValue(item, 'totalEvaluaciones') ??
         _readValue(item, 'total_evaluaciones') ??
         '0';
 
-    final promedioRiesgo = _readValue(item, 'porcentajePromedioRiesgo') ??
+    final promedioRiesgo =
+        _readValue(item, 'porcentajePromedioRiesgo') ??
         _readValue(item, 'porcentaje_promedio_riesgo') ??
         '-';
 
-    final ultimoRiesgo = _readValue(item, 'ultimoPorcentajeRiesgo') ??
+    final ultimoRiesgo =
+        _readValue(item, 'ultimoPorcentajeRiesgo') ??
         _readValue(item, 'ultimo_porcentaje_riesgo') ??
         '-';
 
-    final ultimoSemaforo = _readValue(item, 'ultimoSemaforo') ??
+    final ultimoSemaforo =
+        _readValue(item, 'ultimoSemaforo') ??
         _readValue(item, 'ultimo_semaforo') ??
         '-';
 
-    final ultimaFecha = _readValue(item, 'ultimaFecha') ??
-        _readValue(item, 'ultima_fecha');
+    final ultimaFecha =
+        _readValue(item, 'ultimaFecha') ?? _readValue(item, 'ultima_fecha');
 
-    final promedioTiempo = _readValue(item, 'promedioTiempoMs') ??
+    final promedioTiempo =
+        _readValue(item, 'promedioTiempoMs') ??
         _readValue(item, 'promedio_tiempo_ms') ??
         '-';
 
-    final promedioErrores = _readValue(item, 'promedioErrores') ??
+    final promedioErrores =
+        _readValue(item, 'promedioErrores') ??
         _readValue(item, 'promedio_errores') ??
         '-';
 
-    final totalVerde = _readValue(item, 'totalVerde') ??
+    final totalVerde =
+        _readValue(item, 'totalVerde') ??
         _readValue(item, 'total_verde') ??
         '0';
 
-    final totalAmarillo = _readValue(item, 'totalAmarillo') ??
+    final totalAmarillo =
+        _readValue(item, 'totalAmarillo') ??
         _readValue(item, 'total_amarillo') ??
         '0';
 
-    final totalRojo = _readValue(item, 'totalRojo') ??
-        _readValue(item, 'total_rojo') ??
-        '0';
+    final totalRojo =
+        _readValue(item, 'totalRojo') ?? _readValue(item, 'total_rojo') ?? '0';
 
     return Card(
       child: Padding(
@@ -517,10 +529,7 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
                 RiskBadge(value: ultimoSemaforo),
               ],
             ),
-            _InfoRow(
-              label: 'Última fecha',
-              value: _formatDate(ultimaFecha),
-            ),
+            _InfoRow(label: 'Última fecha', value: _formatDate(ultimaFecha)),
             _InfoRow(
               label: 'Promedio tiempo',
               value: '${_formatNumber(promedioTiempo)} ms',
@@ -549,10 +558,7 @@ class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _InfoRow({
-    required this.label,
-    required this.value,
-  });
+  const _InfoRow({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -568,15 +574,9 @@ class _InfoRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-            ),
-          ),
+          Flexible(child: Text(value, textAlign: TextAlign.right)),
         ],
       ),
     );
   }
 }
-

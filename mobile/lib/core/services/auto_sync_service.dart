@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
@@ -6,13 +6,7 @@ import 'package:flutter/foundation.dart';
 import '../repositories/local_evaluation_storage.dart';
 import 'evaluation_sync_service.dart';
 
-enum AutoSyncPhase {
-  idle,
-  offline,
-  syncing,
-  synced,
-  error,
-}
+enum AutoSyncPhase { idle, offline, syncing, synced, error }
 
 class AutoSyncSnapshot {
   final AutoSyncPhase phase;
@@ -46,14 +40,14 @@ class AutoSyncService {
 
   final ValueNotifier<AutoSyncSnapshot> status =
       ValueNotifier<AutoSyncSnapshot>(
-    AutoSyncSnapshot(
-      phase: AutoSyncPhase.idle,
-      message: 'Sincronización automática lista.',
-      pendingSessions: 0,
-      connectionLabel: 'No verificado',
-      updatedAt: DateTime.now(),
-    ),
-  );
+        AutoSyncSnapshot(
+          phase: AutoSyncPhase.idle,
+          message: 'Sincronización automática lista.',
+          pendingSessions: 0,
+          connectionLabel: 'No verificado',
+          updatedAt: DateTime.now(),
+        ),
+      );
 
   StreamSubscription<List<ConnectivityResult>>? _subscription;
 
@@ -69,12 +63,7 @@ class AutoSyncService {
 
     _subscription = _connectivity.onConnectivityChanged.listen(
       (results) {
-        unawaited(
-          _handleConnectivity(
-            results,
-            reason: 'cambio_conectividad',
-          ),
-        );
+        unawaited(_handleConnectivity(results, reason: 'cambio_conectividad'));
       },
       onError: (Object error) {
         _updateStatus(
@@ -92,15 +81,10 @@ class AutoSyncService {
     _isStarted = false;
   }
 
-  Future<void> checkAndSync({
-    String reason = 'manual',
-  }) async {
+  Future<void> checkAndSync({String reason = 'manual'}) async {
     final results = await _connectivity.checkConnectivity();
 
-    await _handleConnectivity(
-      results,
-      reason: reason,
-    );
+    await _handleConnectivity(results, reason: reason);
   }
 
   Future<void> syncNow() async {
@@ -189,9 +173,7 @@ class AutoSyncService {
   bool _hasNetwork(List<ConnectivityResult> results) {
     if (results.isEmpty) return false;
 
-    return results.any(
-      (result) => result != ConnectivityResult.none,
-    );
+    return results.any((result) => result != ConnectivityResult.none);
   }
 
   String _connectionLabel(List<ConnectivityResult> results) {
@@ -227,7 +209,8 @@ class AutoSyncService {
     status.value = AutoSyncSnapshot(
       phase: phase,
       message: message,
-      pendingSessions: pendingSessions ??
+      pendingSessions:
+          pendingSessions ??
           LocalEvaluationStorage.countCompletedPendingSyncSessions(),
       connectionLabel: connectionLabel ?? status.value.connectionLabel,
       updatedAt: DateTime.now(),

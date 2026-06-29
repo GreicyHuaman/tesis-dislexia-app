@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class AppStatusView extends StatelessWidget {
   final IconData icon;
@@ -23,18 +23,18 @@ class AppStatusView extends StatelessWidget {
     this.title = 'Cargando información',
     this.message = 'Espera un momento mientras se consulta la información.',
     this.retryLabel = 'Reintentar',
-  })  : icon = Icons.hourglass_empty,
-        showProgress = true,
-        onRetry = null;
+  }) : icon = Icons.hourglass_empty,
+       showProgress = true,
+       onRetry = null;
 
   const AppStatusView.empty({
     super.key,
     this.title = 'Sin información',
     this.message = 'No se encontraron datos para mostrar.',
     this.retryLabel = 'Reintentar',
-  })  : icon = Icons.inbox_outlined,
-        showProgress = false,
-        onRetry = null;
+  }) : icon = Icons.inbox_outlined,
+       showProgress = false,
+       onRetry = null;
 
   const AppStatusView.error({
     super.key,
@@ -42,8 +42,8 @@ class AppStatusView extends StatelessWidget {
     required this.message,
     this.onRetry,
     this.retryLabel = 'Reintentar',
-  })  : icon = Icons.error_outline,
-        showProgress = false;
+  }) : icon = Icons.error_outline,
+       showProgress = false;
 
   @override
   Widget build(BuildContext context) {
@@ -63,11 +63,7 @@ class AppStatusView extends StatelessWidget {
               if (showProgress)
                 const CircularProgressIndicator()
               else
-                Icon(
-                  icon,
-                  size: 52,
-                  color: color,
-                ),
+                Icon(icon, size: 52, color: color),
               const SizedBox(height: 18),
               Text(
                 title,

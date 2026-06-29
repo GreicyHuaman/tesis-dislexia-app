@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -7,10 +7,7 @@ class StudentPdfReportResult {
   final String filename;
   final Uint8List bytes;
 
-  const StudentPdfReportResult({
-    required this.filename,
-    required this.bytes,
-  });
+  const StudentPdfReportResult({required this.filename, required this.bytes});
 }
 
 class StudentPdfReportBuilder {
@@ -21,11 +18,13 @@ class StudentPdfReportBuilder {
   }) async {
     final now = DateTime.now();
 
-    final estudianteId = _readValue(profile, 'estudianteId') ??
+    final estudianteId =
+        _readValue(profile, 'estudianteId') ??
         _readValue(profile, 'estudiante_id') ??
         '-';
 
-    final estudianteNombre = _readValue(profile, 'estudianteNombre') ??
+    final estudianteNombre =
+        _readValue(profile, 'estudianteNombre') ??
         _readValue(profile, 'estudiante_nombre') ??
         'Estudiante';
 
@@ -91,18 +90,12 @@ class StudentPdfReportBuilder {
       children: [
         pw.Text(
           'Reporte individual de tamizaje de riesgo de dislexia',
-          style: pw.TextStyle(
-            fontSize: 18,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 8),
         pw.Text(
           'Estudiante: $estudianteNombre',
-          style: pw.TextStyle(
-            fontSize: 12,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
         ),
         pw.Text(
           'ID estudiante: $estudianteId',
@@ -121,10 +114,7 @@ class StudentPdfReportBuilder {
       width: double.infinity,
       padding: const pw.EdgeInsets.all(10),
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(
-          color: PdfColors.grey600,
-          width: 0.5,
-        ),
+        border: pw.Border.all(color: PdfColors.grey600, width: 0.5),
         color: PdfColors.grey100,
       ),
       child: pw.Text(
@@ -138,27 +128,33 @@ class StudentPdfReportBuilder {
   }
 
   pw.Widget _buildGeneralSummary(dynamic profile) {
-    final seccionId = _readValue(profile, 'seccionId') ??
+    final seccionId =
+        _readValue(profile, 'seccionId') ??
         _readValue(profile, 'seccion_id') ??
         '-';
 
-    final totalEvaluaciones = _readValue(profile, 'totalEvaluaciones') ??
+    final totalEvaluaciones =
+        _readValue(profile, 'totalEvaluaciones') ??
         _readValue(profile, 'total_evaluaciones') ??
         '0';
 
-    final promedioGeneral = _readValue(profile, 'porcentajePromedioGeneral') ??
+    final promedioGeneral =
+        _readValue(profile, 'porcentajePromedioGeneral') ??
         _readValue(profile, 'porcentaje_promedio_general') ??
         '-';
 
-    final ultimoRiesgo = _readValue(profile, 'ultimoPorcentajeRiesgoGeneral') ??
+    final ultimoRiesgo =
+        _readValue(profile, 'ultimoPorcentajeRiesgoGeneral') ??
         _readValue(profile, 'ultimo_porcentaje_riesgo_general') ??
         '-';
 
-    final ultimoSemaforo = _readValue(profile, 'ultimoSemaforoGeneral') ??
+    final ultimoSemaforo =
+        _readValue(profile, 'ultimoSemaforoGeneral') ??
         _readValue(profile, 'ultimo_semaforo_general') ??
         '-';
 
-    final ultimaFecha = _readValue(profile, 'ultimaFechaGeneral') ??
+    final ultimaFecha =
+        _readValue(profile, 'ultimaFechaGeneral') ??
         _readValue(profile, 'ultima_fecha_general');
 
     final rows = [
@@ -176,27 +172,19 @@ class StudentPdfReportBuilder {
       children: [
         pw.Text(
           'Resumen general',
-          style: pw.TextStyle(
-            fontSize: 14,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 8),
         pw.TableHelper.fromTextArray(
           headers: rows.first,
           data: rows.skip(1).toList(),
-          border: pw.TableBorder.all(
-            color: PdfColors.grey600,
-            width: 0.4,
-          ),
+          border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.4),
           headerStyle: pw.TextStyle(
             fontWeight: pw.FontWeight.bold,
             fontSize: 9,
           ),
           cellStyle: const pw.TextStyle(fontSize: 9),
-          headerDecoration: const pw.BoxDecoration(
-            color: PdfColors.grey300,
-          ),
+          headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
           cellAlignment: pw.Alignment.centerLeft,
           cellPadding: const pw.EdgeInsets.all(5),
         ),
@@ -205,9 +193,7 @@ class StudentPdfReportBuilder {
   }
 
   pw.Widget _buildTestProfiles(dynamic profile) {
-    final pruebas = _readList(
-      _readValue(profile, 'pruebas'),
-    );
+    final pruebas = _readList(_readValue(profile, 'pruebas'));
 
     if (pruebas.isEmpty) {
       return pw.Column(
@@ -215,10 +201,7 @@ class StudentPdfReportBuilder {
         children: [
           pw.Text(
             'Detalle por tipo de prueba',
-            style: pw.TextStyle(
-              fontSize: 14,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 8),
           pw.Text(
@@ -230,46 +213,56 @@ class StudentPdfReportBuilder {
     }
 
     final rows = pruebas.map((item) {
-      final tipoPrueba = _readValue(item, 'tipoPrueba') ??
+      final tipoPrueba =
+          _readValue(item, 'tipoPrueba') ??
           _readValue(item, 'tipo_prueba') ??
           '-';
 
-      final totalEvaluaciones = _readValue(item, 'totalEvaluaciones') ??
+      final totalEvaluaciones =
+          _readValue(item, 'totalEvaluaciones') ??
           _readValue(item, 'total_evaluaciones') ??
           '0';
 
-      final promedioRiesgo = _readValue(item, 'porcentajePromedioRiesgo') ??
+      final promedioRiesgo =
+          _readValue(item, 'porcentajePromedioRiesgo') ??
           _readValue(item, 'porcentaje_promedio_riesgo') ??
           '-';
 
-      final ultimoRiesgo = _readValue(item, 'ultimoPorcentajeRiesgo') ??
+      final ultimoRiesgo =
+          _readValue(item, 'ultimoPorcentajeRiesgo') ??
           _readValue(item, 'ultimo_porcentaje_riesgo') ??
           '-';
 
-      final ultimoSemaforo = _readValue(item, 'ultimoSemaforo') ??
+      final ultimoSemaforo =
+          _readValue(item, 'ultimoSemaforo') ??
           _readValue(item, 'ultimo_semaforo') ??
           '-';
 
-      final ultimaFecha = _readValue(item, 'ultimaFecha') ??
-          _readValue(item, 'ultima_fecha');
+      final ultimaFecha =
+          _readValue(item, 'ultimaFecha') ?? _readValue(item, 'ultima_fecha');
 
-      final promedioTiempo = _readValue(item, 'promedioTiempoMs') ??
+      final promedioTiempo =
+          _readValue(item, 'promedioTiempoMs') ??
           _readValue(item, 'promedio_tiempo_ms') ??
           '-';
 
-      final promedioErrores = _readValue(item, 'promedioErrores') ??
+      final promedioErrores =
+          _readValue(item, 'promedioErrores') ??
           _readValue(item, 'promedio_errores') ??
           '-';
 
-      final totalVerde = _readValue(item, 'totalVerde') ??
+      final totalVerde =
+          _readValue(item, 'totalVerde') ??
           _readValue(item, 'total_verde') ??
           '0';
 
-      final totalAmarillo = _readValue(item, 'totalAmarillo') ??
+      final totalAmarillo =
+          _readValue(item, 'totalAmarillo') ??
           _readValue(item, 'total_amarillo') ??
           '0';
 
-      final totalRojo = _readValue(item, 'totalRojo') ??
+      final totalRojo =
+          _readValue(item, 'totalRojo') ??
           _readValue(item, 'total_rojo') ??
           '0';
 
@@ -293,10 +286,7 @@ class StudentPdfReportBuilder {
       children: [
         pw.Text(
           'Detalle por tipo de prueba',
-          style: pw.TextStyle(
-            fontSize: 14,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 8),
         pw.TableHelper.fromTextArray(
@@ -314,18 +304,13 @@ class StudentPdfReportBuilder {
             'Rojo',
           ],
           data: rows,
-          border: pw.TableBorder.all(
-            color: PdfColors.grey600,
-            width: 0.35,
-          ),
+          border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.35),
           headerStyle: pw.TextStyle(
             fontWeight: pw.FontWeight.bold,
             fontSize: 7,
           ),
           cellStyle: const pw.TextStyle(fontSize: 7),
-          headerDecoration: const pw.BoxDecoration(
-            color: PdfColors.grey300,
-          ),
+          headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
           cellAlignment: pw.Alignment.centerLeft,
           cellPadding: const pw.EdgeInsets.all(3),
         ),
@@ -338,20 +323,14 @@ class StudentPdfReportBuilder {
       width: double.infinity,
       padding: const pw.EdgeInsets.all(10),
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(
-          color: PdfColors.grey500,
-          width: 0.4,
-        ),
+        border: pw.Border.all(color: PdfColors.grey500, width: 0.4),
       ),
       child: pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(
             'Interpretacion sugerida',
-            style: pw.TextStyle(
-              fontSize: 11,
-              fontWeight: pw.FontWeight.bold,
-            ),
+            style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           pw.Text(

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class NoticeCard extends StatelessWidget {
   final IconData icon;
@@ -26,10 +26,7 @@ class NoticeCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              icon,
-              color: baseColor,
-            ),
+            Icon(icon, color: baseColor),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -45,9 +42,7 @@ class NoticeCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     message,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      height: 1.35,
-                    ),
+                    style: theme.textTheme.bodySmall?.copyWith(height: 1.35),
                   ),
                 ],
               ),

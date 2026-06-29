@@ -1,4 +1,4 @@
-﻿class LocalEvaluationDetail {
+class LocalEvaluationDetail {
   final String stimulusId;
   final String texto;
   final String tipoPrueba;

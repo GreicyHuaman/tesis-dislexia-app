@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/models/stimulus.dart';
 import '../../../core/repositories/stimuli_repository.dart';
@@ -24,16 +24,12 @@ class _LecturaPreviewScreenState extends State<LecturaPreviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Prueba lectora - Assets locales'),
-      ),
+      appBar: AppBar(title: const Text('Prueba lectora - Assets locales')),
       body: FutureBuilder<List<Stimulus>>(
         future: _stimuliFuture,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
+            return const Center(child: CircularProgressIndicator());
           }
 
           if (snapshot.hasError) {
@@ -49,9 +45,7 @@ class _LecturaPreviewScreenState extends State<LecturaPreviewScreen> {
           final stimuli = snapshot.data ?? [];
 
           if (stimuli.isEmpty) {
-            return const Center(
-              child: Text('No se encontraron estimulos.'),
-            );
+            return const Center(child: Text('No se encontraron estimulos.'));
           }
 
           return ListView.separated(

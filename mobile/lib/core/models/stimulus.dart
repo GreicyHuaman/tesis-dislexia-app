@@ -1,4 +1,4 @@
-﻿class Stimulus {
+class Stimulus {
   final String id;
   final String texto;
   final String tipoPrueba;

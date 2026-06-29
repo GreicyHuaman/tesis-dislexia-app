@@ -1,4 +1,4 @@
-﻿class EvaluationReportItem {
+class EvaluationReportItem {
   final int id;
   final int? estudianteId;
   final String? estudianteNombre;
@@ -46,18 +46,13 @@
       estudianteId: _asNullableInt(json['estudiante_id']),
       estudianteNombre: json['estudiante_nombre']?.toString(),
       seccionId: _asNullableInt(json['seccion_id']),
-      fechaEvaluacion: DateTime.tryParse(
-            json['fecha_evaluacion']?.toString() ?? '',
-          ) ??
+      fechaEvaluacion:
+          DateTime.tryParse(json['fecha_evaluacion']?.toString() ?? '') ??
           DateTime.fromMillisecondsSinceEpoch(0),
       tipoPrueba: json['tipo_prueba']?.toString(),
       totalItems: _asNullableInt(json['total_items']),
-      aciertosPrimerIntento: _asNullableInt(
-        json['aciertos_primer_intento'],
-      ),
-      tapsErroneosTotales: _asNullableInt(
-        json['taps_erroneos_totales'],
-      ),
+      aciertosPrimerIntento: _asNullableInt(json['aciertos_primer_intento']),
+      tapsErroneosTotales: _asNullableInt(json['taps_erroneos_totales']),
       tiempoPromedioMs: _asNullableInt(json['tiempo_promedio_ms']),
       porcentajeRiesgo: _asNullableDouble(json['porcentaje_riesgo']),
       semaforo: json['semaforo']?.toString(),
@@ -65,9 +60,7 @@
       modeloNombre: json['modelo_nombre']?.toString(),
       modeloVersion: json['modelo_version']?.toString(),
       probabilidadVerde: _asNullableDouble(json['probabilidad_verde']),
-      probabilidadAmarillo: _asNullableDouble(
-        json['probabilidad_amarillo'],
-      ),
+      probabilidadAmarillo: _asNullableDouble(json['probabilidad_amarillo']),
       probabilidadRojo: _asNullableDouble(json['probabilidad_rojo']),
     );
   }
@@ -178,10 +171,7 @@ class SemaforoSummaryItem {
   final String semaforo;
   final int total;
 
-  const SemaforoSummaryItem({
-    required this.semaforo,
-    required this.total,
-  });
+  const SemaforoSummaryItem({required this.semaforo, required this.total});
 
   factory SemaforoSummaryItem.fromJson(Map<String, dynamic> json) {
     return SemaforoSummaryItem(
@@ -217,9 +207,7 @@ class ReportSummary {
       for (final item in rawSemaforos) {
         if (item is Map) {
           parsedSemaforos.add(
-            SemaforoSummaryItem.fromJson(
-              Map<String, dynamic>.from(item),
-            ),
+            SemaforoSummaryItem.fromJson(Map<String, dynamic>.from(item)),
           );
         }
       }
@@ -262,7 +250,6 @@ class ReportSummary {
     return double.tryParse(value.toString());
   }
 }
-
 
 class StudentTestProfile {
   final String tipoPrueba;
@@ -366,9 +353,7 @@ class StudentRiskProfile {
       for (final item in rawPruebas) {
         if (item is Map) {
           parsedPruebas.add(
-            StudentTestProfile.fromJson(
-              Map<String, dynamic>.from(item),
-            ),
+            StudentTestProfile.fromJson(Map<String, dynamic>.from(item)),
           );
         }
       }

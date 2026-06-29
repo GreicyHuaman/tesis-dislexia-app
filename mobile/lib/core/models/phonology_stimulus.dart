@@ -1,4 +1,4 @@
-﻿class PhonologyStimulus {
+class PhonologyStimulus {
   final String id;
   final String tipoEstimulo;
   final String palabra;
@@ -52,8 +52,7 @@
       numSilabas: _asNullableInt(json['num_silabas']),
       numLetras: _asNullableInt(json['num_letras']),
       frecuencia: _asNullableDouble(json['frecuencia']),
-      complejidadEstimulo:
-          json['complejidad_estimulo']?.toString() ?? 'MEDIA',
+      complejidadEstimulo: json['complejidad_estimulo']?.toString() ?? 'MEDIA',
       tipoPrueba: json['tipo_prueba']?.toString() ?? 'FONOLOGIA',
     );
   }

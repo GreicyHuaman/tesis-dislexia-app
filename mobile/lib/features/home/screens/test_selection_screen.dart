@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/widgets/auto_sync_status_banner.dart';
 import '../../auth/screens/pin_login_screen.dart';
@@ -17,9 +17,7 @@ class TestSelectionScreen extends StatelessWidget {
 
   void _changeStudent(BuildContext context) {
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => const PinLoginScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const PinLoginScreen()),
       (route) => false,
     );
   }
@@ -68,10 +66,7 @@ class TestSelectionScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.assignment_outlined,
-                    size: 72,
-                  ),
+                  const Icon(Icons.assignment_outlined, size: 72),
                   const SizedBox(height: 16),
                   Text(
                     studentDisplayName,
@@ -135,13 +130,8 @@ class _TestOptionCard extends StatelessWidget {
     return Card(
       elevation: 3,
       child: ListTile(
-        leading: CircleAvatar(
-          child: Icon(icon),
-        ),
-        title: Text(
-          title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
+        leading: CircleAvatar(child: Icon(icon)),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.arrow_forward_ios),
         onTap: onTap,

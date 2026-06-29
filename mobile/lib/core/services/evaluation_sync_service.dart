@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -27,7 +27,7 @@ class EvaluationSyncService {
   final String baseUrl;
 
   const EvaluationSyncService({
-    this.baseUrl = 'http://127.0.0.1:8000',
+    this.baseUrl = 'https://tesis-dislexia-app-production.up.railway.app',
   });
 
   Future<EvaluationSyncResult> syncPendingEvaluations() async {
@@ -51,7 +51,7 @@ class EvaluationSyncService {
         return const EvaluationSyncResult(
           success: false,
           message:
-              'El backend no está disponible. Verifica Docker y /health en http://127.0.0.1:8000/health.',
+              'El backend no está disponible. Verifica Docker y /health en https://tesis-dislexia-app-production.up.railway.app/health.',
           sessionsSynced: 0,
           detailsSynced: 0,
         );
@@ -62,9 +62,7 @@ class EvaluationSyncService {
       final response = await http
           .post(
             uri,
-            headers: {
-              'Content-Type': 'application/json',
-            },
+            headers: {'Content-Type': 'application/json'},
             body: jsonEncode(payload),
           )
           .timeout(const Duration(seconds: 30));
@@ -112,9 +110,7 @@ class EvaluationSyncService {
       final sessionsInserted = _asInt(decoded['evaluations_inserted']);
       final detailsInserted = _asInt(decoded['details_inserted']);
 
-      final porcentajeRiesgo = _asDouble(
-        lastSyncedItem?['porcentaje_riesgo'],
-      );
+      final porcentajeRiesgo = _asDouble(lastSyncedItem?['porcentaje_riesgo']);
       final semaforo = lastSyncedItem?['semaforo']?.toString();
 
       final riskText = porcentajeRiesgo == null || semaforo == null
@@ -152,9 +148,7 @@ class EvaluationSyncService {
     try {
       final uri = Uri.parse('$baseUrl/health');
 
-      final response = await http.get(uri).timeout(
-            const Duration(seconds: 5),
-          );
+      final response = await http.get(uri).timeout(const Duration(seconds: 5));
 
       return response.statusCode >= 200 && response.statusCode < 300;
     } catch (_) {

@@ -1,4 +1,4 @@
-﻿// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
 
 import 'dart:html' as html;
 
@@ -6,10 +6,7 @@ Future<String> savePdfFile({
   required List<int> bytes,
   required String filename,
 }) async {
-  final blob = html.Blob(
-    [bytes],
-    'application/pdf',
-  );
+  final blob = html.Blob([bytes], 'application/pdf');
 
   final url = html.Url.createObjectUrlFromBlob(blob);
 

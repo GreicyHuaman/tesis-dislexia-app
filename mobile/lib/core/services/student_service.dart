@@ -57,7 +57,9 @@ class _StaffLoginResult {
 class StudentService {
   final String baseUrl;
 
-  const StudentService({this.baseUrl = 'http://127.0.0.1:8000'});
+  const StudentService({
+    this.baseUrl = 'https://tesis-dislexia-app-production.up.railway.app',
+  });
 
   Future<StudentLookupResult> findByPin(String pin) async {
     final cleanPin = pin.trim();

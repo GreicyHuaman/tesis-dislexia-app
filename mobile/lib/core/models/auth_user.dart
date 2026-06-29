@@ -1,4 +1,4 @@
-﻿class AuthUser {
+class AuthUser {
   final int id;
   final String nombres;
   final String apellidos;
@@ -22,9 +22,7 @@
   factory AuthUser.fromJson(Map<String, dynamic> json) {
     final rawUser = json['user'];
     final source = rawUser is Map
-        ? rawUser.map(
-            (key, dynamic value) => MapEntry(key.toString(), value),
-          )
+        ? rawUser.map((key, dynamic value) => MapEntry(key.toString(), value))
         : json;
 
     return AuthUser(
@@ -73,10 +71,7 @@ int? _asNullableInt(dynamic value) {
   return int.tryParse(value.toString());
 }
 
-bool _asBool(
-  dynamic value, {
-  required bool defaultValue,
-}) {
+bool _asBool(dynamic value, {required bool defaultValue}) {
   if (value is bool) return value;
 
   final text = value?.toString().toLowerCase().trim();

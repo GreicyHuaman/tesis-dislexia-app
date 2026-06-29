@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../services/auto_sync_service.dart';
 
@@ -27,17 +27,11 @@ class AutoSyncStatusBanner extends StatelessWidget {
                         color: color,
                       ),
                     )
-                  : Icon(
-                      icon,
-                      color: color,
-                    ),
+                  : Icon(icon, color: color),
             ),
             title: Text(
               snapshot.message,
-              style: const TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-              ),
+              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
             ),
             subtitle: Text(
               'Pendientes: ${snapshot.pendingSessions} | Conexión: ${snapshot.connectionLabel}',

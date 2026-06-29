@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -66,18 +66,18 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
     super.dispose();
   }
 
-  List<PhonologyStimulus> _buildSessionStimuli(
-    List<PhonologyStimulus> source,
-  ) {
-    final realItems = source
-        .where((stimulus) => stimulus.tipoEstimulo == 'PALABRA_REAL')
-        .toList()
-      ..shuffle(_random);
+  List<PhonologyStimulus> _buildSessionStimuli(List<PhonologyStimulus> source) {
+    final realItems =
+        source
+            .where((stimulus) => stimulus.tipoEstimulo == 'PALABRA_REAL')
+            .toList()
+          ..shuffle(_random);
 
-    final pseudoItems = source
-        .where((stimulus) => stimulus.tipoEstimulo == 'PSEUDOPALABRA')
-        .toList()
-      ..shuffle(_random);
+    final pseudoItems =
+        source
+            .where((stimulus) => stimulus.tipoEstimulo == 'PSEUDOPALABRA')
+            .toList()
+          ..shuffle(_random);
 
     final selected = <PhonologyStimulus>[];
 
@@ -87,10 +87,11 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
     if (selected.length < 10) {
       final selectedIds = selected.map((stimulus) => stimulus.id).toSet();
 
-      final fallbackItems = source
-          .where((stimulus) => !selectedIds.contains(stimulus.id))
-          .toList()
-        ..shuffle(_random);
+      final fallbackItems =
+          source
+              .where((stimulus) => !selectedIds.contains(stimulus.id))
+              .toList()
+            ..shuffle(_random);
 
       selected.addAll(fallbackItems.take(10 - selected.length));
     }
@@ -262,9 +263,9 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
       );
     }
 
-    final telemetryJson = const JsonEncoder.withIndent('  ').convert(
-      _answers.map((answer) => answer.toJson()).toList(),
-    );
+    final telemetryJson = const JsonEncoder.withIndent(
+      '  ',
+    ).convert(_answers.map((answer) => answer.toJson()).toList());
 
     debugPrint('TELEMETRIA LOCAL DE FONOLOGIA - SESION ACTUAL');
     debugPrint(telemetryJson);
@@ -323,9 +324,7 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
 
   void _changeStudent() {
     Navigator.of(context).pushAndRemoveUntil(
-      MaterialPageRoute(
-        builder: (_) => const PinLoginScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const PinLoginScreen()),
       (route) => false,
     );
   }
@@ -355,10 +354,7 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
   }
 
   int get _totalErrores {
-    return _answers.fold<int>(
-      0,
-      (sum, answer) => sum + answer.tapsErroneos,
-    );
+    return _answers.fold<int>(0, (sum, answer) => sum + answer.tapsErroneos);
   }
 
   int get _aciertosPrimerIntento {
@@ -379,18 +375,12 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (_errorMessage != null) {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Conciencia fonológica'),
-        ),
+        appBar: AppBar(title: const Text('Conciencia fonológica')),
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
@@ -521,10 +511,7 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
                         data: option,
                         feedback: Material(
                           color: Colors.transparent,
-                          child: _SyllableChip(
-                            text: option,
-                            isFloating: true,
-                          ),
+                          child: _SyllableChip(text: option, isFloating: true),
                         ),
                         childWhenDragging: Opacity(
                           opacity: 0.35,
@@ -583,10 +570,7 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Icon(
-                Icons.check_circle_outline,
-                size: 64,
-              ),
+              const Icon(Icons.check_circle_outline, size: 64),
               const SizedBox(height: 16),
               Text(
                 'Evaluación finalizada',
@@ -598,10 +582,7 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
                 label: 'Estudiante',
                 value: widget.studentDisplayName,
               ),
-              _SummaryTile(
-                label: 'Tipo de prueba',
-                value: 'FONOLOGIA',
-              ),
+              _SummaryTile(label: 'Tipo de prueba', value: 'FONOLOGIA'),
               _SummaryTile(
                 label: 'Total de ítems',
                 value: '${_answers.length}',
@@ -633,9 +614,7 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
                       )
                     : const Icon(Icons.cloud_upload_outlined),
                 label: Text(
-                  _isSyncing
-                      ? 'Sincronizando...'
-                      : 'Sincronizar con backend',
+                  _isSyncing ? 'Sincronizando...' : 'Sincronizar con backend',
                 ),
               ),
               if (_syncMessage != null) ...[
@@ -644,7 +623,8 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
                   _syncMessage!,
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: _syncMessage!.toLowerCase().contains('exitosa') ||
+                    color:
+                        _syncMessage!.toLowerCase().contains('exitosa') ||
                             _syncMessage!.toLowerCase().contains('no hay')
                         ? Colors.green
                         : Colors.red,
@@ -683,26 +663,17 @@ class _SyllableChip extends StatelessWidget {
   final String text;
   final bool isFloating;
 
-  const _SyllableChip({
-    required this.text,
-    this.isFloating = false,
-  });
+  const _SyllableChip({required this.text, this.isFloating = false});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: isFloating ? 8 : 2,
       child: Padding(
-        padding: const EdgeInsets.symmetric(
-          horizontal: 28,
-          vertical: 18,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 18),
         child: Text(
           text,
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -713,10 +684,7 @@ class _SummaryTile extends StatelessWidget {
   final String label;
   final String value;
 
-  const _SummaryTile({
-    required this.label,
-    required this.value,
-  });
+  const _SummaryTile({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -726,10 +694,7 @@ class _SummaryTile extends StatelessWidget {
         trailing: Text(
           value,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -769,19 +734,12 @@ class _RiskResultCard extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         child: Column(
           children: [
-            Icon(
-              icon,
-              size: 48,
-              color: color,
-            ),
+            Icon(icon, size: 48, color: color),
             const SizedBox(height: 12),
             const Text(
               'Resultado preliminar de tamizaje',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Text(
@@ -815,4 +773,3 @@ class _RiskResultCard extends StatelessWidget {
     );
   }
 }
-

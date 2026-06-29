@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/repositories/auth_session_storage.dart';
 import '../../../core/services/auth_service.dart';
@@ -51,7 +51,9 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
         return;
       }
 
-      final verifiedUser = await _authService.fetchCurrentUser(accessToken: token);
+      final verifiedUser = await _authService.fetchCurrentUser(
+        accessToken: token,
+      );
 
       if (!mounted) return;
 
@@ -88,10 +90,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
     });
 
     try {
-      final result = await _authService.login(
-        email: email,
-        password: password,
-      );
+      final result = await _authService.login(email: email, password: password);
 
       if (!mounted) return;
 
@@ -126,9 +125,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
 
   void _openReportes(dynamic user) {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (_) => ReportesScreen(currentUser: user),
-      ),
+      MaterialPageRoute(builder: (_) => ReportesScreen(currentUser: user)),
     );
   }
 
@@ -171,16 +168,11 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Personal educativo'),
-      ),
+      appBar: AppBar(title: const Text('Personal educativo')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 22,
-              vertical: 18,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 460),
               child: Column(
@@ -251,9 +243,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
               enabled: !_isLoading,
               keyboardType: TextInputType.emailAddress,
               textInputAction: TextInputAction.next,
-              autofillHints: const [
-                AutofillHints.email,
-              ],
+              autofillHints: const [AutofillHints.email],
               decoration: const InputDecoration(
                 labelText: 'Correo institucional',
                 hintText: 'usuario@colegio.com',
@@ -266,9 +256,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
               enabled: !_isLoading,
               obscureText: _obscurePassword,
               textInputAction: TextInputAction.done,
-              autofillHints: const [
-                AutofillHints.password,
-              ],
+              autofillHints: const [AutofillHints.password],
               decoration: InputDecoration(
                 labelText: 'Contraseña',
                 prefixIcon: const Icon(Icons.lock_outline),
@@ -318,10 +306,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              Icons.info_outline,
-              color: color,
-            ),
+            Icon(Icons.info_outline, color: color),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -368,4 +353,3 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
     );
   }
 }
-

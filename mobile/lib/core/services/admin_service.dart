@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -9,12 +9,10 @@ class AdminService {
   final String baseUrl;
 
   const AdminService({
-    this.baseUrl = 'http://127.0.0.1:8000',
+    this.baseUrl = 'https://tesis-dislexia-app-production.up.railway.app',
   });
 
-  Future<List<AdminStudent>> fetchStudents({
-    required String? authToken,
-  }) async {
+  Future<List<AdminStudent>> fetchStudents({required String? authToken}) async {
     final list = await _getList(
       path: '/api/v1/estudiantes/admin/list',
       authToken: authToken,
@@ -24,9 +22,7 @@ class AdminService {
         .whereType<Map>()
         .map(
           (item) => AdminStudent.fromJson(
-            item.map(
-              (key, dynamic value) => MapEntry(key.toString(), value),
-            ),
+            item.map((key, dynamic value) => MapEntry(key.toString(), value)),
           ),
         )
         .toList();
@@ -79,9 +75,7 @@ class AdminService {
     return AdminStudent.fromJson(json);
   }
 
-  Future<List<AdminSection>> fetchSections({
-    required String? authToken,
-  }) async {
+  Future<List<AdminSection>> fetchSections({required String? authToken}) async {
     final list = await _getList(
       path: '/api/v1/secciones',
       authToken: authToken,
@@ -91,9 +85,7 @@ class AdminService {
         .whereType<Map>()
         .map(
           (item) => AdminSection.fromJson(
-            item.map(
-              (key, dynamic value) => MapEntry(key.toString(), value),
-            ),
+            item.map((key, dynamic value) => MapEntry(key.toString(), value)),
           ),
         )
         .toList();
@@ -142,9 +134,7 @@ class AdminService {
     return AdminSection.fromJson(json);
   }
 
-  Future<List<AcademicUser>> fetchUsers({
-    required String? authToken,
-  }) async {
+  Future<List<AcademicUser>> fetchUsers({required String? authToken}) async {
     final list = await _getList(
       path: '/api/v1/admin/usuarios',
       authToken: authToken,
@@ -154,9 +144,7 @@ class AdminService {
         .whereType<Map>()
         .map(
           (item) => AcademicUser.fromJson(
-            item.map(
-              (key, dynamic value) => MapEntry(key.toString(), value),
-            ),
+            item.map((key, dynamic value) => MapEntry(key.toString(), value)),
           ),
         )
         .toList();
@@ -234,9 +222,7 @@ class AdminService {
         .whereType<Map>()
         .map(
           (item) => TeacherSectionLink.fromJson(
-            item.map(
-              (key, dynamic value) => MapEntry(key.toString(), value),
-            ),
+            item.map((key, dynamic value) => MapEntry(key.toString(), value)),
           ),
         )
         .toList();
@@ -250,10 +236,7 @@ class AdminService {
     final json = await _postJson(
       path: '/api/v1/admin/docente-seccion',
       authToken: authToken,
-      body: {
-        'usuario_id': usuarioId,
-        'seccion_id': seccionId,
-      },
+      body: {'usuario_id': usuarioId, 'seccion_id': seccionId},
     );
 
     return TeacherSectionLink.fromJson(json);
@@ -266,10 +249,7 @@ class AdminService {
     final uri = Uri.parse('$baseUrl/api/v1/admin/docente-seccion/$linkId');
 
     final response = await http
-        .delete(
-          uri,
-          headers: _headers(authToken),
-        )
+        .delete(uri, headers: _headers(authToken))
         .timeout(const Duration(seconds: 15));
 
     _ensureSuccess(response);
@@ -282,10 +262,7 @@ class AdminService {
     final uri = Uri.parse('$baseUrl$path');
 
     final response = await http
-        .get(
-          uri,
-          headers: _headers(authToken),
-        )
+        .get(uri, headers: _headers(authToken))
         .timeout(const Duration(seconds: 15));
 
     _ensureSuccess(response);
@@ -308,11 +285,7 @@ class AdminService {
     final cleanBody = _withoutNulls(body);
 
     final response = await http
-        .post(
-          uri,
-          headers: _headers(authToken),
-          body: jsonEncode(cleanBody),
-        )
+        .post(uri, headers: _headers(authToken), body: jsonEncode(cleanBody))
         .timeout(const Duration(seconds: 15));
 
     _ensureSuccess(response);
@@ -329,11 +302,7 @@ class AdminService {
     final cleanBody = _withoutNulls(body);
 
     final response = await http
-        .patch(
-          uri,
-          headers: _headers(authToken),
-          body: jsonEncode(cleanBody),
-        )
+        .patch(uri, headers: _headers(authToken), body: jsonEncode(cleanBody))
         .timeout(const Duration(seconds: 15));
 
     _ensureSuccess(response);

@@ -1,14 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class RiskBadge extends StatelessWidget {
   final Object? value;
   final bool compact;
 
-  const RiskBadge({
-    super.key,
-    required this.value,
-    this.compact = false,
-  });
+  const RiskBadge({super.key, required this.value, this.compact = false});
 
   String get _label {
     final text = value?.toString().trim().toUpperCase();
@@ -50,9 +46,9 @@ class RiskBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _color(context);
     final textStyle = Theme.of(context).textTheme.labelMedium?.copyWith(
-          color: color,
-          fontWeight: FontWeight.w800,
-        );
+      color: color,
+      fontWeight: FontWeight.w800,
+    );
 
     return Container(
       padding: EdgeInsets.symmetric(
@@ -67,16 +63,9 @@ class RiskBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            _icon,
-            size: compact ? 15 : 17,
-            color: color,
-          ),
+          Icon(_icon, size: compact ? 15 : 17, color: color),
           const SizedBox(width: 6),
-          Text(
-            _label,
-            style: textStyle,
-          ),
+          Text(_label, style: textStyle),
         ],
       ),
     );

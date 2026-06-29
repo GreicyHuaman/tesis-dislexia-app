@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/services/student_service.dart';
 
@@ -6,10 +6,7 @@ class OfflineCacheCredentials {
   final String email;
   final String password;
 
-  const OfflineCacheCredentials({
-    required this.email,
-    required this.password,
-  });
+  const OfflineCacheCredentials({required this.email, required this.password});
 }
 
 Future<void> showOfflineCacheSetupDialog({
@@ -19,12 +16,8 @@ Future<void> showOfflineCacheSetupDialog({
   final credentials = await showDialog<OfflineCacheCredentials>(
     context: context,
     builder: (dialogContext) {
-      final emailController = TextEditingController(
-        text: 'maestra3a@demo.com',
-      );
-      final passwordController = TextEditingController(
-        text: '123456',
-      );
+      final emailController = TextEditingController(text: 'maestra3a@demo.com');
+      final passwordController = TextEditingController(text: '123456');
 
       return AlertDialog(
         title: const Text('Actualizar padrón offline'),
@@ -83,9 +76,7 @@ Future<void> showOfflineCacheSetupDialog({
   if (!context.mounted) return;
 
   ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(
-      content: Text('Descargando padrón offline autorizado...'),
-    ),
+    const SnackBar(content: Text('Descargando padrón offline autorizado...')),
   );
 
   final result = await studentService.refreshOfflineCache(
@@ -102,4 +93,3 @@ Future<void> showOfflineCacheSetupDialog({
     ),
   );
 }
-

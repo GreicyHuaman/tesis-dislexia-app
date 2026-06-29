@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
@@ -13,7 +13,9 @@ class PhonologyRepository {
     final decoded = jsonDecode(rawJson);
 
     if (decoded is! List) {
-      throw Exception('El archivo fonologia_stimuli.json no contiene una lista.');
+      throw Exception(
+        'El archivo fonologia_stimuli.json no contiene una lista.',
+      );
     }
 
     final stimuli = <PhonologyStimulus>[];

@@ -1,4 +1,4 @@
-﻿// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
+// ignore_for_file: avoid_web_libraries_in_flutter, deprecated_member_use
 
 import 'dart:html' as html;
 
@@ -6,10 +6,7 @@ Future<String> saveCsvFile({
   required List<int> bytes,
   required String filename,
 }) async {
-  final blob = html.Blob(
-    [bytes],
-    'text/csv;charset=utf-8',
-  );
+  final blob = html.Blob([bytes], 'text/csv;charset=utf-8');
 
   final url = html.Url.createObjectUrlFromBlob(blob);
 
@@ -25,4 +22,3 @@ Future<String> saveCsvFile({
 
   return filename;
 }
-

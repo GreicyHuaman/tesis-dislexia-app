@@ -440,7 +440,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
               keyboardType: TextInputType.number,
               maxLength: 4,
               obscureText: _obscurePin,
-              obscuringCharacter: '•',
+              obscuringCharacter: '*',
               enableSuggestions: false,
               autocorrect: false,
               inputFormatters: [

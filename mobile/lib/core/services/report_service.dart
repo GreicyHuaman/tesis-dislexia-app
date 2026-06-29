@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -10,16 +10,10 @@ class ReportFilters {
   final String? semaforo;
   final int? estudianteId;
 
-  const ReportFilters({
-    this.tipoPrueba,
-    this.semaforo,
-    this.estudianteId,
-  });
+  const ReportFilters({this.tipoPrueba, this.semaforo, this.estudianteId});
 
   bool get hasFilters {
-    return tipoPrueba != null ||
-        semaforo != null ||
-        estudianteId != null;
+    return tipoPrueba != null || semaforo != null || estudianteId != null;
   }
 
   Map<String, String> toQueryParameters() {
@@ -45,39 +39,30 @@ class ReportCsvDownloadResult {
   final String filename;
   final List<int> bytes;
 
-  const ReportCsvDownloadResult({
-    required this.filename,
-    required this.bytes,
-  });
+  const ReportCsvDownloadResult({required this.filename, required this.bytes});
 }
 
 class ReportService {
   final String baseUrl;
 
   const ReportService({
-    this.baseUrl = 'http://127.0.0.1:8000',
+    this.baseUrl = 'https://tesis-dislexia-app-production.up.railway.app',
   });
 
   Future<ReportSummary> fetchResumenSemaforo({
     String? authToken,
     ReportFilters filters = const ReportFilters(),
   }) async {
-    final uri = Uri.parse('$baseUrl/api/v1/reportes/resumen-semaforo')
-        .replace(
-      queryParameters: filters.toQueryParameters(),
-    );
+    final uri = Uri.parse(
+      '$baseUrl/api/v1/reportes/resumen-semaforo',
+    ).replace(queryParameters: filters.toQueryParameters());
 
     final response = await http
         .get(
           uri,
-          headers: _headers(
-            authToken: authToken,
-            accept: 'application/json',
-          ),
+          headers: _headers(authToken: authToken, accept: 'application/json'),
         )
-        .timeout(
-          const Duration(seconds: 15),
-        );
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
@@ -94,22 +79,16 @@ class ReportService {
     String? authToken,
     ReportFilters filters = const ReportFilters(),
   }) async {
-    final uri = Uri.parse('$baseUrl/api/v1/reportes/evaluaciones')
-        .replace(
-      queryParameters: filters.toQueryParameters(),
-    );
+    final uri = Uri.parse(
+      '$baseUrl/api/v1/reportes/evaluaciones',
+    ).replace(queryParameters: filters.toQueryParameters());
 
     final response = await http
         .get(
           uri,
-          headers: _headers(
-            authToken: authToken,
-            accept: 'application/json',
-          ),
+          headers: _headers(authToken: authToken, accept: 'application/json'),
         )
-        .timeout(
-          const Duration(seconds: 15),
-        );
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
@@ -128,9 +107,7 @@ class ReportService {
     for (final item in decoded) {
       if (item is Map) {
         items.add(
-          EvaluationReportItem.fromJson(
-            Map<String, dynamic>.from(item),
-          ),
+          EvaluationReportItem.fromJson(Map<String, dynamic>.from(item)),
         );
       }
     }
@@ -149,14 +126,9 @@ class ReportService {
     final response = await http
         .get(
           uri,
-          headers: _headers(
-            authToken: authToken,
-            accept: 'application/json',
-          ),
+          headers: _headers(authToken: authToken, accept: 'application/json'),
         )
-        .timeout(
-          const Duration(seconds: 15),
-        );
+        .timeout(const Duration(seconds: 15));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
@@ -179,22 +151,16 @@ class ReportService {
       throw Exception('No hay token de autenticación para exportar CSV.');
     }
 
-    final uri = Uri.parse('$baseUrl/api/v1/reportes/evaluaciones.csv')
-        .replace(
-      queryParameters: filters.toQueryParameters(),
-    );
+    final uri = Uri.parse(
+      '$baseUrl/api/v1/reportes/evaluaciones.csv',
+    ).replace(queryParameters: filters.toQueryParameters());
 
     final response = await http
         .get(
           uri,
-          headers: _headers(
-            authToken: cleanToken,
-            accept: 'text/csv',
-          ),
+          headers: _headers(authToken: cleanToken, accept: 'text/csv'),
         )
-        .timeout(
-          const Duration(seconds: 30),
-        );
+        .timeout(const Duration(seconds: 30));
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception(
@@ -214,9 +180,7 @@ class ReportService {
     required String? authToken,
     required String accept,
   }) {
-    final headers = <String, String>{
-      'Accept': accept,
-    };
+    final headers = <String, String>{'Accept': accept};
 
     final cleanToken = authToken?.trim();
 
@@ -229,16 +193,15 @@ class ReportService {
 
   String _buildCsvFilename(ReportFilters filters) {
     final now = DateTime.now();
-    final timestamp = '${now.year}'
+    final timestamp =
+        '${now.year}'
         '${_two(now.month)}'
         '${_two(now.day)}_'
         '${_two(now.hour)}'
         '${_two(now.minute)}'
         '${_two(now.second)}';
 
-    final parts = <String>[
-      'reporte_evaluaciones',
-    ];
+    final parts = <String>['reporte_evaluaciones'];
 
     if (filters.tipoPrueba != null) {
       parts.add(filters.tipoPrueba!.toLowerCase());

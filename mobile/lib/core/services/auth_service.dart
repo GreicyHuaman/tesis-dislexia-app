@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
@@ -23,7 +23,7 @@ class AuthService {
   final String baseUrl;
 
   const AuthService({
-    this.baseUrl = 'http://127.0.0.1:8000',
+    this.baseUrl = 'https://tesis-dislexia-app-production.up.railway.app',
   });
 
   Future<AuthLoginResult> login({
@@ -51,10 +51,7 @@ class AuthService {
               'Content-Type': 'application/json',
               'Accept': 'application/json',
             },
-            body: jsonEncode({
-              'email': cleanEmail,
-              'password': password,
-            }),
+            body: jsonEncode({'email': cleanEmail, 'password': password}),
           )
           .timeout(const Duration(seconds: 15));
 
@@ -113,9 +110,7 @@ class AuthService {
     }
   }
 
-  Future<AuthUser?> fetchCurrentUser({
-    required String accessToken,
-  }) async {
+  Future<AuthUser?> fetchCurrentUser({required String accessToken}) async {
     try {
       final uri = Uri.parse('$baseUrl/api/v1/auth/me');
 
@@ -135,10 +130,7 @@ class AuthService {
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
 
-      return AuthUser.fromJson({
-        ...decoded,
-        'access_token': accessToken,
-      });
+      return AuthUser.fromJson({...decoded, 'access_token': accessToken});
     } catch (_) {
       return null;
     }

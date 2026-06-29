@@ -1,4 +1,4 @@
-﻿import 'dart:typed_data';
+import 'dart:typed_data';
 
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
@@ -9,10 +9,7 @@ class PdfReportResult {
   final String filename;
   final Uint8List bytes;
 
-  const PdfReportResult({
-    required this.filename,
-    required this.bytes,
-  });
+  const PdfReportResult({required this.filename, required this.bytes});
 }
 
 class PdfReportBuilder {
@@ -47,10 +44,7 @@ class PdfReportBuilder {
         },
         build: (context) {
           return [
-            _buildHeader(
-              currentUser: currentUser,
-              generatedAt: now,
-            ),
+            _buildHeader(currentUser: currentUser, generatedAt: now),
             pw.SizedBox(height: 14),
             _buildDisclaimer(),
             pw.SizedBox(height: 14),
@@ -64,10 +58,7 @@ class PdfReportBuilder {
 
     final bytes = await document.save();
 
-    return PdfReportResult(
-      filename: _buildFilename(now),
-      bytes: bytes,
-    );
+    return PdfReportResult(filename: _buildFilename(now), bytes: bytes);
   }
 
   pw.Widget _buildHeader({
@@ -79,10 +70,7 @@ class PdfReportBuilder {
       children: [
         pw.Text(
           'Reporte de tamizaje de riesgo de dislexia',
-          style: pw.TextStyle(
-            fontSize: 20,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 6),
         pw.Text(
@@ -102,10 +90,7 @@ class PdfReportBuilder {
       width: double.infinity,
       padding: const pw.EdgeInsets.all(10),
       decoration: pw.BoxDecoration(
-        border: pw.Border.all(
-          color: PdfColors.grey600,
-          width: 0.5,
-        ),
+        border: pw.Border.all(color: PdfColors.grey600, width: 0.5),
         color: PdfColors.grey100,
       ),
       child: pw.Text(
@@ -119,11 +104,13 @@ class PdfReportBuilder {
   }
 
   pw.Widget _buildSummary(dynamic summary) {
-    final total = _readValue(summary, 'totalEvaluaciones') ??
+    final total =
+        _readValue(summary, 'totalEvaluaciones') ??
         _readValue(summary, 'total_evaluaciones') ??
         '0';
 
-    final promedio = _readValue(summary, 'porcentajePromedioRiesgo') ??
+    final promedio =
+        _readValue(summary, 'porcentajePromedioRiesgo') ??
         _readValue(summary, 'porcentaje_promedio_riesgo') ??
         '-';
 
@@ -140,10 +127,7 @@ class PdfReportBuilder {
         final semaforo = _readValue(item, 'semaforo')?.toString() ?? '-';
         final itemTotal = _readValue(item, 'total')?.toString() ?? '0';
 
-        rows.add([
-          'Total $semaforo',
-          itemTotal,
-        ]);
+        rows.add(['Total $semaforo', itemTotal]);
       }
     }
 
@@ -152,27 +136,19 @@ class PdfReportBuilder {
       children: [
         pw.Text(
           'Resumen general',
-          style: pw.TextStyle(
-            fontSize: 14,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 8),
         pw.TableHelper.fromTextArray(
           headers: rows.first,
           data: rows.skip(1).toList(),
-          border: pw.TableBorder.all(
-            color: PdfColors.grey600,
-            width: 0.4,
-          ),
+          border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.4),
           headerStyle: pw.TextStyle(
             fontWeight: pw.FontWeight.bold,
             fontSize: 9,
           ),
           cellStyle: const pw.TextStyle(fontSize: 9),
-          headerDecoration: const pw.BoxDecoration(
-            color: PdfColors.grey300,
-          ),
+          headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
           cellAlignment: pw.Alignment.centerLeft,
           cellPadding: const pw.EdgeInsets.all(5),
         ),
@@ -184,40 +160,49 @@ class PdfReportBuilder {
     final rows = evaluations.map((item) {
       final id = _readValue(item, 'id')?.toString() ?? '-';
 
-      final estudiante = _readValue(item, 'estudianteNombre') ??
+      final estudiante =
+          _readValue(item, 'estudianteNombre') ??
           _readValue(item, 'estudiante_nombre') ??
           'Sin nombre';
 
-      final tipoPrueba = _readValue(item, 'tipoPrueba') ??
+      final tipoPrueba =
+          _readValue(item, 'tipoPrueba') ??
           _readValue(item, 'tipo_prueba') ??
           '-';
 
-      final fechaRaw = _readValue(item, 'fechaEvaluacion') ??
+      final fechaRaw =
+          _readValue(item, 'fechaEvaluacion') ??
           _readValue(item, 'fecha_evaluacion');
 
-      final riesgo = _readValue(item, 'porcentajeRiesgo') ??
+      final riesgo =
+          _readValue(item, 'porcentajeRiesgo') ??
           _readValue(item, 'porcentaje_riesgo') ??
           '-';
 
       final semaforo = _readValue(item, 'semaforo')?.toString() ?? '-';
 
-      final totalItems = _readValue(item, 'totalItems') ??
+      final totalItems =
+          _readValue(item, 'totalItems') ??
           _readValue(item, 'total_items') ??
           '-';
 
-      final aciertos = _readValue(item, 'aciertosPrimerIntento') ??
+      final aciertos =
+          _readValue(item, 'aciertosPrimerIntento') ??
           _readValue(item, 'aciertos_primer_intento') ??
           '-';
 
-      final errores = _readValue(item, 'tapsErroneosTotales') ??
+      final errores =
+          _readValue(item, 'tapsErroneosTotales') ??
           _readValue(item, 'taps_erroneos_totales') ??
           '-';
 
-      final tiempo = _readValue(item, 'tiempoPromedioMs') ??
+      final tiempo =
+          _readValue(item, 'tiempoPromedioMs') ??
           _readValue(item, 'tiempo_promedio_ms') ??
           '-';
 
-      final modelo = _readValue(item, 'modeloNombre') ??
+      final modelo =
+          _readValue(item, 'modeloNombre') ??
           _readValue(item, 'modelo_nombre') ??
           _readValue(item, 'fuentePrediccion') ??
           _readValue(item, 'fuente_prediccion') ??
@@ -243,10 +228,7 @@ class PdfReportBuilder {
       children: [
         pw.Text(
           'Detalle de evaluaciones',
-          style: pw.TextStyle(
-            fontSize: 14,
-            fontWeight: pw.FontWeight.bold,
-          ),
+          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 8),
         if (rows.isEmpty)
@@ -270,18 +252,13 @@ class PdfReportBuilder {
               'Modelo',
             ],
             data: rows,
-            border: pw.TableBorder.all(
-              color: PdfColors.grey600,
-              width: 0.35,
-            ),
+            border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.35),
             headerStyle: pw.TextStyle(
               fontWeight: pw.FontWeight.bold,
               fontSize: 7,
             ),
             cellStyle: const pw.TextStyle(fontSize: 7),
-            headerDecoration: const pw.BoxDecoration(
-              color: PdfColors.grey300,
-            ),
+            headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
             cellAlignment: pw.Alignment.centerLeft,
             cellPadding: const pw.EdgeInsets.all(3),
             columnWidths: const {
@@ -425,4 +402,3 @@ class PdfReportBuilder {
     return 'reporte_evaluaciones_$year$month${day}_$hour$minute.pdf';
   }
 }
-

@@ -1,4 +1,4 @@
-﻿import 'dart:convert';
+import 'dart:convert';
 
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
@@ -135,17 +135,13 @@ class LocalEvaluationStorage {
 
   static int countCompletedPendingSyncSessions() {
     return getAllSessions()
-        .where(
-          (session) => session['sync_status'] == 'COMPLETED_PENDING_SYNC',
-        )
+        .where((session) => session['sync_status'] == 'COMPLETED_PENDING_SYNC')
         .length;
   }
 
   static Map<String, dynamic> getPendingSyncPayload() {
     final pendingSessions = getAllSessions()
-        .where(
-          (session) => session['sync_status'] == 'COMPLETED_PENDING_SYNC',
-        )
+        .where((session) => session['sync_status'] == 'COMPLETED_PENDING_SYNC')
         .toList();
 
     final pendingSessionIds = pendingSessions
@@ -163,15 +159,10 @@ class LocalEvaluationStorage {
         )
         .toList();
 
-    return {
-      'sessions': pendingSessions,
-      'details': pendingDetails,
-    };
+    return {'sessions': pendingSessions, 'details': pendingDetails};
   }
 
-  static Future<void> markSessionsAsSynced(
-    List<String> localSessionIds,
-  ) async {
+  static Future<void> markSessionsAsSynced(List<String> localSessionIds) async {
     final now = DateTime.now().toUtc().toIso8601String();
     final ids = localSessionIds.toSet();
 
@@ -215,10 +206,7 @@ class LocalEvaluationStorage {
   }
 
   static String exportDebugJson() {
-    final data = {
-      'sessions': getAllSessions(),
-      'details': getAllDetails(),
-    };
+    final data = {'sessions': getAllSessions(), 'details': getAllDetails()};
 
     return const JsonEncoder.withIndent('  ').convert(data);
   }

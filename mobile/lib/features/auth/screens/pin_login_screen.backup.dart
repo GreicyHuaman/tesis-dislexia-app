@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../../core/repositories/local_student_cache.dart';
@@ -107,11 +107,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   }
 
   void _openStaffLogin() {
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => const StaffLoginScreen(),
-      ),
-    );
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const StaffLoginScreen()));
   }
 
   @override
@@ -121,9 +119,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
         : '$_cachedStudents estudiantes guardados para uso offline';
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ingreso de estudiante'),
-      ),
+      appBar: AppBar(title: const Text('Ingreso de estudiante')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -133,10 +129,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
-                    Icons.lock_outline,
-                    size: 72,
-                  ),
+                  const Icon(Icons.lock_outline, size: 72),
                   const SizedBox(height: 20),
                   Text(
                     'Ingresa tu PIN',

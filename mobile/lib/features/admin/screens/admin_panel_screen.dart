@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../core/models/admin_models.dart';
 import '../../../core/models/auth_user.dart';
@@ -7,10 +7,7 @@ import '../../../core/services/admin_service.dart';
 class AdminPanelScreen extends StatefulWidget {
   final AuthUser currentUser;
 
-  const AdminPanelScreen({
-    super.key,
-    required this.currentUser,
-  });
+  const AdminPanelScreen({super.key, required this.currentUser});
 
   @override
   State<AdminPanelScreen> createState() => _AdminPanelScreenState();
@@ -68,9 +65,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     }
   }
 
-  Future<void> _runAction(
-    Future<void> Function() action,
-  ) async {
+  Future<void> _runAction(Future<void> Function() action) async {
     try {
       await action();
       await _loadAdminData();
@@ -87,10 +82,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(error.toString()),
-          backgroundColor: Colors.red,
-        ),
+        SnackBar(content: Text(error.toString()), backgroundColor: Colors.red),
       );
     }
   }
@@ -123,9 +115,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
     if (role != 'DIRECTORA') {
       return Scaffold(
-        appBar: AppBar(
-          title: const Text('Panel administrativo'),
-        ),
+        appBar: AppBar(title: const Text('Panel administrativo')),
         body: const Center(
           child: Text(
             'Solo la directora puede acceder al panel administrativo.',
@@ -150,22 +140,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           bottom: const TabBar(
             isScrollable: true,
             tabs: [
-              Tab(
-                icon: Icon(Icons.school_outlined),
-                text: 'Estudiantes',
-              ),
-              Tab(
-                icon: Icon(Icons.class_outlined),
-                text: 'Secciones',
-              ),
-              Tab(
-                icon: Icon(Icons.people_alt_outlined),
-                text: 'Usuarios',
-              ),
-              Tab(
-                icon: Icon(Icons.link_outlined),
-                text: 'Docente-sección',
-              ),
+              Tab(icon: Icon(Icons.school_outlined), text: 'Estudiantes'),
+              Tab(icon: Icon(Icons.class_outlined), text: 'Secciones'),
+              Tab(icon: Icon(Icons.people_alt_outlined), text: 'Usuarios'),
+              Tab(icon: Icon(Icons.link_outlined), text: 'Docente-sección'),
             ],
           ),
         ),
@@ -176,9 +154,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   Widget _buildBody() {
     if (_isLoading) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_errorMessage != null) {
@@ -224,9 +200,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               spacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Chip(
-                  label: Text(student.activo ? 'Activo' : 'Inactivo'),
-                ),
+                Chip(label: Text(student.activo ? 'Activo' : 'Inactivo')),
                 IconButton(
                   onPressed: () => _showStudentDialog(student: student),
                   icon: const Icon(Icons.edit_outlined),
@@ -258,9 +232,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               spacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Chip(
-                  label: Text(section.activo ? 'Activa' : 'Inactiva'),
-                ),
+                Chip(label: Text(section.activo ? 'Activa' : 'Inactiva')),
                 IconButton(
                   onPressed: () => _showSectionDialog(section: section),
                   icon: const Icon(Icons.edit_outlined),
@@ -292,9 +264,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               spacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Chip(
-                  label: Text(user.activo ? 'Activo' : 'Inactivo'),
-                ),
+                Chip(label: Text(user.activo ? 'Activo' : 'Inactivo')),
                 IconButton(
                   onPressed: () => _showUserDialog(user: user),
                   icon: const Icon(Icons.edit_outlined),
@@ -371,18 +341,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
-  Future<void> _showStudentDialog({
-    AdminStudent? student,
-  }) async {
+  Future<void> _showStudentDialog({AdminStudent? student}) async {
     final nombresController = TextEditingController(
       text: student?.nombres ?? '',
     );
     final apellidosController = TextEditingController(
       text: student?.apellidos ?? '',
     );
-    final pinController = TextEditingController(
-      text: student?.pinCorto ?? '',
-    );
+    final pinController = TextEditingController(text: student?.pinCorto ?? '');
     final seccionController = TextEditingController(
       text: student?.seccionId?.toString() ?? '',
     );
@@ -499,15 +465,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     });
   }
 
-  Future<void> _showSectionDialog({
-    AdminSection? section,
-  }) async {
+  Future<void> _showSectionDialog({AdminSection? section}) async {
     final gradoController = TextEditingController(
       text: section?.grado.toString() ?? '3',
     );
-    final nombreController = TextEditingController(
-      text: section?.nombre ?? '',
-    );
+    final nombreController = TextEditingController(text: section?.nombre ?? '');
     final turnoController = TextEditingController(
       text: section?.turno ?? 'MANANA',
     );
@@ -520,9 +482,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(
-                section == null ? 'Nueva sección' : 'Editar sección',
-              ),
+              title: Text(section == null ? 'Nueva sección' : 'Editar sección'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -610,18 +570,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     });
   }
 
-  Future<void> _showUserDialog({
-    AcademicUser? user,
-  }) async {
-    final nombresController = TextEditingController(
-      text: user?.nombres ?? '',
-    );
+  Future<void> _showUserDialog({AcademicUser? user}) async {
+    final nombresController = TextEditingController(text: user?.nombres ?? '');
     final apellidosController = TextEditingController(
       text: user?.apellidos ?? '',
     );
-    final emailController = TextEditingController(
-      text: user?.email ?? '',
-    );
+    final emailController = TextEditingController(text: user?.email ?? '');
     final passwordController = TextEditingController();
     final gradoScopeController = TextEditingController(
       text: user?.gradoScope?.toString() ?? '',
@@ -636,9 +590,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(
-                user == null ? 'Nuevo usuario' : 'Editar usuario',
-              ),
+              title: Text(user == null ? 'Nuevo usuario' : 'Editar usuario'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -877,4 +829,3 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     });
   }
 }
-
