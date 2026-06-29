@@ -101,6 +101,23 @@ class LocalStudentCache {
     return student;
   }
 
+  static Student? findByPinForSection({
+    required String pin,
+    required int seccionId,
+  }) {
+    final student = findByPin(pin);
+
+    if (student == null) {
+      return null;
+    }
+
+    if (student.seccionId != seccionId) {
+      return null;
+    }
+
+    return student;
+  }
+
   static int countCachedStudents() {
     return _studentsByPinBox.length;
   }

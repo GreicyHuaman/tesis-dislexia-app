@@ -30,20 +30,26 @@ class AdminService {
 
   Future<AdminStudent> createStudent({
     required String? authToken,
+    String? codigoEstudiante,
     required String nombres,
     required String apellidos,
-    required String pinCorto,
-    int? seccionId,
+    String? fechaNacimiento,
+    required int seccionId,
+    required bool consentimientoFirmado,
+    String? fechaConsentimiento,
     bool activo = true,
   }) async {
     final json = await _postJson(
       path: '/api/v1/estudiantes',
       authToken: authToken,
       body: {
+        'codigo_estudiante': codigoEstudiante,
         'nombres': nombres,
         'apellidos': apellidos,
-        'pin_corto': pinCorto,
+        'fecha_nacimiento': fechaNacimiento,
         'seccion_id': seccionId,
+        'consentimiento_firmado': consentimientoFirmado,
+        'fecha_consentimiento': fechaConsentimiento,
         'activo': activo,
       },
     );
@@ -54,22 +60,41 @@ class AdminService {
   Future<AdminStudent> updateStudent({
     required String? authToken,
     required int estudianteId,
+    String? codigoEstudiante,
     required String nombres,
     required String apellidos,
-    required String pinCorto,
+    String? fechaNacimiento,
     int? seccionId,
+    required bool consentimientoFirmado,
+    String? fechaConsentimiento,
     required bool activo,
   }) async {
     final json = await _patchJson(
       path: '/api/v1/estudiantes/$estudianteId',
       authToken: authToken,
       body: {
+        'codigo_estudiante': codigoEstudiante,
         'nombres': nombres,
         'apellidos': apellidos,
-        'pin_corto': pinCorto,
+        'fecha_nacimiento': fechaNacimiento,
         'seccion_id': seccionId,
+        'consentimiento_firmado': consentimientoFirmado,
+        'fecha_consentimiento': fechaConsentimiento,
         'activo': activo,
       },
+    );
+
+    return AdminStudent.fromJson(json);
+  }
+
+  Future<AdminStudent> regenerateStudentPin({
+    required String? authToken,
+    required int estudianteId,
+  }) async {
+    final json = await _postJson(
+      path: '/api/v1/estudiantes/$estudianteId/regenerar-pin',
+      authToken: authToken,
+      body: {},
     );
 
     return AdminStudent.fromJson(json);
@@ -322,7 +347,7 @@ class AdminService {
     final token = authToken?.trim();
 
     if (token == null || token.isEmpty) {
-      throw Exception('No existe token de sesión académica.');
+      throw Exception('No existe token de sesion academica.');
     }
 
     return {
@@ -350,7 +375,7 @@ class AdminService {
     }
 
     if (response.statusCode == 401 || response.statusCode == 403) {
-      throw Exception('Sesión no autorizada. $message');
+      throw Exception('Sesion no autorizada. $message');
     }
 
     throw Exception(message);

@@ -2,7 +2,11 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/admin_models.dart';
 import '../../../core/models/auth_user.dart';
+import '../../../core/models/jornada_evaluacion.dart';
+import '../../../core/repositories/local_classroom_mode_storage.dart';
 import '../../../core/services/admin_service.dart';
+import '../../../core/services/jornada_service.dart';
+import '../../auth/screens/pin_login_screen.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   final AuthUser currentUser;
@@ -15,6 +19,7 @@ class AdminPanelScreen extends StatefulWidget {
 
 class _AdminPanelScreenState extends State<AdminPanelScreen> {
   final AdminService _adminService = const AdminService();
+  final JornadaService _jornadaService = const JornadaService();
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -24,7 +29,31 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   List<AcademicUser> _users = [];
   List<TeacherSectionLink> _teacherSectionLinks = [];
 
+  ClassroomModeState? _classroomMode;
+  JornadaEvaluacion? _activeJornada;
+  int? _selectedClassroomSectionId;
+
   String? get _token => widget.currentUser.accessToken;
+
+  bool get _isDirector {
+    return widget.currentUser.rol.toUpperCase() == 'DIRECTORA';
+  }
+
+  bool get _isTeacher {
+    return widget.currentUser.rol.toUpperCase() == 'MAESTRO';
+  }
+
+  bool get _canUseAdminPanel {
+    return _isDirector || _isTeacher;
+  }
+
+  bool get _canManageFullAdmin {
+    return _isDirector;
+  }
+
+  List<AdminSection> get _activeSections {
+    return _sections.where((section) => section.activo).toList();
+  }
 
   @override
   void initState() {
@@ -39,20 +68,47 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     });
 
     try {
-      final results = await Future.wait([
-        _adminService.fetchStudents(authToken: _token),
-        _adminService.fetchSections(authToken: _token),
-        _adminService.fetchUsers(authToken: _token),
-        _adminService.fetchTeacherSectionLinks(authToken: _token),
-      ]);
+      final students = await _adminService.fetchStudents(authToken: _token);
+      final sections = await _adminService.fetchSections(authToken: _token);
+
+      List<AcademicUser> users = [];
+      List<TeacherSectionLink> links = [];
+
+      if (_canManageFullAdmin) {
+        users = await _adminService.fetchUsers(authToken: _token);
+        links = await _adminService.fetchTeacherSectionLinks(authToken: _token);
+      }
+
+      final classroomMode = await LocalClassroomModeStorage.getCurrent();
+
+      JornadaEvaluacion? activeJornada;
+      int? selectedSectionId = classroomMode?.seccionId;
+
+      if (selectedSectionId == null && sections.isNotEmpty) {
+        selectedSectionId = sections.first.id;
+      }
+
+      if (selectedSectionId != null) {
+        try {
+          activeJornada = await _jornadaService.obtenerJornadaActiva(
+            authToken: _token,
+            seccionId: selectedSectionId,
+          );
+        } catch (_) {
+          activeJornada = null;
+        }
+      }
 
       if (!mounted) return;
 
       setState(() {
-        _students = results[0] as List<AdminStudent>;
-        _sections = results[1] as List<AdminSection>;
-        _users = results[2] as List<AcademicUser>;
-        _teacherSectionLinks = results[3] as List<TeacherSectionLink>;
+        _students = students;
+        _sections = sections;
+        _users = users;
+        _teacherSectionLinks = links;
+        _classroomMode = classroomMode;
+        _selectedClassroomSectionId = selectedSectionId;
+        _activeJornada = activeJornada;
         _isLoading = false;
       });
     } catch (error) {
@@ -66,34 +122,36 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Future<void> _runAction(Future<void> Function() action) async {
+    final messenger = ScaffoldMessenger.of(context);
+
     try {
       await action();
       await _loadAdminData();
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         const SnackBar(
-          content: Text('Operación realizada correctamente.'),
+          content: Text('Operacion realizada correctamente.'),
           backgroundColor: Colors.green,
         ),
       );
     } catch (error) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
+      messenger.showSnackBar(
         SnackBar(content: Text(error.toString()), backgroundColor: Colors.red),
       );
     }
   }
 
   String _sectionName(int? seccionId) {
-    if (seccionId == null) return 'Sin sección';
+    if (seccionId == null) return 'Sin seccion';
 
     final matches = _sections.where((section) => section.id == seccionId);
 
     if (matches.isEmpty) {
-      return 'Sección $seccionId';
+      return 'Seccion $seccionId';
     }
 
     return matches.first.displayName;
@@ -111,25 +169,38 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final role = widget.currentUser.rol.toUpperCase();
-
-    if (role != 'DIRECTORA') {
+    if (!_canUseAdminPanel) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Panel administrativo')),
+        appBar: AppBar(title: const Text('Panel del personal educativo')),
         body: const Center(
           child: Text(
-            'Solo la directora puede acceder al panel administrativo.',
+            'Este panel esta disponible para direccion o docentes.',
             textAlign: TextAlign.center,
           ),
         ),
       );
     }
 
+    final tabs = _canManageFullAdmin
+        ? const [
+            Tab(icon: Icon(Icons.meeting_room_outlined), text: 'Modo aula'),
+            Tab(icon: Icon(Icons.school_outlined), text: 'Estudiantes'),
+            Tab(icon: Icon(Icons.class_outlined), text: 'Secciones'),
+            Tab(icon: Icon(Icons.people_alt_outlined), text: 'Usuarios'),
+            Tab(icon: Icon(Icons.link_outlined), text: 'Docente-seccion'),
+          ]
+        : const [
+            Tab(icon: Icon(Icons.meeting_room_outlined), text: 'Modo aula'),
+            Tab(icon: Icon(Icons.school_outlined), text: 'Estudiantes'),
+          ];
+
     return DefaultTabController(
-      length: 4,
+      length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Panel administrativo'),
+          title: Text(
+            _canManageFullAdmin ? 'Panel administrativo' : 'Panel docente',
+          ),
           actions: [
             IconButton(
               onPressed: _isLoading ? null : _loadAdminData,
@@ -137,15 +208,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
               tooltip: 'Actualizar',
             ),
           ],
-          bottom: const TabBar(
-            isScrollable: true,
-            tabs: [
-              Tab(icon: Icon(Icons.school_outlined), text: 'Estudiantes'),
-              Tab(icon: Icon(Icons.class_outlined), text: 'Secciones'),
-              Tab(icon: Icon(Icons.people_alt_outlined), text: 'Usuarios'),
-              Tab(icon: Icon(Icons.link_outlined), text: 'Docente-sección'),
-            ],
-          ),
+          bottom: TabBar(isScrollable: true, tabs: tabs),
         ),
         body: _buildBody(),
       ),
@@ -170,13 +233,313 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       );
     }
 
+    if (_canManageFullAdmin) {
+      return TabBarView(
+        children: [
+          _buildClassroomModeTab(),
+          _buildStudentsTab(),
+          _buildSectionsTab(),
+          _buildUsersTab(),
+          _buildTeacherSectionTab(),
+        ],
+      );
+    }
+
     return TabBarView(
+      children: [_buildClassroomModeTab(), _buildStudentsTab()],
+    );
+  }
+
+  Widget _buildClassroomModeTab() {
+    final selectedId = _selectedClassroomSectionId;
+    final activeMode = _classroomMode;
+    final activeJornada = _activeJornada;
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
       children: [
-        _buildStudentsTab(),
-        _buildSectionsTab(),
-        _buildUsersTab(),
-        _buildTeacherSectionTab(),
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.meeting_room_outlined,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Modo aula',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                const Text(
+                  'Activa una jornada semanal para que los estudiantes ingresen solo con su PIN dentro de la seccion seleccionada.',
+                ),
+                const SizedBox(height: 18),
+                DropdownButtonFormField<int>(
+                  initialValue: selectedId,
+                  decoration: const InputDecoration(
+                    labelText: 'Seccion',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: _activeSections
+                      .map(
+                        (section) => DropdownMenuItem(
+                          value: section.id,
+                          child: Text(section.displayName),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedClassroomSectionId = value;
+                      _activeJornada = null;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                if (activeMode != null)
+                  _buildCurrentClassroomModeCard(activeMode)
+                else
+                  const _InfoBox(
+                    icon: Icons.info_outline,
+                    text: 'No hay modo aula guardado en este dispositivo.',
+                  ),
+                const SizedBox(height: 16),
+                if (activeJornada != null)
+                  _buildActiveJornadaCard(activeJornada)
+                else
+                  const _InfoBox(
+                    icon: Icons.event_busy_outlined,
+                    text:
+                        'No se encontro jornada activa para la seccion seleccionada.',
+                  ),
+                const SizedBox(height: 18),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: [
+                    FilledButton.icon(
+                      onPressed: selectedId == null
+                          ? null
+                          : () => _activateClassroomMode(selectedId),
+                      icon: const Icon(Icons.play_circle_outline),
+                      label: const Text('Activar jornada'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: selectedId == null
+                          ? null
+                          : () => _checkActiveJornada(selectedId),
+                      icon: const Icon(Icons.search_outlined),
+                      label: const Text('Verificar jornada'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: activeMode == null
+                          ? null
+                          : () => _goToStudentPinScreen(),
+                      icon: const Icon(Icons.login_outlined),
+                      label: const Text('Ir a PIN estudiante'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: activeMode == null
+                          ? null
+                          : () => _clearClassroomMode(),
+                      icon: const Icon(Icons.logout_outlined),
+                      label: const Text('Desactivar modo aula local'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
+    );
+  }
+
+  Widget _buildCurrentClassroomModeCard(ClassroomModeState mode) {
+    return Card(
+      color: Theme.of(
+        context,
+      ).colorScheme.primaryContainer.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.check_circle_outline,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Modo aula activo en este dispositivo: ${mode.sectionDisplayName}\n'
+                'Jornada ID: ${mode.jornadaId}',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActiveJornadaCard(JornadaEvaluacion jornada) {
+    return Card(
+      color: Colors.green.withValues(alpha: 0.10),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Icon(Icons.event_available_outlined, color: Colors.green),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Jornada activa en backend.\n'
+                'Seccion: ${_sectionName(jornada.seccionId)}\n'
+                'Lectura: ${jornada.pruebaLecturaActiva ? "activa" : "inactiva"} - '
+                'Fonologia: ${jornada.pruebaFonologiaActiva ? "activa" : "inactiva"}',
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+            IconButton(
+              tooltip: 'Cerrar jornada',
+              onPressed: () => _closeJornada(jornada.id),
+              icon: const Icon(Icons.stop_circle_outlined),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _activateClassroomMode(int seccionId) async {
+    final sectionName = _sectionName(seccionId);
+
+    await _runAction(() async {
+      JornadaEvaluacion jornada;
+
+      try {
+        jornada = await _jornadaService.activarJornada(
+          authToken: _token,
+          seccionId: seccionId,
+          pruebaLecturaActiva: true,
+          pruebaFonologiaActiva: true,
+          duracionHoras: 8,
+        );
+      } catch (error) {
+        final message = error.toString();
+
+        if (!message.contains('Ya existe una jornada activa')) {
+          rethrow;
+        }
+
+        jornada = await _jornadaService.obtenerJornadaActiva(
+          authToken: _token,
+          seccionId: seccionId,
+        );
+      }
+
+      await LocalClassroomModeStorage.saveFromJornada(
+        jornada: jornada,
+        sectionDisplayName: sectionName,
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _classroomMode = ClassroomModeState(
+          seccionId: jornada.seccionId,
+          sectionDisplayName: sectionName,
+          jornadaId: jornada.id,
+          fechaInicio: jornada.fechaInicio,
+          fechaExpiracion: jornada.fechaExpiracion,
+          pruebaLecturaActiva: jornada.pruebaLecturaActiva,
+          pruebaFonologiaActiva: jornada.pruebaFonologiaActiva,
+        );
+        _activeJornada = jornada;
+        _selectedClassroomSectionId = seccionId;
+      });
+    });
+  }
+
+  Future<void> _checkActiveJornada(int seccionId) async {
+    await _runAction(() async {
+      final jornada = await _jornadaService.obtenerJornadaActiva(
+        authToken: _token,
+        seccionId: seccionId,
+      );
+
+      await LocalClassroomModeStorage.saveFromJornada(
+        jornada: jornada,
+        sectionDisplayName: _sectionName(seccionId),
+      );
+
+      if (!mounted) return;
+
+      setState(() {
+        _activeJornada = jornada;
+        _classroomMode = ClassroomModeState(
+          seccionId: jornada.seccionId,
+          sectionDisplayName: _sectionName(seccionId),
+          jornadaId: jornada.id,
+          fechaInicio: jornada.fechaInicio,
+          fechaExpiracion: jornada.fechaExpiracion,
+          pruebaLecturaActiva: jornada.pruebaLecturaActiva,
+          pruebaFonologiaActiva: jornada.pruebaFonologiaActiva,
+        );
+      });
+    });
+  }
+
+  Future<void> _closeJornada(int jornadaId) async {
+    await _runAction(() async {
+      await _jornadaService.cerrarJornada(
+        authToken: _token,
+        jornadaId: jornadaId,
+      );
+
+      await LocalClassroomModeStorage.clear();
+
+      if (!mounted) return;
+
+      setState(() {
+        _classroomMode = null;
+        _activeJornada = null;
+      });
+    });
+  }
+
+  Future<void> _clearClassroomMode() async {
+    await LocalClassroomModeStorage.clear();
+
+    if (!mounted) return;
+
+    setState(() {
+      _classroomMode = null;
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Modo aula local desactivado.')),
+    );
+  }
+
+  void _goToStudentPinScreen() {
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const PinLoginScreen()),
+      (route) => false,
     );
   }
 
@@ -184,7 +547,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     return _buildTabWithAction(
       actionLabel: 'Nuevo estudiante',
       actionIcon: Icons.person_add_alt,
-      onAction: () => _showStudentDialog(),
+      onAction: _activeSections.isEmpty ? null : () => _showStudentDialog(),
       child: ListView.separated(
         itemCount: _students.length,
         separatorBuilder: (context, index) => const Divider(height: 1),
@@ -194,8 +557,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           return ListTile(
             title: Text(student.nombreCompleto),
             subtitle: Text(
-              'PIN: ${student.pinCorto ?? "-"} · ${_sectionName(student.seccionId)}',
+              'PIN: ${student.pinCorto ?? "-"} - ${_sectionName(student.seccionId)}\n'
+              'Consentimiento: ${student.consentimientoFirmado ? "SI" : "NO"}',
             ),
+            isThreeLine: true,
             trailing: Wrap(
               spacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -205,6 +570,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   onPressed: () => _showStudentDialog(student: student),
                   icon: const Icon(Icons.edit_outlined),
                   tooltip: 'Editar',
+                ),
+                IconButton(
+                  onPressed: () => _regeneratePin(student),
+                  icon: const Icon(Icons.password_outlined),
+                  tooltip: 'Regenerar PIN',
                 ),
               ],
             ),
@@ -216,7 +586,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   Widget _buildSectionsTab() {
     return _buildTabWithAction(
-      actionLabel: 'Nueva sección',
+      actionLabel: 'Nueva seccion',
       actionIcon: Icons.add_business_outlined,
       onAction: () => _showSectionDialog(),
       child: ListView.separated(
@@ -259,7 +629,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
           return ListTile(
             title: Text(user.nombreCompleto),
-            subtitle: Text('${user.email} · ${user.rolTexto}'),
+            subtitle: Text('${user.email} - ${user.rolTexto}'),
             trailing: Wrap(
               spacing: 8,
               crossAxisAlignment: WrapCrossAlignment.center,
@@ -284,7 +654,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         .toList();
 
     return _buildTabWithAction(
-      actionLabel: 'Asignar sección',
+      actionLabel: 'Asignar seccion',
       actionIcon: Icons.add_link_outlined,
       onAction: teachers.isEmpty || _sections.isEmpty
           ? null
@@ -308,7 +678,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 );
               },
               icon: const Icon(Icons.delete_outline),
-              tooltip: 'Eliminar asignación',
+              tooltip: 'Eliminar asignacion',
             ),
           );
         },
@@ -342,18 +712,28 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Future<void> _showStudentDialog({AdminStudent? student}) async {
+    final codigoController = TextEditingController(
+      text: student?.codigoEstudiante ?? '',
+    );
     final nombresController = TextEditingController(
       text: student?.nombres ?? '',
     );
     final apellidosController = TextEditingController(
       text: student?.apellidos ?? '',
     );
-    final pinController = TextEditingController(text: student?.pinCorto ?? '');
-    final seccionController = TextEditingController(
-      text: student?.seccionId?.toString() ?? '',
+    final fechaNacimientoController = TextEditingController(
+      text: student?.fechaNacimiento ?? '',
+    );
+    final fechaConsentimientoController = TextEditingController(
+      text: student?.fechaConsentimiento ?? _todayIsoDate(),
     );
 
+    int selectedSectionId =
+        student?.seccionId ??
+        (_activeSections.isNotEmpty ? _activeSections.first.id : 0);
+
     bool activo = student?.activo ?? true;
+    bool consentimientoFirmado = student?.consentimientoFirmado ?? true;
 
     final saved = await showDialog<bool>(
       context: context,
@@ -368,6 +748,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    TextField(
+                      controller: codigoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Codigo estudiante',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                     TextField(
                       controller: nombresController,
                       decoration: const InputDecoration(
@@ -385,25 +773,55 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     ),
                     const SizedBox(height: 12),
                     TextField(
-                      controller: pinController,
-                      keyboardType: TextInputType.number,
-                      maxLength: 4,
+                      controller: fechaNacimientoController,
                       decoration: const InputDecoration(
-                        labelText: 'PIN de 4 dígitos',
+                        labelText: 'Fecha nacimiento YYYY-MM-DD',
                         border: OutlineInputBorder(),
-                        counterText: '',
                       ),
                     ),
                     const SizedBox(height: 12),
-                    TextField(
-                      controller: seccionController,
-                      keyboardType: TextInputType.number,
+                    DropdownButtonFormField<int>(
+                      initialValue: selectedSectionId == 0
+                          ? null
+                          : selectedSectionId,
                       decoration: const InputDecoration(
-                        labelText: 'ID de sección',
+                        labelText: 'Seccion',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: _activeSections
+                          .map(
+                            (section) => DropdownMenuItem(
+                              value: section.id,
+                              child: Text(section.displayName),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (value) {
+                        if (value == null) return;
+
+                        setDialogState(() {
+                          selectedSectionId = value;
+                        });
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: fechaConsentimientoController,
+                      decoration: const InputDecoration(
+                        labelText: 'Fecha consentimiento YYYY-MM-DD',
                         border: OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 8),
+                    SwitchListTile(
+                      value: consentimientoFirmado,
+                      title: const Text('Consentimiento firmado'),
+                      onChanged: (value) {
+                        setDialogState(() {
+                          consentimientoFirmado = value;
+                        });
+                      },
+                    ),
                     SwitchListTile(
                       value: activo,
                       title: const Text('Activo'),
@@ -413,6 +831,15 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         });
                       },
                     ),
+                    if (student?.pinCorto != null)
+                      ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: const Icon(Icons.password_outlined),
+                        title: Text('PIN actual: ${student!.pinCorto}'),
+                        subtitle: const Text(
+                          'El PIN se genera automaticamente. Use regenerar PIN si necesita cambiarlo.',
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -432,36 +859,62 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       },
     );
 
+    codigoController.dispose();
+    nombresController.dispose();
+    apellidosController.dispose();
+    fechaNacimientoController.dispose();
+    fechaConsentimientoController.dispose();
+
     if (saved != true) {
       return;
     }
 
+    final codigo = codigoController.text.trim();
     final nombres = nombresController.text.trim();
     final apellidos = apellidosController.text.trim();
-    final pin = pinController.text.trim();
-    final seccionId = int.tryParse(seccionController.text.trim());
+    final fechaNacimiento = fechaNacimientoController.text.trim();
+    final fechaConsentimiento = fechaConsentimientoController.text.trim();
 
     await _runAction(() async {
       if (student == null) {
         await _adminService.createStudent(
           authToken: _token,
+          codigoEstudiante: codigo.isEmpty ? null : codigo,
           nombres: nombres,
           apellidos: apellidos,
-          pinCorto: pin,
-          seccionId: seccionId,
+          fechaNacimiento: fechaNacimiento.isEmpty ? null : fechaNacimiento,
+          seccionId: selectedSectionId,
+          consentimientoFirmado: consentimientoFirmado,
+          fechaConsentimiento: fechaConsentimiento.isEmpty
+              ? null
+              : fechaConsentimiento,
           activo: activo,
         );
       } else {
         await _adminService.updateStudent(
           authToken: _token,
           estudianteId: student.id,
+          codigoEstudiante: codigo.isEmpty ? null : codigo,
           nombres: nombres,
           apellidos: apellidos,
-          pinCorto: pin,
-          seccionId: seccionId,
+          fechaNacimiento: fechaNacimiento.isEmpty ? null : fechaNacimiento,
+          seccionId: selectedSectionId,
+          consentimientoFirmado: consentimientoFirmado,
+          fechaConsentimiento: fechaConsentimiento.isEmpty
+              ? null
+              : fechaConsentimiento,
           activo: activo,
         );
       }
+    });
+  }
+
+  Future<void> _regeneratePin(AdminStudent student) async {
+    await _runAction(() async {
+      await _adminService.regenerateStudentPin(
+        authToken: _token,
+        estudianteId: student.id,
+      );
     });
   }
 
@@ -482,7 +935,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(section == null ? 'Nueva sección' : 'Editar sección'),
+              title: Text(section == null ? 'Nueva seccion' : 'Editar seccion'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -499,7 +952,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     TextField(
                       controller: nombreController,
                       decoration: const InputDecoration(
-                        labelText: 'Nombre de sección',
+                        labelText: 'Nombre de seccion',
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -539,6 +992,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         );
       },
     );
+
+    gradoController.dispose();
+    nombreController.dispose();
+    turnoController.dispose();
 
     if (saved != true) {
       return;
@@ -633,7 +1090,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         ),
                         DropdownMenuItem(
                           value: 'PSICOLOGA',
-                          child: Text('Psicóloga'),
+                          child: Text('Psicologa'),
                         ),
                         DropdownMenuItem(
                           value: 'DIRECTORA',
@@ -652,6 +1109,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     TextField(
                       controller: passwordController,
                       obscureText: true,
+                      obscuringCharacter: '*',
                       decoration: InputDecoration(
                         labelText: user == null
                             ? 'Contraseña'
@@ -696,6 +1154,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         );
       },
     );
+
+    nombresController.dispose();
+    apellidosController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    gradoScopeController.dispose();
 
     if (saved != true) {
       return;
@@ -749,7 +1213,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Asignar docente a sección'),
+              title: const Text('Asignar docente a seccion'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -777,7 +1241,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   DropdownButtonFormField<int>(
                     initialValue: selectedSectionId,
                     decoration: const InputDecoration(
-                      labelText: 'Sección',
+                      labelText: 'Seccion',
                       border: OutlineInputBorder(),
                     ),
                     items: _sections
@@ -827,5 +1291,44 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         seccionId: selectedSectionId!,
       );
     });
+  }
+
+  String _todayIsoDate() {
+    final now = DateTime.now();
+
+    return '${now.year.toString().padLeft(4, '0')}-'
+        '${now.month.toString().padLeft(2, '0')}-'
+        '${now.day.toString().padLeft(2, '0')}';
+  }
+}
+
+class _InfoBox extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _InfoBox({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.45),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Icon(icon),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                text,
+                style: const TextStyle(fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

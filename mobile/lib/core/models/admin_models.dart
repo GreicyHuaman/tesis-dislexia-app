@@ -1,30 +1,48 @@
 class AdminStudent {
   final int id;
+  final String? codigoEstudiante;
   final String nombres;
   final String apellidos;
   final String? fechaNacimiento;
   final String? pinCorto;
   final int? seccionId;
+  final bool consentimientoFirmado;
+  final String? fechaConsentimiento;
+  final int nivelLectura;
+  final int nivelFonologia;
   final bool activo;
 
   const AdminStudent({
     required this.id,
+    required this.codigoEstudiante,
     required this.nombres,
     required this.apellidos,
     required this.fechaNacimiento,
     required this.pinCorto,
     required this.seccionId,
+    required this.consentimientoFirmado,
+    required this.fechaConsentimiento,
+    required this.nivelLectura,
+    required this.nivelFonologia,
     required this.activo,
   });
 
   factory AdminStudent.fromJson(Map<String, dynamic> json) {
     return AdminStudent(
       id: _asInt(json['id']),
+      codigoEstudiante: json['codigo_estudiante']?.toString(),
       nombres: json['nombres']?.toString() ?? '',
       apellidos: json['apellidos']?.toString() ?? '',
       fechaNacimiento: json['fecha_nacimiento']?.toString(),
       pinCorto: json['pin_corto']?.toString(),
       seccionId: _asNullableInt(json['seccion_id']),
+      consentimientoFirmado: _asBool(
+        json['consentimiento_firmado'],
+        defaultValue: false,
+      ),
+      fechaConsentimiento: json['fecha_consentimiento']?.toString(),
+      nivelLectura: _asIntWithDefault(json['nivel_lectura'], 1),
+      nivelFonologia: _asIntWithDefault(json['nivel_fonologia'], 1),
       activo: _asBool(json['activo'], defaultValue: true),
     );
   }
@@ -97,7 +115,7 @@ class AcademicUser {
     final normalized = rol.toUpperCase();
 
     if (normalized == 'MAESTRO') return 'Maestro';
-    if (normalized == 'PSICOLOGA') return 'Psicóloga';
+    if (normalized == 'PSICOLOGA') return 'Psicologa';
     if (normalized == 'DIRECTORA') return 'Directora';
 
     return rol;
@@ -131,6 +149,12 @@ int _asInt(dynamic value) {
   return int.tryParse(value?.toString() ?? '') ?? 0;
 }
 
+int _asIntWithDefault(dynamic value, int defaultValue) {
+  final parsed = _asNullableInt(value);
+
+  return parsed ?? defaultValue;
+}
+
 int? _asNullableInt(dynamic value) {
   if (value == null) return null;
   if (value is int) return value;
@@ -145,8 +169,8 @@ bool _asBool(dynamic value, {required bool defaultValue}) {
 
   final text = value?.toString().toLowerCase();
 
-  if (text == 'true') return true;
-  if (text == 'false') return false;
+  if (text == 'true' || text == '1' || text == 'si') return true;
+  if (text == 'false' || text == '0' || text == 'no') return false;
 
   return defaultValue;
 }

@@ -126,6 +126,92 @@ class StudentService {
     }
   }
 
+  Future<StudentLookupResult> findByPinForModoAula({
+    required int seccionId,
+    required String pin,
+  }) async {
+    final cleanPin = pin.trim();
+
+    if (cleanPin.length != 4 || int.tryParse(cleanPin) == null) {
+      return const StudentLookupResult(
+        success: false,
+        student: null,
+        message: 'Ingresa un PIN valido de 4 digitos.',
+      );
+    }
+
+    try {
+      final healthOk = await _checkBackendHealth();
+
+      if (!healthOk) {
+        return _findCachedStudentForSection(
+          cleanPin: cleanPin,
+          seccionId: seccionId,
+        );
+      }
+
+      final uri = Uri.parse(
+        '$baseUrl/api/v1/estudiantes/modo-aula/$seccionId/pin/$cleanPin',
+      );
+
+      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 400) {
+        return const StudentLookupResult(
+          success: false,
+          student: null,
+          message: 'PIN no reconocido.',
+        );
+      }
+
+      if (response.statusCode == 403) {
+        return const StudentLookupResult(
+          success: false,
+          student: null,
+          message:
+              'No hay jornada activa para esta seccion. Pide ayuda a tu docente.',
+        );
+      }
+
+      if (response.statusCode == 404) {
+        return const StudentLookupResult(
+          success: false,
+          student: null,
+          message: 'No se encontro estudiante activo para esta seccion y PIN.',
+        );
+      }
+
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        return const StudentLookupResult(
+          success: false,
+          student: null,
+          message: 'No se pudo validar el PIN. Pide ayuda a tu docente.',
+        );
+      }
+
+      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final student = Student.fromJson(decoded);
+
+      await LocalStudentCache.saveStudentByPin(pin: cleanPin, student: student);
+
+      return StudentLookupResult(
+        success: true,
+        student: student,
+        message: 'Estudiante encontrado: ${student.nombreCompleto}.',
+      );
+    } on TimeoutException {
+      return _findCachedStudentForSection(
+        cleanPin: cleanPin,
+        seccionId: seccionId,
+      );
+    } catch (_) {
+      return _findCachedStudentForSection(
+        cleanPin: cleanPin,
+        seccionId: seccionId,
+      );
+    }
+  }
+
   Future<StudentCacheRefreshResult> refreshOfflineCache({
     String? staffEmail,
     String? staffPassword,
@@ -340,6 +426,34 @@ class StudentService {
         message: 'Error autenticando personal académico: $error',
       );
     }
+  }
+
+  StudentLookupResult _findCachedStudentForSection({
+    required String cleanPin,
+    required int seccionId,
+  }) {
+    final cachedStudent = LocalStudentCache.findByPinForSection(
+      pin: cleanPin,
+      seccionId: seccionId,
+    );
+
+    if (cachedStudent == null) {
+      return const StudentLookupResult(
+        success: false,
+        student: null,
+        message:
+            'No hay conexion y este PIN no existe en la cache local de esta seccion. Primero actualiza el padron offline.',
+        fromCache: true,
+      );
+    }
+
+    return StudentLookupResult(
+      success: true,
+      student: cachedStudent,
+      message:
+          'Modo offline: estudiante encontrado en cache local: ${cachedStudent.nombreCompleto}',
+      fromCache: true,
+    );
   }
 
   StudentLookupResult _findCachedStudent(String cleanPin) {

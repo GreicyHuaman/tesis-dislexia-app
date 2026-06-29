@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../../../core/repositories/local_classroom_mode_storage.dart';
 import '../../../core/repositories/local_pin_attempt_guard.dart';
 import '../../../core/services/student_service.dart';
 import '../../home/screens/test_selection_screen.dart';
@@ -16,8 +17,6 @@ class PinLoginScreen extends StatefulWidget {
 }
 
 class _PinLoginScreenState extends State<PinLoginScreen> {
-  static const String _pinGuardContextKey = 'student_pin_login_global';
-
   final TextEditingController _pinController = TextEditingController();
   final StudentService _studentService = StudentService();
 
@@ -26,13 +25,22 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   String? _message;
   bool _isSuccessMessage = false;
 
+  ClassroomModeState? _classroomMode;
   PinAttemptState? _attemptState;
   Timer? _blockTimer;
+
+  String get _pinGuardContextKey {
+    return _classroomMode?.pinGuardContextKey ?? 'student_pin_login_global';
+  }
+
+  bool get _hasClassroomMode {
+    return _classroomMode != null;
+  }
 
   @override
   void initState() {
     super.initState();
-    _loadAttemptState();
+    _loadInitialState();
   }
 
   @override
@@ -40,6 +48,21 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     _blockTimer?.cancel();
     _pinController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadInitialState() async {
+    await _loadClassroomMode();
+    await _loadAttemptState();
+  }
+
+  Future<void> _loadClassroomMode() async {
+    final mode = await LocalClassroomModeStorage.getCurrent();
+
+    if (!mounted) return;
+
+    setState(() {
+      _classroomMode = mode;
+    });
   }
 
   Future<void> _loadAttemptState() async {
@@ -85,17 +108,35 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   bool get _isPinInputLocked {
     final state = _currentAttemptState;
 
-    return state.requiresTeacherUnlock || state.isTemporarilyBlocked;
+    return !_hasClassroomMode ||
+        state.requiresTeacherUnlock ||
+        state.isTemporarilyBlocked;
   }
 
   Future<void> _submitPin() async {
     if (_isLoading) return;
 
-    final state = await LocalPinAttemptGuard.getState(_pinGuardContextKey);
+    final mode = await LocalClassroomModeStorage.getCurrent();
+
+    if (mode == null) {
+      await _loadClassroomMode();
+
+      _setMessage(
+        'No hay jornada activa. Pide a tu docente que active la evaluacion.',
+        isSuccess: false,
+      );
+      return;
+    }
+
+    setState(() {
+      _classroomMode = mode;
+    });
+
+    final state = await LocalPinAttemptGuard.getState(mode.pinGuardContextKey);
 
     if (state.requiresTeacherUnlock) {
       _setMessage(
-        'El ingreso está bloqueado. Pide a tu docente o directora que lo desbloquee.',
+        'El ingreso esta bloqueado. Pide a tu docente o directora que lo desbloquee.',
         isSuccess: false,
       );
       await _loadAttemptState();
@@ -114,7 +155,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     final pin = _pinController.text.trim();
 
     if (pin.length != 4) {
-      _setMessage('Ingrese los 4 números de su PIN.', isSuccess: false);
+      _setMessage('Ingrese los 4 numeros de su PIN.', isSuccess: false);
       return;
     }
 
@@ -128,13 +169,16 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     });
 
     try {
-      final result = await _studentService.findByPin(pin);
+      final result = await _studentService.findByPinForModoAula(
+        seccionId: mode.seccionId,
+        pin: pin,
+      );
 
       if (!mounted) return;
 
       if (!result.success || result.student == null) {
         final guardResult = await LocalPinAttemptGuard.registerFailure(
-          _pinGuardContextKey,
+          mode.pinGuardContextKey,
         );
 
         await _loadAttemptState();
@@ -149,7 +193,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
         return;
       }
 
-      await LocalPinAttemptGuard.registerSuccess(_pinGuardContextKey);
+      await LocalPinAttemptGuard.registerSuccess(mode.pinGuardContextKey);
 
       final student = result.student!;
       final studentDisplayName = '${student.nombres} ${student.apellidos}'
@@ -167,7 +211,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       );
     } catch (_) {
       final guardResult = await LocalPinAttemptGuard.registerFailure(
-        _pinGuardContextKey,
+        mode.pinGuardContextKey,
       );
 
       await _loadAttemptState();
@@ -202,7 +246,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Text(
-                      'Ingrese credenciales de docente o dirección para desbloquear el ingreso por PIN.',
+                      'Ingrese credenciales de docente o direccion para desbloquear el ingreso por PIN.',
                     ),
                     const SizedBox(height: 16),
                     TextField(
@@ -219,6 +263,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                       controller: passwordController,
                       enabled: !dialogLoading,
                       obscureText: true,
+                      obscuringCharacter: '*',
                       decoration: const InputDecoration(
                         labelText: 'Contraseña',
                         prefixIcon: Icon(Icons.lock_outline),
@@ -248,12 +293,12 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                   onPressed: dialogLoading
                       ? null
                       : () async {
+                          final navigator = Navigator.of(dialogContext);
+
                           setDialogState(() {
                             dialogLoading = true;
                             dialogMessage = null;
                           });
-
-                          final navigator = Navigator.of(dialogContext);
 
                           final result = await _studentService
                               .validateStaffCredentialsForPinUnlock(
@@ -261,7 +306,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                                 password: passwordController.text,
                               );
 
-                          if (!mounted) return;
+                          if (!mounted || !dialogContext.mounted) return;
 
                           if (!result.success) {
                             setDialogState(() {
@@ -275,7 +320,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                             _pinGuardContextKey,
                           );
 
-                          if (!mounted) return;
+                          if (!mounted || !dialogContext.mounted) return;
 
                           navigator.pop(true);
                         },
@@ -315,9 +360,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
   void _openStaffLogin() {
     if (_isLoading) return;
 
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const StaffLoginScreen()));
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => const StaffLoginScreen()))
+        .then((_) => _loadInitialState());
   }
 
   void _setMessage(String message, {required bool isSuccess}) {
@@ -366,7 +411,9 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   _buildHeader(theme),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
+                  _buildClassroomStatusCard(theme),
+                  const SizedBox(height: 16),
                   _buildPinCard(theme),
                   const SizedBox(height: 14),
                   if (_message != null) _buildMessageCard(theme),
@@ -413,7 +460,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Ingrese su PIN de 4 números.',
+          'Ingrese su PIN de 4 numeros.',
           textAlign: TextAlign.center,
           style: theme.textTheme.bodyLarge?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
@@ -421,6 +468,53 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildClassroomStatusCard(ThemeData theme) {
+    final mode = _classroomMode;
+
+    if (mode == null) {
+      return Card(
+        color: theme.colorScheme.errorContainer.withValues(alpha: 0.35),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Row(
+            children: [
+              Icon(Icons.event_busy_outlined, color: theme.colorScheme.error),
+              const SizedBox(width: 10),
+              const Expanded(
+                child: Text(
+                  'No hay jornada activa. Pide a tu docente que active el modo aula.',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Card(
+      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Icon(Icons.class_outlined, color: theme.colorScheme.primary),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                'Modo aula activo: ${mode.sectionDisplayName}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -491,6 +585,8 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
               label: Text(
                 _isLoading
                     ? 'Ingresando...'
+                    : !_hasClassroomMode
+                    ? 'Sin jornada activa'
                     : locked
                     ? 'Acceso bloqueado'
                     : 'Empezar',
@@ -577,7 +673,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
 
     if (state.requiresTeacherUnlock) {
       text =
-          'Ingreso bloqueado. Se requiere desbloqueo por docente o dirección.';
+          'Ingreso bloqueado. Se requiere desbloqueo por docente o direccion.';
     } else if (state.isTemporarilyBlocked) {
       text =
           'Bloqueo temporal activo. Tiempo restante: ${_formatDuration(state.remainingBlockDuration)}.';
@@ -637,7 +733,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
             ),
             const SizedBox(height: 10),
             Text(
-              'Opciones protegidas para docentes, psicología o dirección.',
+              'Opciones protegidas para docentes, psicologia o direccion.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -658,7 +754,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
 
   Widget _buildFooter(ThemeData theme) {
     return Text(
-      'Tamizaje educativo temprano. No reemplaza una evaluación profesional.',
+      'Tamizaje educativo temprano. No reemplaza una evaluacion profesional.',
       textAlign: TextAlign.center,
       style: theme.textTheme.bodySmall?.copyWith(
         color: theme.colorScheme.onSurfaceVariant,
