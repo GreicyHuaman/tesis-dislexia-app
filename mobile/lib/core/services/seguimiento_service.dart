@@ -67,6 +67,37 @@ class SeguimientoService {
         .toList();
   }
 
+  Future<void> createObservacion({
+    required String? authToken,
+    required int estudianteId,
+    int? evaluacionId,
+    required String observacionDocente,
+    required List<String> categorias,
+    String estado = 'ABIERTO',
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/v1/seguimiento/observaciones');
+
+    final body = <String, dynamic>{
+      'estudiante_id': estudianteId,
+      'evaluacion_id': evaluacionId,
+      'observacion_docente': observacionDocente.trim().isEmpty
+          ? null
+          : observacionDocente.trim(),
+      'categorias': categorias,
+      'estado': estado.trim().toUpperCase(),
+    };
+
+    final response = await http
+        .post(
+          uri,
+          headers: {..._headers(authToken), 'Content-Type': 'application/json'},
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 15));
+
+    _ensureSuccess(response);
+  }
+
   Map<String, String> _headers(String? authToken) {
     final token = authToken?.trim();
 

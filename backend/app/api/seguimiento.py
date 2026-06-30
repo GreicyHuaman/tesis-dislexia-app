@@ -345,6 +345,9 @@ def _observation_required(
     if (latest_item.semaforo or "").upper() == "ROJO":
         return True
 
+    if latest_item.estado_semanal.upper() == "VENCIDA":
+        return True
+
     if requested_estado.upper() in {
         "DERIVACION_SUGERIDA",
         "CERRADO",

@@ -16,6 +16,23 @@ class SeguimientoScreen extends StatefulWidget {
 class _SeguimientoScreenState extends State<SeguimientoScreen> {
   final SeguimientoService _seguimientoService = const SeguimientoService();
 
+  static const List<String> _observationCategories = [
+    'Lectura lenta',
+    'Confusión visual de letras',
+    'Omisiones',
+    'Sustituciones',
+    'Inversión de letras',
+    'Dificultad con pseudopalabras',
+    'Dificultad de segmentación silábica',
+    'Dificultad de conciencia fonológica',
+    'Dificultad en rimas',
+    'Baja atención durante la prueba',
+    'Frustración o cansancio',
+    'Requiere reforzamiento',
+    'Requiere derivación sugerida',
+    'Otro',
+  ];
+
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -74,6 +91,233 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     _loadSeguimiento();
   }
 
+  bool _isObservationRequired(SeguimientoItem item, String estado) {
+    final semaforo = (item.semaforo ?? '').toUpperCase();
+    final estadoSemanal = item.estadoSemanal.toUpperCase();
+    final estadoSeguimiento = estado.toUpperCase();
+
+    return semaforo == 'ROJO' ||
+        estadoSemanal == 'VENCIDA' ||
+        estadoSeguimiento == 'DERIVACION_SUGERIDA' ||
+        estadoSeguimiento == 'CERRADO' ||
+        estadoSeguimiento == 'CAMBIO_MANUAL';
+  }
+
+  Future<void> _openObservationDialog(SeguimientoItem item) async {
+    final controller = TextEditingController(
+      text: item.observacionDocente ?? '',
+    );
+    final selectedCategories = item.categorias.toSet();
+    String selectedEstado = item.estado ?? 'ABIERTO';
+    bool isSaving = false;
+
+    final saved = await showDialog<bool>(
+      context: context,
+      barrierDismissible: !isSaving,
+      builder: (dialogContext) {
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final required = _isObservationRequired(item, selectedEstado);
+
+            Future<void> saveObservation() async {
+              final observation = controller.text.trim();
+
+              if (required && observation.isEmpty) {
+                ScaffoldMessenger.of(dialogContext).showSnackBar(
+                  const SnackBar(
+                    content: Text(
+                      'La observación es obligatoria para este caso.',
+                    ),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+                return;
+              }
+
+              setDialogState(() {
+                isSaving = true;
+              });
+
+              final navigator = Navigator.of(dialogContext);
+              final messenger = ScaffoldMessenger.of(dialogContext);
+
+              try {
+                await _seguimientoService.createObservacion(
+                  authToken: widget.currentUser.accessToken,
+                  estudianteId: item.estudianteId,
+                  evaluacionId: item.evaluacionId,
+                  observacionDocente: observation,
+                  categorias: selectedCategories.toList()..sort(),
+                  estado: selectedEstado,
+                );
+
+                if (!mounted) return;
+
+                navigator.pop(true);
+              } catch (error) {
+                if (!mounted) return;
+
+                setDialogState(() {
+                  isSaving = false;
+                });
+
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('No se pudo guardar: $error'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            }
+
+            return AlertDialog(
+              title: const Text('Registrar observación'),
+              content: SizedBox(
+                width: 520,
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        item.estudianteNombre,
+                        style: const TextStyle(fontWeight: FontWeight.w900),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Prioridad: ${item.prioridad}\n'
+                        'Estado semanal: ${_estadoSemanalTexto(item.estadoSemanal)}\n'
+                        'Semáforo: ${item.semaforo ?? 'N/D'}\n'
+                        'Tendencia: ${_tendenciaTexto(item.tendencia)}',
+                        style: const TextStyle(height: 1.35),
+                      ),
+                      const SizedBox(height: 14),
+                      DropdownButtonFormField<String>(
+                        initialValue: selectedEstado,
+                        decoration: const InputDecoration(
+                          labelText: 'Estado del seguimiento',
+                          border: OutlineInputBorder(),
+                        ),
+                        items: const [
+                          DropdownMenuItem<String>(
+                            value: 'ABIERTO',
+                            child: Text('Abierto'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'REFORZAMIENTO',
+                            child: Text('Reforzamiento'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'DERIVACION_SUGERIDA',
+                            child: Text('Derivación sugerida'),
+                          ),
+                          DropdownMenuItem<String>(
+                            value: 'CERRADO',
+                            child: Text('Cerrado'),
+                          ),
+                        ],
+                        onChanged: isSaving
+                            ? null
+                            : (value) {
+                                if (value == null) return;
+
+                                setDialogState(() {
+                                  selectedEstado = value;
+                                });
+                              },
+                      ),
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: controller,
+                        enabled: !isSaving,
+                        minLines: 3,
+                        maxLines: 5,
+                        decoration: InputDecoration(
+                          labelText: required
+                              ? 'Observación docente obligatoria'
+                              : 'Observación docente opcional',
+                          border: const OutlineInputBorder(),
+                          helperText: required
+                              ? 'Requerida por riesgo alto, evaluación vencida o cambio de estado.'
+                              : 'Recomendada para casos amarillos o seguimiento pedagógico.',
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Text(
+                        'Categorías observadas',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 6,
+                        children: _observationCategories.map((category) {
+                          final selected = selectedCategories.contains(
+                            category,
+                          );
+
+                          return FilterChip(
+                            label: Text(category),
+                            selected: selected,
+                            onSelected: isSaving
+                                ? null
+                                : (checked) {
+                                    setDialogState(() {
+                                      if (checked) {
+                                        selectedCategories.add(category);
+                                      } else {
+                                        selectedCategories.remove(category);
+                                      }
+                                    });
+                                  },
+                          );
+                        }).toList(),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSaving
+                      ? null
+                      : () => Navigator.of(dialogContext).pop(false),
+                  child: const Text('Cancelar'),
+                ),
+                FilledButton.icon(
+                  onPressed: isSaving ? null : saveObservation,
+                  icon: isSaving
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.save_outlined),
+                  label: Text(isSaving ? 'Guardando...' : 'Guardar'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+
+    controller.dispose();
+
+    if (saved == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Observación guardada correctamente.'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      await _loadSeguimiento();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final resumen = _resumen;
@@ -126,7 +370,11 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                   ..._items.map(
                     (item) => Padding(
                       padding: const EdgeInsets.only(bottom: 10),
-                      child: _SeguimientoItemCard(item: item),
+                      child: _SeguimientoItemCard(
+                        item: item,
+                        onRegisterObservation: () =>
+                            _openObservationDialog(item),
+                      ),
                     ),
                   ),
               ],
@@ -444,8 +692,12 @@ class _PriorityChip extends StatelessWidget {
 
 class _SeguimientoItemCard extends StatelessWidget {
   final SeguimientoItem item;
+  final VoidCallback onRegisterObservation;
 
-  const _SeguimientoItemCard({required this.item});
+  const _SeguimientoItemCard({
+    required this.item,
+    required this.onRegisterObservation,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -459,44 +711,77 @@ class _SeguimientoItemCard extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 8),
-        child: ListTile(
-          leading: CircleAvatar(
-            backgroundColor: priorityColor.withValues(alpha: 0.16),
-            child: Icon(_priorityIcon(item.prioridad), color: priorityColor),
-          ),
-          title: Text(
-            item.estudianteNombre,
-            style: const TextStyle(fontWeight: FontWeight.w900),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 6),
-            child: Text(
-              'Prioridad: ${item.prioridad}\n'
-              'Estado semanal: $statusText\n'
-              'Tendencia: $trendText\n'
-              'Riesgo: $riskText | Semáforo: ${item.semaforo ?? 'N/D'}\n'
-              'Próxima evaluación: ${item.proximaEvaluacion ?? 'Pendiente'}\n'
-              'Acción sugerida: ${item.accionSugerida}',
-              style: const TextStyle(height: 1.32),
-            ),
-          ),
-          trailing: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(_estadoIcon(item.estadoSemanal), color: priorityColor),
-              const SizedBox(height: 4),
-              Text(
-                item.diasDesdeUltimaEvaluacion == null
-                    ? 'N/D'
-                    : '${item.diasDesdeUltimaEvaluacion} d',
-                style: TextStyle(
+        child: Column(
+          children: [
+            ListTile(
+              onTap: onRegisterObservation,
+              leading: CircleAvatar(
+                backgroundColor: priorityColor.withValues(alpha: 0.16),
+                child: Icon(
+                  _priorityIcon(item.prioridad),
                   color: priorityColor,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12,
                 ),
               ),
-            ],
-          ),
+              title: Text(
+                item.estudianteNombre,
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+              subtitle: Padding(
+                padding: const EdgeInsets.only(top: 6),
+                child: Text(
+                  'Prioridad: ${item.prioridad}\n'
+                  'Estado semanal: $statusText\n'
+                  'Tendencia: $trendText\n'
+                  'Riesgo: $riskText | Semáforo: ${item.semaforo ?? 'N/D'}\n'
+                  'Próxima evaluación: ${item.proximaEvaluacion ?? 'Pendiente'}\n'
+                  'Acción sugerida: ${item.accionSugerida}',
+                  style: const TextStyle(height: 1.32),
+                ),
+              ),
+              trailing: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(_estadoIcon(item.estadoSemanal), color: priorityColor),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.diasDesdeUltimaEvaluacion == null
+                        ? 'N/D'
+                        : '${item.diasDesdeUltimaEvaluacion} d',
+                    style: TextStyle(
+                      color: priorityColor,
+                      fontWeight: FontWeight.w800,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (item.observacionDocente != null &&
+                item.observacionDocente!.trim().isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Última observación: ${item.observacionDocente}',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: OutlinedButton.icon(
+                  onPressed: onRegisterObservation,
+                  icon: const Icon(Icons.edit_note_outlined),
+                  label: const Text('Registrar observación'),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -551,4 +836,26 @@ class _SeguimientoItemCard extends StatelessWidget {
 
     return value;
   }
+}
+
+String _estadoSemanalTexto(String value) {
+  final normalized = value.toUpperCase();
+
+  if (normalized == 'SIN_EVALUACION') return 'Sin evaluación';
+  if (normalized == 'AL_DIA') return 'Al día';
+  if (normalized == 'VENCE_HOY') return 'Vence hoy';
+  if (normalized == 'VENCIDA') return 'Vencida';
+
+  return value;
+}
+
+String _tendenciaTexto(String value) {
+  final normalized = value.toUpperCase();
+
+  if (normalized == 'MEJORA') return 'Mejora';
+  if (normalized == 'ESTABLE') return 'Estable';
+  if (normalized == 'EMPEORA') return 'Empeora';
+  if (normalized == 'SIN_HISTORIAL') return 'Sin historial';
+
+  return value;
 }
