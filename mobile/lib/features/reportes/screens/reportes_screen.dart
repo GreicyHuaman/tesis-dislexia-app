@@ -14,6 +14,7 @@ import '../../admin/screens/admin_panel_screen.dart';
 import '../../../core/utils/csv_exporter.dart';
 import '../../../core/utils/pdf_exporter.dart';
 import 'student_risk_profile_screen.dart';
+import '../../seguimiento/screens/seguimiento_screen.dart';
 
 class ReportesScreen extends StatefulWidget {
   final AuthUser currentUser;
@@ -135,6 +136,14 @@ class _ReportesScreenState extends State<ReportesScreen> {
     );
   }
 
+  void _openSeguimientoScreen() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SeguimientoScreen(currentUser: widget.currentUser),
+      ),
+    );
+  }
+
   void _openAdminPanel() {
     Navigator.of(context).push(
       MaterialPageRoute(
@@ -218,6 +227,56 @@ class _ReportesScreenState extends State<ReportesScreen> {
                       onPressed: _openAdminPanel,
                       icon: Icon(_managementPanelIcon),
                       label: Text(_managementPanelTooltip),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSeguimientoShortcut() {
+    return Card(
+      color: Theme.of(
+        context,
+      ).colorScheme.secondaryContainer.withValues(alpha: 0.35),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(
+              Icons.event_note_outlined,
+              color: Theme.of(context).colorScheme.secondary,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Seguimiento semanal',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Revisa estudiantes vencidos, prioridad alta, tendencia y pr?xima evaluaci?n semanal.',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(height: 1.35),
+                  ),
+                  const SizedBox(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: FilledButton.icon(
+                      onPressed: _openSeguimientoScreen,
+                      icon: const Icon(Icons.event_note_outlined),
+                      label: const Text('Abrir seguimiento'),
                     ),
                   ),
                 ],
@@ -341,6 +400,11 @@ class _ReportesScreenState extends State<ReportesScreen> {
             tooltip: 'Actualizar',
           ),
           IconButton(
+            onPressed: _openSeguimientoScreen,
+            icon: const Icon(Icons.event_note_outlined),
+            tooltip: 'Seguimiento semanal',
+          ),
+          IconButton(
             onPressed: _isLoading ? null : _exportPdf,
             icon: const Icon(Icons.picture_as_pdf_outlined),
             tooltip: 'Exportar PDF',
@@ -403,6 +467,8 @@ class _ReportesScreenState extends State<ReportesScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           _UserScopeCard(user: widget.currentUser),
+          const SizedBox(height: 14),
+          _buildSeguimientoShortcut(),
           if (_canOpenManagementPanel) ...[
             const SizedBox(height: 14),
             _buildManagementPanelShortcut(),
