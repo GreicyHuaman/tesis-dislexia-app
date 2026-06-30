@@ -10,6 +10,7 @@ from app.api.jornadas_evaluacion import router as jornadas_evaluacion_router
 from app.api.evaluaciones import router as evaluaciones_router
 from app.api.ml_dataset import router as ml_dataset_router
 from app.api.reportes import router as reportes_router
+from app.api.seguimiento import router as seguimiento_router
 from app.api.secciones import router as secciones_router
 from app.db.session import create_db_and_tables
 
@@ -17,6 +18,7 @@ from app.models.evaluation import DetalleEvaluacion, Evaluacion  # noqa: F401
 from app.models.jornada import JornadaEvaluacion  # noqa: F401
 from app.models.prediction import PrediccionModelo  # noqa: F401
 from app.models.section import DocenteSeccion, Seccion  # noqa: F401
+from app.models.seguimiento import SeguimientoEstudiante  # noqa: F401
 from app.models.student import Estudiante  # noqa: F401
 from app.models.user import Usuario  # noqa: F401
 
@@ -68,4 +70,5 @@ app.include_router(estudiantes_router)
 app.include_router(jornadas_evaluacion_router)
 app.include_router(evaluaciones_router)
 app.include_router(reportes_router)
+app.include_router(seguimiento_router)
 app.include_router(ml_dataset_router)
