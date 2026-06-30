@@ -221,7 +221,6 @@ def _apply_student_filters_for_user(
 
 
 _REQUIRED_IMPORT_COLUMNS = {
-    "codigo_estudiante",
     "nombres",
     "apellidos",
     "fecha_nacimiento",
@@ -803,9 +802,7 @@ async def import_estudiantes(
 
     for row_number, row in rows:
         try:
-            codigo_estudiante = _clean_optional_text(
-                row.get("codigo_estudiante")
-            )
+            codigo_estudiante = None
             nombres = _required_text(row, "nombres", row_number)
             apellidos = _required_text(row, "apellidos", row_number)
             fecha_nacimiento = _parse_import_date(

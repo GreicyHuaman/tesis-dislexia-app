@@ -894,9 +894,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Future<void> _showStudentDialog({AdminStudent? student}) async {
-    final codigoController = TextEditingController(
-      text: student?.codigoEstudiante ?? '',
-    );
     final nombresController = TextEditingController(
       text: student?.nombres ?? '',
     );
@@ -930,14 +927,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextField(
-                      controller: codigoController,
-                      decoration: const InputDecoration(
-                        labelText: 'Codigo estudiante',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
                     TextField(
                       controller: nombresController,
                       decoration: const InputDecoration(
@@ -1061,7 +1050,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       },
     );
 
-    codigoController.dispose();
     nombresController.dispose();
     apellidosController.dispose();
     fechaNacimientoController.dispose();
@@ -1071,7 +1059,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       return;
     }
 
-    final codigo = codigoController.text.trim();
     final nombres = nombresController.text.trim();
     final apellidos = apellidosController.text.trim();
 
@@ -1106,7 +1093,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       if (student == null) {
         await _adminService.createStudent(
           authToken: _token,
-          codigoEstudiante: codigo.isEmpty ? null : codigo,
           nombres: nombres,
           apellidos: apellidos,
           fechaNacimiento: fechaNacimiento,
@@ -1119,7 +1105,6 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         await _adminService.updateStudent(
           authToken: _token,
           estudianteId: student.id,
-          codigoEstudiante: codigo.isEmpty ? null : codigo,
           nombres: nombres,
           apellidos: apellidos,
           fechaNacimiento: fechaNacimiento,
