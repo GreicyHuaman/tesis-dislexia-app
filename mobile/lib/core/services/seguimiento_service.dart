@@ -67,6 +67,25 @@ class SeguimientoService {
         .toList();
   }
 
+  Future<SeguimientoHistorial> fetchHistorial({
+    required String? authToken,
+    required int estudianteId,
+  }) async {
+    final uri = Uri.parse(
+      '$baseUrl/api/v1/seguimiento/estudiante/$estudianteId',
+    );
+
+    final response = await http
+        .get(uri, headers: _headers(authToken))
+        .timeout(const Duration(seconds: 15));
+
+    _ensureSuccess(response);
+
+    return SeguimientoHistorial.fromJson(
+      jsonDecode(response.body) as Map<String, dynamic>,
+    );
+  }
+
   Future<void> createObservacion({
     required String? authToken,
     required int estudianteId,

@@ -318,6 +318,165 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     }
   }
 
+  void _openHistoryDialog(SeguimientoItem item) {
+    final future = _seguimientoService.fetchHistorial(
+      authToken: widget.currentUser.accessToken,
+      estudianteId: item.estudianteId,
+    );
+
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Historial longitudinal'),
+          content: SizedBox(
+            width: 560,
+            child: FutureBuilder<SeguimientoHistorial>(
+              future: future,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const SizedBox(
+                    height: 160,
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (snapshot.hasError) {
+                  return Text(
+                    'No se pudo cargar el historial: ${snapshot.error}',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.error,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  );
+                }
+
+                final historial = snapshot.data;
+
+                if (historial == null) {
+                  return const Text('No hay historial disponible.');
+                }
+
+                return _buildHistoryContent(historial);
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Cerrar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildHistoryContent(SeguimientoHistorial historial) {
+    final observaciones = historial.observaciones;
+
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            historial.estudianteNombre,
+            style: const TextStyle(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Estado actual: ${_estadoSemanalTexto(historial.actual.estadoSemanal)}\n'
+            'Prioridad: ${historial.actual.prioridad}\n'
+            'Tendencia: ${_tendenciaTexto(historial.actual.tendencia)}\n'
+            'Pr?xima evaluaci?n: ${historial.actual.proximaEvaluacion ?? 'Pendiente'}',
+            style: const TextStyle(height: 1.35),
+          ),
+          const SizedBox(height: 14),
+          const Divider(),
+          const SizedBox(height: 8),
+          Text(
+            'Observaciones registradas',
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 8),
+          if (observaciones.isEmpty)
+            const Card(
+              child: Padding(
+                padding: EdgeInsets.all(14),
+                child: Text(
+                  'Todav?a no hay observaciones docentes registradas.',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            )
+          else
+            ...observaciones.map(_buildHistoryEntry),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHistoryEntry(SeguimientoObservacion observacion) {
+    final categorias = observacion.categorias;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '${_shortDate(observacion.fechaSeguimiento)} | ${observacion.estado}',
+              style: const TextStyle(fontWeight: FontWeight.w900),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              'Responsable: ${observacion.responsableNombre ?? 'N/D'}\n'
+              'Sem?foro: ${observacion.semaforo ?? 'N/D'} | '
+              'Prioridad: ${observacion.prioridad ?? 'N/D'} | '
+              'Tendencia: ${observacion.tendencia ?? 'N/D'}',
+              style: const TextStyle(height: 1.3),
+            ),
+            if (observacion.observacionDocente != null &&
+                observacion.observacionDocente!.trim().isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Text(
+                observacion.observacionDocente!,
+                style: const TextStyle(fontStyle: FontStyle.italic),
+              ),
+            ],
+            if (categorias.isNotEmpty) ...[
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: categorias
+                    .map(
+                      (category) => Chip(
+                        label: Text(category),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    )
+                    .toList(),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _shortDate(String raw) {
+    if (raw.length >= 10) {
+      return raw.substring(0, 10);
+    }
+
+    return raw.isEmpty ? 'N/D' : raw;
+  }
+
   @override
   Widget build(BuildContext context) {
     final resumen = _resumen;
@@ -374,6 +533,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                         item: item,
                         onRegisterObservation: () =>
                             _openObservationDialog(item),
+                        onOpenHistory: () => _openHistoryDialog(item),
                       ),
                     ),
                   ),
@@ -693,10 +853,12 @@ class _PriorityChip extends StatelessWidget {
 class _SeguimientoItemCard extends StatelessWidget {
   final SeguimientoItem item;
   final VoidCallback onRegisterObservation;
+  final VoidCallback onOpenHistory;
 
   const _SeguimientoItemCard({
     required this.item,
     required this.onRegisterObservation,
+    required this.onOpenHistory,
   });
 
   @override
@@ -714,7 +876,7 @@ class _SeguimientoItemCard extends StatelessWidget {
         child: Column(
           children: [
             ListTile(
-              onTap: onRegisterObservation,
+              onTap: onOpenHistory,
               leading: CircleAvatar(
                 backgroundColor: priorityColor.withValues(alpha: 0.16),
                 child: Icon(
@@ -732,9 +894,9 @@ class _SeguimientoItemCard extends StatelessWidget {
                   'Prioridad: ${item.prioridad}\n'
                   'Estado semanal: $statusText\n'
                   'Tendencia: $trendText\n'
-                  'Riesgo: $riskText | Semáforo: ${item.semaforo ?? 'N/D'}\n'
-                  'Próxima evaluación: ${item.proximaEvaluacion ?? 'Pendiente'}\n'
-                  'Acción sugerida: ${item.accionSugerida}',
+                  'Riesgo: $riskText | Sem?foro: ${item.semaforo ?? 'N/D'}\n'
+                  'Pr?xima evaluaci?n: ${item.proximaEvaluacion ?? 'Pendiente'}\n'
+                  'Acci?n sugerida: ${item.accionSugerida}',
                   style: const TextStyle(height: 1.32),
                 ),
               ),
@@ -763,7 +925,7 @@ class _SeguimientoItemCard extends StatelessWidget {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Última observación: ${item.observacionDocente}',
+                    '?ltima observaci?n: ${item.observacionDocente}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontStyle: FontStyle.italic,
                     ),
@@ -772,13 +934,22 @@ class _SeguimientoItemCard extends StatelessWidget {
               ),
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-              child: Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton.icon(
-                  onPressed: onRegisterObservation,
-                  icon: const Icon(Icons.edit_note_outlined),
-                  label: const Text('Registrar observación'),
-                ),
+              child: Wrap(
+                spacing: 10,
+                runSpacing: 8,
+                alignment: WrapAlignment.end,
+                children: [
+                  OutlinedButton.icon(
+                    onPressed: onOpenHistory,
+                    icon: const Icon(Icons.history_outlined),
+                    label: const Text('Ver historial'),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: onRegisterObservation,
+                    icon: const Icon(Icons.edit_note_outlined),
+                    label: const Text('Registrar observaci?n'),
+                  ),
+                ],
               ),
             ),
           ],
@@ -818,8 +989,8 @@ class _SeguimientoItemCard extends StatelessWidget {
   String _estadoSemanalTexto(String value) {
     final normalized = value.toUpperCase();
 
-    if (normalized == 'SIN_EVALUACION') return 'Sin evaluación';
-    if (normalized == 'AL_DIA') return 'Al día';
+    if (normalized == 'SIN_EVALUACION') return 'Sin evaluaci?n';
+    if (normalized == 'AL_DIA') return 'Al d?a';
     if (normalized == 'VENCE_HOY') return 'Vence hoy';
     if (normalized == 'VENCIDA') return 'Vencida';
 
