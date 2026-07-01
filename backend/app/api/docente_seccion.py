@@ -110,3 +110,4 @@ def delete_docente_seccion(
         "status": "ok",
         "deleted_id": link_id,
     }
+

@@ -12,3 +12,4 @@ class TeacherSectionPublic(BaseModel):
     id: int
     usuario_id: int
     seccion_id: int
+

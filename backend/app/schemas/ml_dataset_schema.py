@@ -51,3 +51,4 @@ class MlDatasetItem(BaseModel):
 
     porcentaje_riesgo: Optional[float] = None
     semaforo: Optional[str] = None
+

@@ -1208,3 +1208,4 @@ def get_estudiante_by_pin(
         )
 
     return StudentPublic.model_validate(estudiante)
+

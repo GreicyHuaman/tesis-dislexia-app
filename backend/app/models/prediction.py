@@ -26,3 +26,4 @@ class PrediccionModelo(SQLModel, table=True):
     probabilidades_json: Optional[str] = Field(default=None)
 
     creado_en: datetime = Field(default_factory=datetime.utcnow)
+

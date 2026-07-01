@@ -116,3 +116,4 @@ def update_seccion(
     session.refresh(seccion)
 
     return SectionPublic.model_validate(seccion)
+

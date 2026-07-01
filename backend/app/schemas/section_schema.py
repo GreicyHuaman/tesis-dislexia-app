@@ -25,3 +25,4 @@ class SectionPublic(BaseModel):
     nombre: str
     turno: Optional[str] = None
     activo: bool
+

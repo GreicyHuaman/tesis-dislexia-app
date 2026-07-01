@@ -165,3 +165,4 @@ def update_admin_user(
     session.refresh(user)
 
     return AdminUserPublic.model_validate(user)
+

@@ -25,3 +25,4 @@ class JornadaPublic(BaseModel):
     prueba_fonologia_activa: bool
     created_at: datetime
     updated_at: datetime
+

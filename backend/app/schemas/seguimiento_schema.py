@@ -86,3 +86,4 @@ class SeguimientoHistorialResponse(BaseModel):
     seccion_id: Optional[int] = None
     actual: SeguimientoItem
     observaciones: list[SeguimientoPublic]
+

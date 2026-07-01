@@ -21,3 +21,4 @@ class StudentImportResponse(BaseModel):
     skipped_count: int
     error_count: int
     results: list[StudentImportRowResult] = Field(default_factory=list)
+
