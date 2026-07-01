@@ -119,7 +119,7 @@ class AdminService {
     _ensureSuccess(response);
 
     return StudentImportResponse.fromJson(
-      jsonDecode(response.body) as Map<String, dynamic>,
+      jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
     );
   }
 
@@ -315,7 +315,7 @@ class AdminService {
 
     _ensureSuccess(response);
 
-    final decoded = jsonDecode(response.body);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
 
     if (decoded is List) {
       return decoded;
@@ -338,7 +338,7 @@ class AdminService {
 
     _ensureSuccess(response);
 
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> _patchJson({
@@ -355,7 +355,7 @@ class AdminService {
 
     _ensureSuccess(response);
 
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    return jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
   }
 
   Map<String, dynamic> _withoutNulls(Map<String, dynamic> input) {
@@ -398,7 +398,7 @@ class AdminService {
     String message = 'Error HTTP ${response.statusCode}.';
 
     try {
-      final decoded = jsonDecode(response.body);
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (decoded is Map && decoded['detail'] != null) {
         message = decoded['detail'].toString();

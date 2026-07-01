@@ -37,7 +37,7 @@ class JornadaService {
     _ensureSuccess(response);
 
     return JornadaEvaluacion.fromJson(
-      jsonDecode(response.body) as Map<String, dynamic>,
+      jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
     );
   }
 
@@ -56,7 +56,7 @@ class JornadaService {
     _ensureSuccess(response);
 
     return JornadaEvaluacion.fromJson(
-      jsonDecode(response.body) as Map<String, dynamic>,
+      jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
     );
   }
 
@@ -75,7 +75,7 @@ class JornadaService {
     _ensureSuccess(response);
 
     return JornadaEvaluacion.fromJson(
-      jsonDecode(response.body) as Map<String, dynamic>,
+      jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
     );
   }
 
@@ -101,7 +101,7 @@ class JornadaService {
     String message = 'Error HTTP ${response.statusCode}.';
 
     try {
-      final decoded = jsonDecode(response.body);
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (decoded is Map && decoded['detail'] != null) {
         message = decoded['detail'].toString();

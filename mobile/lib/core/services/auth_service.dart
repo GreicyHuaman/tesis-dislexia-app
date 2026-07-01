@@ -73,7 +73,8 @@ class AuthService {
         );
       }
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded =
+          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       final user = AuthUser.fromJson(decoded);
 
       if (!user.hasAccessToken) {
@@ -128,7 +129,8 @@ class AuthService {
         return null;
       }
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded =
+          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
 
       return AuthUser.fromJson({...decoded, 'access_token': accessToken});
     } catch (_) {

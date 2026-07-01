@@ -29,6 +29,15 @@ app = FastAPI(
     description="Backend para app offline-first de tamizaje temprano de riesgo de dislexia.",
 )
 
+@app.middleware("http")
+async def add_utf8_charset_for_json(request, call_next):
+    response = await call_next(request)
+    content_type = response.headers.get("content-type", "")
+    if content_type.startswith("application/json") and "charset" not in content_type.lower():
+        response.headers["content-type"] = "application/json; charset=utf-8"
+    return response
+
+
 
 app.add_middleware(
     CORSMiddleware,

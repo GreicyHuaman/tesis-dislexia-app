@@ -108,7 +108,8 @@ class StudentService {
         );
       }
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded =
+          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       final student = Student.fromJson(decoded);
 
       await LocalStudentCache.saveStudentByPin(pin: cleanPin, student: student);
@@ -189,7 +190,8 @@ class StudentService {
         );
       }
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded =
+          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       final student = Student.fromJson(decoded);
 
       await LocalStudentCache.saveStudentByPin(pin: cleanPin, student: student);
@@ -273,7 +275,7 @@ class StudentService {
         );
       }
 
-      final decoded = jsonDecode(response.body);
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
 
       if (decoded is! List) {
         return const StudentCacheRefreshResult(
@@ -383,7 +385,8 @@ class StudentService {
         );
       }
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded =
+          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       final token = decoded['access_token']?.toString();
 
       if (token == null || token.trim().isEmpty) {

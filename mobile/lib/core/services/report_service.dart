@@ -70,7 +70,8 @@ class ReportService {
       );
     }
 
-    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
 
     return ReportSummary.fromJson(decoded);
   }
@@ -96,7 +97,7 @@ class ReportService {
       );
     }
 
-    final decoded = jsonDecode(response.body);
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
 
     if (decoded is! List) {
       throw Exception('Formato inesperado de evaluaciones.');
@@ -136,7 +137,8 @@ class ReportService {
       );
     }
 
-    final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+    final decoded =
+        jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
 
     return StudentRiskProfile.fromJson(decoded);
   }

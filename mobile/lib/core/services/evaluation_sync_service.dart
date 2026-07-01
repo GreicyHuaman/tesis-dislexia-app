@@ -86,7 +86,8 @@ class EvaluationSyncService {
         );
       }
 
-      final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+      final decoded =
+          jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>;
       final syncedRaw = decoded['synced'];
       final sessionsByLocalId = <String, Map<String, dynamic>>{
         for (final session in sessions)
