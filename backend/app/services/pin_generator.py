@@ -65,3 +65,4 @@ def generate_unique_pin(existing_pins: set[str]) -> str:
         raise RuntimeError("No hay PINs disponibles con las reglas actuales.")
 
     return random.SystemRandom().choice(candidates)
+

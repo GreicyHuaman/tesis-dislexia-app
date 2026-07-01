@@ -51,3 +51,4 @@ class DetalleEvaluacion(SQLModel, table=True):
     # No reemplaza las columnas principales del diseño.
     stimulus_id: Optional[str] = Field(default=None)
     texto: Optional[str] = Field(default=None)
+

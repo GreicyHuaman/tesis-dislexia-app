@@ -21,3 +21,4 @@ class DocenteSeccion(SQLModel, table=True):
 
     usuario_id: int = Field(foreign_key="usuarios.id")
     seccion_id: int = Field(foreign_key="secciones.id")
+

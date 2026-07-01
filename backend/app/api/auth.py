@@ -100,3 +100,4 @@ def get_me(
     current_user: Usuario = Depends(get_current_user),
 ) -> CurrentUserPublic:
     return CurrentUserPublic.model_validate(current_user)
+

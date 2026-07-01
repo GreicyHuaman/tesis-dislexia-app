@@ -74,3 +74,4 @@ class StudentOfflineCacheItem(BaseModel):
     nivel_lectura: int = 1
     nivel_fonologia: int = 1
     activo: bool
+

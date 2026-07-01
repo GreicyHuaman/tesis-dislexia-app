@@ -33,3 +33,4 @@ class AdminUserPublic(BaseModel):
     rol: str
     grado_scope: Optional[int] = None
     activo: bool
+

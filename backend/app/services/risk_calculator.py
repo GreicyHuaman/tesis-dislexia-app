@@ -54,3 +54,4 @@ def calculate_risk_from_session(
         semaforo = "ROJO"
 
     return porcentaje_riesgo, semaforo
+

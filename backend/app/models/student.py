@@ -30,3 +30,4 @@ class Estudiante(SQLModel, table=True):
     nivel_fonologia: int = Field(default=1)
 
     activo: bool = Field(default=True)
+

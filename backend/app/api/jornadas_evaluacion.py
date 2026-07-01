@@ -296,3 +296,4 @@ def cerrar_jornada(
     session.refresh(jornada)
 
     return JornadaPublic.model_validate(jornada)
+

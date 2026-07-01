@@ -70,3 +70,4 @@ class StudentRiskProfileResponse(BaseModel):
     ultima_fecha_general: Optional[datetime] = None
 
     pruebas: list[StudentTestProfile]
+

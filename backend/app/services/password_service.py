@@ -64,3 +64,4 @@ def _is_legacy_sha256_hash(value: str) -> bool:
         return True
     except ValueError:
         return False
+

@@ -64,3 +64,4 @@ class EvaluationSyncResponse(BaseModel):
     evaluations_inserted: int
     details_inserted: int
     synced: List[SyncedEvaluationOut]
+

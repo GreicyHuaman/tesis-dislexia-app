@@ -617,3 +617,4 @@ def update_seguimiento(
     session.refresh(seguimiento)
 
     return SeguimientoPublic.model_validate(seguimiento)
+

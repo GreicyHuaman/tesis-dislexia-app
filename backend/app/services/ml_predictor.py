@@ -386,3 +386,4 @@ def get_model_status() -> dict[str, Any]:
         "label_mapping": bundle.get("label_mapping", {}),
         "model_version": bundle.get("model_version"),
     }
+

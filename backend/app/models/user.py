@@ -19,3 +19,4 @@ class Usuario(SQLModel, table=True):
     grado_scope: Optional[int] = Field(default=None)
 
     activo: bool = Field(default=True)
+

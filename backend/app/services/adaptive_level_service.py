@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+﻿from dataclasses import dataclass
 
 from sqlmodel import Session, select
 
@@ -158,3 +158,4 @@ def _build_change_label(
         return "BAJA"
 
     return "MANTIENE"
+

@@ -168,3 +168,4 @@ def predict_risk_with_ml(feature_vector: dict[str, Any]) -> dict[str, Any]:
         "modelo_version": "v1.0-synthetic-160",
         "fuente_prediccion": "ML_RANDOM_FOREST",
     }
+

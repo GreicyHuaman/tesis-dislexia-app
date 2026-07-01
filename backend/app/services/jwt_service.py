@@ -68,3 +68,4 @@ def decode_access_token(token: str) -> dict[str, Any]:
         raise JwtDecodeError("Token expirado.") from exc
     except jwt.InvalidTokenError as exc:
         raise JwtDecodeError("Token invalido.") from exc
+
