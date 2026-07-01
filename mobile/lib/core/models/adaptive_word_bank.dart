@@ -57,8 +57,7 @@ class AdaptiveWordBankSelector {
     final selected = <T>[];
 
     for (final entry in distribution.entries) {
-      final source = List<T>.from(grouped[entry.key] ?? <T>[])
-        ..shuffle(random);
+      final source = List<T>.from(grouped[entry.key] ?? <T>[])..shuffle(random);
 
       if (source.length < entry.value) {
         throw StateError(

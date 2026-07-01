@@ -144,9 +144,7 @@ class EvaluationSyncService {
         lastSyncedItem?['nivel_actualizado'],
       );
       final nivelLectura = _asNullableInt(lastSyncedItem?['nivel_lectura']);
-      final nivelFonologia = _asNullableInt(
-        lastSyncedItem?['nivel_fonologia'],
-      );
+      final nivelFonologia = _asNullableInt(lastSyncedItem?['nivel_fonologia']);
       final cambioNivel = lastSyncedItem?['cambio_nivel']?.toString();
 
       final riskText = porcentajeRiesgo == null || semaforo == null
