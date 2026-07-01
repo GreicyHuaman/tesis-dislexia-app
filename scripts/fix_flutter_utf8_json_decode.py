@@ -18,8 +18,8 @@ patterns = [
 changed = []
 
 for path in mobile_lib.rglob("*.dart"):
-    text = path.read_text(encoding="utf-8")
-    original = text
+    original = path.read_text(encoding="utf-8")
+    text = original
 
     for pattern, replacement in patterns:
         text = pattern.sub(replacement, text)
@@ -31,7 +31,7 @@ for path in mobile_lib.rglob("*.dart"):
         path.write_text(text, encoding="utf-8")
         changed.append(path)
 
-print("Archivos Flutter modificados:")
+print("Archivos modificados:")
 for path in changed:
     print(path.relative_to(ROOT))
 
