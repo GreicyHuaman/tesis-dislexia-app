@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../../core/models/adaptive_word_bank.dart';
 import '../../../core/models/local_evaluation_detail.dart';
 import '../../../core/models/stimulus.dart';
 import '../../../core/repositories/local_evaluation_storage.dart';
@@ -13,11 +14,13 @@ import '../../auth/screens/pin_login_screen.dart';
 class LecturaAssessmentScreen extends StatefulWidget {
   final int estudianteId;
   final String studentDisplayName;
+  final int nivelLectura;
 
   const LecturaAssessmentScreen({
     super.key,
     required this.estudianteId,
     required this.studentDisplayName,
+    required this.nivelLectura,
   });
 
   @override
@@ -52,10 +55,14 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
   int _currentIndex = 0;
   int _tapsErroneosCurrent = 0;
   int _pendingLocalSessions = 0;
+  late int _currentAdaptiveLevel;
 
   @override
   void initState() {
     super.initState();
+    _currentAdaptiveLevel = AdaptiveWordBankSelector.clampLevel(
+      widget.nivelLectura,
+    );
     _loadStimuli();
   }
 
@@ -73,10 +80,14 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
           .where((stimulus) => stimulus.texto.trim().isNotEmpty)
           .toList();
 
-      validStimuli.shuffle(_random);
-
-      final sessionSize = min(10, validStimuli.length);
-      final sessionStimuli = validStimuli.take(sessionSize).toList();
+      final selection = AdaptiveWordBankSelector.select<Stimulus>(
+        items: validStimuli,
+        level: _currentAdaptiveLevel,
+        difficultyOf: (stimulus) => stimulus.complejidadEstimulo,
+        random: _random,
+      );
+      final sessionStimuli = selection.items;
+      final metadata = selection.metadata;
 
       String? sessionId;
 
@@ -85,6 +96,11 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
           tipoPrueba: 'LECTURA',
           totalItems: sessionStimuli.length,
           estudianteId: widget.estudianteId,
+          nivelDificultadAplicado: metadata.nivelDificultadAplicado,
+          totalBaja: metadata.totalBaja,
+          totalMedia: metadata.totalMedia,
+          totalAlta: metadata.totalAlta,
+          versionBancoPalabras: metadata.versionBancoPalabras,
         );
       }
 
@@ -265,9 +281,14 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
   }
 
   Future<void> _restartSession() async {
-    final shuffled = List<Stimulus>.from(_allStimuli)..shuffle(_random);
-    final sessionSize = min(10, shuffled.length);
-    final sessionStimuli = shuffled.take(sessionSize).toList();
+    final selection = AdaptiveWordBankSelector.select<Stimulus>(
+      items: _allStimuli,
+      level: _currentAdaptiveLevel,
+      difficultyOf: (stimulus) => stimulus.complejidadEstimulo,
+      random: _random,
+    );
+    final sessionStimuli = selection.items;
+    final metadata = selection.metadata;
 
     String? sessionId;
 
@@ -276,6 +297,11 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
         tipoPrueba: 'LECTURA',
         totalItems: sessionStimuli.length,
         estudianteId: widget.estudianteId,
+        nivelDificultadAplicado: metadata.nivelDificultadAplicado,
+        totalBaja: metadata.totalBaja,
+        totalMedia: metadata.totalMedia,
+        totalAlta: metadata.totalAlta,
+        versionBancoPalabras: metadata.versionBancoPalabras,
       );
     }
 
@@ -321,6 +347,12 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
       if (result.success && result.porcentajeRiesgo != null) {
         _lastPorcentajeRiesgo = result.porcentajeRiesgo;
         _lastSemaforo = result.semaforo;
+      }
+
+      if (result.success && result.nivelLectura != null) {
+        _currentAdaptiveLevel = AdaptiveWordBankSelector.clampLevel(
+          result.nivelLectura!,
+        );
       }
     });
   }

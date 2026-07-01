@@ -8,11 +8,15 @@ import '../../lectura/screens/lectura_assessment_screen.dart';
 class TestSelectionScreen extends StatelessWidget {
   final int estudianteId;
   final String studentDisplayName;
+  final int nivelLectura;
+  final int nivelFonologia;
 
   const TestSelectionScreen({
     super.key,
     required this.estudianteId,
     required this.studentDisplayName,
+    required this.nivelLectura,
+    required this.nivelFonologia,
   });
 
   void _changeStudent(BuildContext context) {
@@ -28,6 +32,7 @@ class TestSelectionScreen extends StatelessWidget {
         builder: (_) => LecturaAssessmentScreen(
           estudianteId: estudianteId,
           studentDisplayName: studentDisplayName,
+          nivelLectura: nivelLectura,
         ),
       ),
     );
@@ -39,6 +44,7 @@ class TestSelectionScreen extends StatelessWidget {
         builder: (_) => FonologiaAssessmentScreen(
           estudianteId: estudianteId,
           studentDisplayName: studentDisplayName,
+          nivelFonologia: nivelFonologia,
         ),
       ),
     );

@@ -28,6 +28,11 @@ class LocalEvaluationStorage {
     required String tipoPrueba,
     required int totalItems,
     int? estudianteId,
+    int? nivelDificultadAplicado,
+    int totalBaja = 0,
+    int totalMedia = 0,
+    int totalAlta = 0,
+    String? versionBancoPalabras,
   }) async {
     final sessionId = generateId();
     final now = DateTime.now().toUtc().toIso8601String();
@@ -42,6 +47,11 @@ class LocalEvaluationStorage {
       'aciertos_primer_intento': 0,
       'taps_erroneos_totales': 0,
       'tiempo_promedio_ms': 0,
+      'nivel_dificultad_aplicado': nivelDificultadAplicado,
+      'total_baja': totalBaja,
+      'total_media': totalMedia,
+      'total_alta': totalAlta,
+      'version_banco_palabras': versionBancoPalabras,
       'sync_status': 'PENDING',
       'created_at': now,
       'updated_at': now,

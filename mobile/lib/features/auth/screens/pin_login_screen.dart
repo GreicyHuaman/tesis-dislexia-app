@@ -223,6 +223,8 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
           builder: (_) => TestSelectionScreen(
             estudianteId: student.id,
             studentDisplayName: studentDisplayName,
+            nivelLectura: student.nivelLectura,
+            nivelFonologia: student.nivelFonologia,
           ),
         ),
       );

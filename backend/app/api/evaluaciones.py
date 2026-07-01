@@ -20,11 +20,58 @@ from app.services.ml_predictor import (
 )
 from app.services.risk_calculator import calculate_risk_from_session
 from app.services.ml_risk_predictor import predict_risk_with_ml
+from app.services.adaptive_level_service import update_student_level_for_test_type
 
 router = APIRouter(
     prefix="/api/v1/evaluaciones",
     tags=["evaluaciones"],
 )
+
+
+def _count_complexity_details(local_details) -> dict[str, int]:
+    totals = {
+        "BAJA": 0,
+        "MEDIA": 0,
+        "ALTA": 0,
+    }
+
+    for detail in local_details:
+        complexity = (detail.complejidad_estimulo or "").strip().upper()
+
+        if complexity in totals:
+            totals[complexity] += 1
+
+    return totals
+
+
+def _non_negative(value: int | None) -> int:
+    if value is None:
+        return 0
+
+    return max(0, int(value))
+
+
+def _resolve_adaptive_distribution(
+    *,
+    local_session,
+    local_details,
+) -> tuple[int, int, int]:
+    supplied_total = (
+        _non_negative(local_session.total_baja)
+        + _non_negative(local_session.total_media)
+        + _non_negative(local_session.total_alta)
+    )
+
+    if supplied_total > 0:
+        return (
+            _non_negative(local_session.total_baja),
+            _non_negative(local_session.total_media),
+            _non_negative(local_session.total_alta),
+        )
+
+    counted = _count_complexity_details(local_details)
+
+    return counted["BAJA"], counted["MEDIA"], counted["ALTA"]
 
 
 @router.post("/sync", response_model=EvaluationSyncResponse)
@@ -94,6 +141,11 @@ def sync_evaluaciones(
                 probabilidades = ml_prediction.probabilidades
                 features = ml_prediction.features
 
+        total_baja, total_media, total_alta = _resolve_adaptive_distribution(
+            local_session=local_session,
+            local_details=local_details,
+        )
+
         evaluacion = Evaluacion(
             estudiante_id=local_session.estudiante_id,
             fecha_evaluacion=fecha_evaluacion,
@@ -104,6 +156,11 @@ def sync_evaluaciones(
             aciertos_primer_intento=local_session.aciertos_primer_intento,
             taps_erroneos_totales=local_session.taps_erroneos_totales,
             tiempo_promedio_ms=local_session.tiempo_promedio_ms,
+            nivel_dificultad_aplicado=local_session.nivel_dificultad_aplicado,
+            total_baja=total_baja,
+            total_media=total_media,
+            total_alta=total_alta,
+            version_banco_palabras=local_session.version_banco_palabras,
         )
 
         session.add(evaluacion)
@@ -133,6 +190,12 @@ def sync_evaluaciones(
         session.add(prediccion)
         session.commit()
 
+        level_result = update_student_level_for_test_type(
+            session=session,
+            estudiante_id=local_session.estudiante_id,
+            tipo_prueba=local_session.tipo_prueba,
+        )
+
         inserted_for_session = 0
 
         for local_detail in local_details:
@@ -156,6 +219,17 @@ def sync_evaluaciones(
 
         total_details_inserted += inserted_for_session
 
+        nivel_actualizado = None
+        nivel_lectura = None
+        nivel_fonologia = None
+        cambio_nivel = None
+
+        if level_result is not None:
+            nivel_actualizado = level_result.nivel_actualizado
+            nivel_lectura = level_result.nivel_lectura
+            nivel_fonologia = level_result.nivel_fonologia
+            cambio_nivel = level_result.cambio_nivel
+
         synced_items.append(
             SyncedEvaluationOut(
                 local_session_id=local_session.local_session_id,
@@ -165,6 +239,10 @@ def sync_evaluaciones(
                 semaforo=semaforo,
                 fuente_prediccion=fuente_prediccion,
                 modelo_nombre=modelo_nombre,
+                nivel_actualizado=nivel_actualizado,
+                nivel_lectura=nivel_lectura,
+                nivel_fonologia=nivel_fonologia,
+                cambio_nivel=cambio_nivel,
             )
         )
 

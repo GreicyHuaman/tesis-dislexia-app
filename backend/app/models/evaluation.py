@@ -25,6 +25,12 @@ class Evaluacion(SQLModel, table=True):
     taps_erroneos_totales: Optional[int] = Field(default=None)
     tiempo_promedio_ms: Optional[int] = Field(default=None)
 
+    nivel_dificultad_aplicado: Optional[int] = Field(default=None)
+    total_baja: int = Field(default=0)
+    total_media: int = Field(default=0)
+    total_alta: int = Field(default=0)
+    version_banco_palabras: Optional[str] = Field(default=None)
+
 
 class DetalleEvaluacion(SQLModel, table=True):
     __tablename__ = "detalles_evaluacion"

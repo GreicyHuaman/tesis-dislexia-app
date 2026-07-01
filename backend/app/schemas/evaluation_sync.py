@@ -15,6 +15,11 @@ class SyncSessionIn(BaseModel):
     taps_erroneos_totales: int = 0
     tiempo_promedio_ms: int = 0
     sync_status: Optional[str] = None
+    nivel_dificultad_aplicado: Optional[int] = None
+    total_baja: int = 0
+    total_media: int = 0
+    total_alta: int = 0
+    version_banco_palabras: Optional[str] = None
 
 
 class SyncDetailIn(BaseModel):
@@ -46,6 +51,10 @@ class SyncedEvaluationOut(BaseModel):
     semaforo: Optional[str] = None
     fuente_prediccion: Optional[str] = None
     modelo_nombre: Optional[str] = None
+    nivel_actualizado: Optional[int] = None
+    nivel_lectura: Optional[int] = None
+    nivel_fonologia: Optional[int] = None
+    cambio_nivel: Optional[str] = None
 
 
 class EvaluationSyncResponse(BaseModel):

@@ -3,6 +3,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 
+import '../../../core/models/adaptive_word_bank.dart';
 import '../../../core/models/local_evaluation_detail.dart';
 import '../../../core/models/phonology_stimulus.dart';
 import '../../../core/repositories/local_evaluation_storage.dart';
@@ -13,11 +14,13 @@ import '../../auth/screens/pin_login_screen.dart';
 class FonologiaAssessmentScreen extends StatefulWidget {
   final int estudianteId;
   final String studentDisplayName;
+  final int nivelFonologia;
 
   const FonologiaAssessmentScreen({
     super.key,
     required this.estudianteId,
     required this.studentDisplayName,
+    required this.nivelFonologia,
   });
 
   @override
@@ -53,10 +56,14 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
   int _currentIndex = 0;
   int _erroresCurrent = 0;
   int _pendingLocalSessions = 0;
+  late int _currentAdaptiveLevel;
 
   @override
   void initState() {
     super.initState();
+    _currentAdaptiveLevel = AdaptiveWordBankSelector.clampLevel(
+      widget.nivelFonologia,
+    );
     _loadStimuli();
   }
 
@@ -66,39 +73,15 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
     super.dispose();
   }
 
-  List<PhonologyStimulus> _buildSessionStimuli(List<PhonologyStimulus> source) {
-    final realItems =
-        source
-            .where((stimulus) => stimulus.tipoEstimulo == 'PALABRA_REAL')
-            .toList()
-          ..shuffle(_random);
-
-    final pseudoItems =
-        source
-            .where((stimulus) => stimulus.tipoEstimulo == 'PSEUDOPALABRA')
-            .toList()
-          ..shuffle(_random);
-
-    final selected = <PhonologyStimulus>[];
-
-    selected.addAll(realItems.take(7));
-    selected.addAll(pseudoItems.take(3));
-
-    if (selected.length < 10) {
-      final selectedIds = selected.map((stimulus) => stimulus.id).toSet();
-
-      final fallbackItems =
-          source
-              .where((stimulus) => !selectedIds.contains(stimulus.id))
-              .toList()
-            ..shuffle(_random);
-
-      selected.addAll(fallbackItems.take(10 - selected.length));
-    }
-
-    selected.shuffle(_random);
-
-    return selected.take(10).toList();
+  AdaptiveSelection<PhonologyStimulus> _buildSessionSelection(
+    List<PhonologyStimulus> source,
+  ) {
+    return AdaptiveWordBankSelector.select<PhonologyStimulus>(
+      items: source,
+      level: _currentAdaptiveLevel,
+      difficultyOf: (stimulus) => stimulus.complejidadEstimulo,
+      random: _random,
+    );
   }
 
   Future<void> _loadStimuli() async {
@@ -114,7 +97,9 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
           )
           .toList();
 
-      final sessionStimuli = _buildSessionStimuli(validStimuli);
+      final selection = _buildSessionSelection(validStimuli);
+      final sessionStimuli = selection.items;
+      final metadata = selection.metadata;
 
       String? sessionId;
 
@@ -123,6 +108,11 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
           tipoPrueba: 'FONOLOGIA',
           totalItems: sessionStimuli.length,
           estudianteId: widget.estudianteId,
+          nivelDificultadAplicado: metadata.nivelDificultadAplicado,
+          totalBaja: metadata.totalBaja,
+          totalMedia: metadata.totalMedia,
+          totalAlta: metadata.totalAlta,
+          versionBancoPalabras: metadata.versionBancoPalabras,
         );
       }
 
@@ -287,7 +277,9 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
   }
 
   Future<void> _restartSession() async {
-    final sessionStimuli = _buildSessionStimuli(_allStimuli);
+    final selection = _buildSessionSelection(_allStimuli);
+    final sessionStimuli = selection.items;
+    final metadata = selection.metadata;
 
     String? sessionId;
 
@@ -296,6 +288,11 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
         tipoPrueba: 'FONOLOGIA',
         totalItems: sessionStimuli.length,
         estudianteId: widget.estudianteId,
+        nivelDificultadAplicado: metadata.nivelDificultadAplicado,
+        totalBaja: metadata.totalBaja,
+        totalMedia: metadata.totalMedia,
+        totalAlta: metadata.totalAlta,
+        versionBancoPalabras: metadata.versionBancoPalabras,
       );
     }
 
@@ -349,6 +346,12 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
       if (result.success && result.porcentajeRiesgo != null) {
         _lastPorcentajeRiesgo = result.porcentajeRiesgo;
         _lastSemaforo = result.semaforo;
+      }
+
+      if (result.success && result.nivelFonologia != null) {
+        _currentAdaptiveLevel = AdaptiveWordBankSelector.clampLevel(
+          result.nivelFonologia!,
+        );
       }
     });
   }

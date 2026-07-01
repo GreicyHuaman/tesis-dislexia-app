@@ -118,6 +118,34 @@ class LocalStudentCache {
     return student;
   }
 
+  static Future<void> updateStudentLevelsById({
+    required int studentId,
+    int? nivelLectura,
+    int? nivelFonologia,
+  }) async {
+    if (nivelLectura == null && nivelFonologia == null) {
+      return;
+    }
+
+    final now = DateTime.now().toUtc().toIso8601String();
+
+    for (final key in _studentsByPinBox.keys.toList()) {
+      final value = _studentsByPinBox.get(key);
+      final map = _asStringMap(value);
+
+      if (map.isEmpty || _asInt(map['id']) != studentId) {
+        continue;
+      }
+
+      await _studentsByPinBox.put(key, {
+        ...map,
+        'nivel_lectura': ?nivelLectura,
+        'nivel_fonologia': ?nivelFonologia,
+        'updated_at': now,
+      });
+    }
+  }
+
   static int countCachedStudents() {
     return _studentsByPinBox.length;
   }
@@ -136,5 +164,12 @@ class LocalStudentCache {
     }
 
     return {};
+  }
+
+  static int _asInt(dynamic value) {
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+
+    return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 }

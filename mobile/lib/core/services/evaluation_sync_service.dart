@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../repositories/local_evaluation_storage.dart';
+import '../repositories/local_student_cache.dart';
 
 class EvaluationSyncResult {
   final bool success;
@@ -12,6 +13,10 @@ class EvaluationSyncResult {
   final int detailsSynced;
   final double? porcentajeRiesgo;
   final String? semaforo;
+  final int? nivelActualizado;
+  final int? nivelLectura;
+  final int? nivelFonologia;
+  final String? cambioNivel;
 
   const EvaluationSyncResult({
     required this.success,
@@ -20,6 +25,10 @@ class EvaluationSyncResult {
     required this.detailsSynced,
     this.porcentajeRiesgo,
     this.semaforo,
+    this.nivelActualizado,
+    this.nivelLectura,
+    this.nivelFonologia,
+    this.cambioNivel,
   });
 }
 
@@ -79,6 +88,11 @@ class EvaluationSyncService {
 
       final decoded = jsonDecode(response.body) as Map<String, dynamic>;
       final syncedRaw = decoded['synced'];
+      final sessionsByLocalId = <String, Map<String, dynamic>>{
+        for (final session in sessions)
+          if (session['local_session_id'] != null)
+            session['local_session_id'].toString(): session,
+      };
 
       final syncedSessionIds = <String>[];
       Map<dynamic, dynamic>? lastSyncedItem;
@@ -92,6 +106,20 @@ class EvaluationSyncService {
 
             if (localSessionId != null && localSessionId.isNotEmpty) {
               syncedSessionIds.add(localSessionId);
+            }
+
+            final sourceSession = localSessionId == null
+                ? null
+                : sessionsByLocalId[localSessionId];
+
+            final studentId = _asNullableInt(sourceSession?['estudiante_id']);
+
+            if (studentId != null) {
+              await LocalStudentCache.updateStudentLevelsById(
+                studentId: studentId,
+                nivelLectura: _asNullableInt(item['nivel_lectura']),
+                nivelFonologia: _asNullableInt(item['nivel_fonologia']),
+              );
             }
           }
         }
@@ -112,6 +140,14 @@ class EvaluationSyncService {
 
       final porcentajeRiesgo = _asDouble(lastSyncedItem?['porcentaje_riesgo']);
       final semaforo = lastSyncedItem?['semaforo']?.toString();
+      final nivelActualizado = _asNullableInt(
+        lastSyncedItem?['nivel_actualizado'],
+      );
+      final nivelLectura = _asNullableInt(lastSyncedItem?['nivel_lectura']);
+      final nivelFonologia = _asNullableInt(
+        lastSyncedItem?['nivel_fonologia'],
+      );
+      final cambioNivel = lastSyncedItem?['cambio_nivel']?.toString();
 
       final riskText = porcentajeRiesgo == null || semaforo == null
           ? ''
@@ -125,6 +161,10 @@ class EvaluationSyncService {
         detailsSynced: detailsInserted,
         porcentajeRiesgo: porcentajeRiesgo,
         semaforo: semaforo,
+        nivelActualizado: nivelActualizado,
+        nivelLectura: nivelLectura,
+        nivelFonologia: nivelFonologia,
+        cambioNivel: cambioNivel,
       );
     } on TimeoutException {
       return const EvaluationSyncResult(
@@ -161,6 +201,14 @@ class EvaluationSyncService {
     if (value is num) return value.toInt();
 
     return int.tryParse(value?.toString() ?? '') ?? 0;
+  }
+
+  int? _asNullableInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is num) return value.toInt();
+
+    return int.tryParse(value.toString());
   }
 
   double? _asDouble(dynamic value) {
