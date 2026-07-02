@@ -1050,28 +1050,36 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       },
     );
 
-    nombresController.dispose();
-    apellidosController.dispose();
-    fechaNacimientoController.dispose();
-    fechaConsentimientoController.dispose();
-
     if (saved != true) {
+      nombresController.dispose();
+      apellidosController.dispose();
+      fechaNacimientoController.dispose();
+      fechaConsentimientoController.dispose();
       return;
     }
 
     final nombres = nombresController.text.trim();
     final apellidos = apellidosController.text.trim();
 
+    final fechaNacimientoTexto = fechaNacimientoController.text;
+    final fechaConsentimientoTexto = fechaConsentimientoController.text;
+
+    nombresController.dispose();
+    apellidosController.dispose();
+    fechaNacimientoController.dispose();
+    fechaConsentimientoController.dispose();
+
     String? fechaNacimiento;
     String? fechaConsentimiento;
 
     try {
       fechaNacimiento = _normalizeDateInput(
-        fechaNacimientoController.text,
+        fechaNacimientoTexto,
         fieldLabel: 'Fecha de nacimiento',
       );
+
       fechaConsentimiento = _normalizeDateInput(
-        fechaConsentimientoController.text,
+        fechaConsentimientoTexto,
         fieldLabel: 'Fecha de consentimiento',
       );
 
