@@ -116,7 +116,7 @@ class AcademicUser {
 
     if (normalized == 'MAESTRO') return 'Maestro';
     if (normalized == 'PSICOLOGA') return 'Psicologa';
-    if (normalized == 'DIRECTORA') return 'Directora';
+    if (normalized == 'DIRECTORA') return 'Director';
 
     return rol;
   }

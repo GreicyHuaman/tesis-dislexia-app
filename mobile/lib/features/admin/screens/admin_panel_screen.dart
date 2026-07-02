@@ -1298,7 +1298,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         ),
                         DropdownMenuItem(
                           value: 'DIRECTORA',
-                          child: Text('Directora'),
+                          child: Text('Director'),
                         ),
                       ],
                       onChanged: (value) {

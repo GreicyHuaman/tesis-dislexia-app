@@ -46,7 +46,7 @@ class AuthUser {
 
     if (normalized == 'MAESTRO') return 'Maestro';
     if (normalized == 'PSICOLOGA') return 'Psicóloga';
-    if (normalized == 'DIRECTORA') return 'Directora';
+    if (normalized == 'DIRECTORA') return 'Director';
 
     return rol;
   }

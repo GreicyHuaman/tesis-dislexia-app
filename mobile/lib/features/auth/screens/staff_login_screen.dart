@@ -160,7 +160,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
   String _roleLabel(AuthUser user) {
     final role = user.rol.toUpperCase();
 
-    if (role == 'DIRECTORA') return 'Directora';
+    if (role == 'DIRECTORA') return 'Director';
     if (role == 'MAESTRO') return 'Maestro';
     if (role == 'PSICOLOGA') return 'Psicología';
 
@@ -430,7 +430,7 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                'Directora: administración completa. Docente: modo aula y estudiantes asignados. Psicología: reportes y seguimiento.',
+                'Director: administración completa. Docente: modo aula y estudiantes asignados. Psicología: reportes y seguimiento.',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: theme.colorScheme.onSurfaceVariant,
                   height: 1.35,
