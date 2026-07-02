@@ -57,7 +57,7 @@ class TestSelectionScreen extends StatelessWidget {
         title: const Text('Seleccionar prueba'),
         actions: [
           IconButton(
-            tooltip: 'Cambiar estudiante',
+            tooltip: 'Cerrar sesión',
             onPressed: () => _changeStudent(context),
             icon: const Icon(Icons.logout),
           ),
@@ -81,7 +81,7 @@ class TestSelectionScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Elige la prueba que realizarÃ¡ el estudiante.',
+                    'Elige la prueba que realizará el estudiante.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -96,9 +96,9 @@ class TestSelectionScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   _TestOptionCard(
-                    title: 'Conciencia fonolÃ³gica',
+                    title: 'Conciencia fonológica',
                     subtitle:
-                        'IdentificaciÃ³n de sÃ­laba inicial mediante arrastrar y soltar.',
+                        'Identificación de sílaba inicial mediante arrastrar y soltar.',
                     icon: Icons.drag_indicator,
                     onTap: () => _openFonologia(context),
                   ),
@@ -106,7 +106,7 @@ class TestSelectionScreen extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: () => _changeStudent(context),
                     icon: const Icon(Icons.logout),
-                    label: const Text('Cambiar estudiante'),
+                    label: const Text('Cerrar sesión'),
                   ),
                 ],
               ),

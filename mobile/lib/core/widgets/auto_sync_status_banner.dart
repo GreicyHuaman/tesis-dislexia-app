@@ -13,6 +13,10 @@ class AutoSyncStatusBanner extends StatelessWidget {
         final color = _colorForPhase(snapshot.phase);
         final icon = _iconForPhase(snapshot.phase);
 
+        if (snapshot.pendingSessions <= 0) {
+          return const SizedBox.shrink();
+        }
+
         return Card(
           elevation: 1,
           child: ListTile(

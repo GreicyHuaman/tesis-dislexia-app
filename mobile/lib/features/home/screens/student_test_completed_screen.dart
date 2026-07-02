@@ -17,7 +17,7 @@ class StudentTestCompletedScreen extends StatelessWidget {
     final normalizedTestName = testName.trim().toLowerCase();
 
     final title = normalizedTestName.contains('fono')
-        ? 'Test de fonologÃ­a completado'
+        ? 'Test de fonología completado'
         : 'Test de lectura completado';
 
     return Scaffold(
@@ -56,7 +56,7 @@ class StudentTestCompletedScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Tu docente podrÃ¡ revisar el avance desde su panel.',
+                    'Tu docente podrá revisar el avance desde su panel.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 16),
                   ),
