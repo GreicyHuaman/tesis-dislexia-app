@@ -26,7 +26,7 @@ def calculate_risk_from_session(
 ) -> tuple[float, str]:
     """
     Cálculo heurístico provisional.
-    No representa diagnóstico clínico.
+    No constituye diagnóstico clínico.
     Luego será reemplazado por Random Forest / XGBoost.
     """
     if total_items <= 0:

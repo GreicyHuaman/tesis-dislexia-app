@@ -370,7 +370,7 @@ class AdminService {
     final token = authToken?.trim();
 
     if (token == null || token.isEmpty) {
-      throw Exception('No existe token de sesion academica.');
+      throw Exception('No existe token de sesión académica.');
     }
 
     return {'Accept': 'application/json', 'Authorization': 'Bearer $token'};
@@ -380,7 +380,7 @@ class AdminService {
     final token = authToken?.trim();
 
     if (token == null || token.isEmpty) {
-      throw Exception('No existe token de sesion academica.');
+      throw Exception('No existe token de sesión académica.');
     }
 
     return {
@@ -408,7 +408,7 @@ class AdminService {
     }
 
     if (response.statusCode == 401 || response.statusCode == 403) {
-      throw Exception('Sesion no autorizada. $message');
+      throw Exception('Sesión no autorizada. $message');
     }
 
     throw Exception(message);

@@ -257,7 +257,7 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
       '  ',
     ).convert(_answers.map((answer) => answer.toJson()).toList());
 
-    debugPrint('TELEMETRIA LOCAL DE FONOLOGIA - SESION ACTUAL');
+    debugPrint('TELEMETRÍA LOCAL DE FONOLOGÍA - SESIÓN ACTUAL');
     debugPrint(telemetryJson);
 
     debugPrint('DATOS HIVE PENDIENTES DE SINCRONIZACION');
@@ -585,7 +585,7 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
                 label: 'Estudiante',
                 value: widget.studentDisplayName,
               ),
-              _SummaryTile(label: 'Tipo de prueba', value: 'FONOLOGIA'),
+              _SummaryTile(label: 'Tipo de prueba', value: 'FONOLOGÍA'),
               _SummaryTile(
                 label: 'Total de ítems',
                 value: '${_answers.length}',
@@ -756,7 +756,7 @@ class _RiskResultCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Semáforo: $normalized',
+              'Semáforo de riesgo: $normalized',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 22,
@@ -766,7 +766,7 @@ class _RiskResultCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             const Text(
-              'Este resultado es un indicador de riesgo para tamizaje educativo. No representa un diagnóstico clínico.',
+              'Este resultado es una estimación de riesgo para tamizaje educativo y no constituye diagnóstico clínico.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14),
             ),

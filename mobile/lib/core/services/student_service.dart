@@ -170,7 +170,7 @@ class StudentService {
           success: false,
           student: null,
           message:
-              'No hay jornada activa para esta seccion. Pide ayuda a tu docente.',
+              'No hay jornada activa para esta sección. Pide ayuda a tu docente.',
         );
       }
 
@@ -178,7 +178,7 @@ class StudentService {
         return const StudentLookupResult(
           success: false,
           student: null,
-          message: 'No se encontro estudiante activo para esta seccion y PIN.',
+          message: 'No se encontró estudiante activo para esta sección y PIN.',
         );
       }
 
@@ -445,7 +445,7 @@ class StudentService {
         success: false,
         student: null,
         message:
-            'No hay conexion y este PIN no existe en la cache local de esta seccion. Primero actualiza el padron offline.',
+            'No hay conexión y este PIN no existe en la caché local de esta sección. Primero actualiza el padrón offline.',
         fromCache: true,
       );
     }

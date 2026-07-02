@@ -14,7 +14,7 @@ class PhonologyRepository {
 
     if (decoded is! List) {
       throw Exception(
-        'El archivo fonologia_stimuli.json no contiene una lista.',
+        'El archivo fonologia_stimuli.json no contiene una lista válida.',
       );
     }
 

@@ -30,9 +30,9 @@ class StudentPdfReportBuilder {
 
     final document = pw.Document(
       title: 'Reporte individual de riesgo de dislexia',
-      author: 'Sistema de tamizaje de riesgo de dislexia',
+      author: 'Sistema de tamizaje educativo de riesgo de dislexia',
       subject: 'Perfil individual de riesgo',
-      creator: 'Tamizaje de riesgo de dislexia',
+      creator: 'Tamizaje educativo de riesgo de dislexia',
     );
 
     document.addPage(
@@ -44,7 +44,7 @@ class StudentPdfReportBuilder {
             alignment: pw.Alignment.centerRight,
             margin: const pw.EdgeInsets.only(top: 10),
             child: pw.Text(
-              'Pagina ${context.pageNumber} de ${context.pagesCount}',
+              'Página ${context.pageNumber} de ${context.pagesCount}',
               style: const pw.TextStyle(fontSize: 8),
             ),
           );
@@ -89,7 +89,7 @@ class StudentPdfReportBuilder {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          'Reporte individual de tamizaje de riesgo de dislexia',
+          'Reporte individual de tamizaje educativo de riesgo de dislexia',
           style: pw.TextStyle(fontSize: 18, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 8),
@@ -102,7 +102,7 @@ class StudentPdfReportBuilder {
           style: const pw.TextStyle(fontSize: 10),
         ),
         pw.Text(
-          'Fecha de generacion: ${_formatDateTime(generatedAt)}',
+          'Fecha de generación: ${_formatDateTime(generatedAt)}',
           style: const pw.TextStyle(fontSize: 10),
         ),
       ],
@@ -118,8 +118,9 @@ class StudentPdfReportBuilder {
         color: PdfColors.grey100,
       ),
       child: pw.Text(
-        'Nota: Este reporte corresponde a un tamizaje temprano de riesgo. '
-        'No constituye diagnostico clinico de dislexia. Los resultados deben '
+        'Nota: Este reporte corresponde a un tamizaje educativo de riesgo. '
+        'Presenta una estimación de riesgo; no constituye diagnóstico clínico '
+        'de dislexia. Los resultados deben '
         'ser interpretados por personal especializado y complementados con '
         'evaluaciones profesionales cuando corresponda.',
         style: const pw.TextStyle(fontSize: 9),
@@ -159,12 +160,12 @@ class StudentPdfReportBuilder {
 
     final rows = [
       ['Indicador', 'Valor'],
-      ['Seccion', seccionId.toString()],
+      ['Sección', seccionId.toString()],
       ['Total de evaluaciones', totalEvaluaciones.toString()],
       ['Promedio general de riesgo', _formatPercent(promedioGeneral)],
-      ['Ultimo riesgo registrado', _formatPercent(ultimoRiesgo)],
-      ['Ultimo semaforo', ultimoSemaforo.toString()],
-      ['Ultima fecha de evaluacion', _formatDateValue(ultimaFecha)],
+      ['Último riesgo registrado', _formatPercent(ultimoRiesgo)],
+      ['Último semáforo', ultimoSemaforo.toString()],
+      ['Última fecha de evaluación', _formatDateValue(ultimaFecha)],
     ];
 
     return pw.Column(
@@ -295,7 +296,7 @@ class StudentPdfReportBuilder {
             'Eval.',
             'Prom. riesgo',
             'Ult. riesgo',
-            'Semaforo',
+            'Semáforo',
             'Ult. fecha',
             'Prom. tiempo',
             'Prom. errores',
@@ -329,16 +330,16 @@ class StudentPdfReportBuilder {
         crossAxisAlignment: pw.CrossAxisAlignment.start,
         children: [
           pw.Text(
-            'Interpretacion sugerida',
+            'Interpretación sugerida',
             style: pw.TextStyle(fontSize: 11, fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 5),
           pw.Text(
-            'VERDE indica bajo riesgo estimado en la evaluacion registrada. '
-            'AMARILLO indica riesgo intermedio que puede requerir seguimiento. '
-            'ROJO indica mayor riesgo estimado y sugiere derivacion o revision '
-            'por personal especializado. Esta interpretacion es orientativa y '
-            'debe complementarse con criterios pedagogicos y psicopedagogicos.',
+            'VERDE indica estimación de riesgo baja en la evaluación registrada. '
+            'AMARILLO indica riesgo intermedio que puede requerir seguimiento pedagógico. '
+            'ROJO indica mayor estimación de riesgo y sugiere derivación o revisión '
+            'por personal especializado. El semáforo de riesgo es orientativo y '
+            'no constituye diagnóstico clínico.',
             style: const pw.TextStyle(fontSize: 9),
           ),
         ],

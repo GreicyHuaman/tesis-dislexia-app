@@ -121,7 +121,7 @@ class SeguimientoService {
     final token = authToken?.trim();
 
     if (token == null || token.isEmpty) {
-      throw Exception('No existe token de sesion academica.');
+      throw Exception('No existe token de sesión académica.');
     }
 
     return {'Accept': 'application/json', 'Authorization': 'Bearer $token'};

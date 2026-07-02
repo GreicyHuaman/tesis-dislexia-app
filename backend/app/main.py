@@ -26,7 +26,7 @@ from app.models.user import Usuario  # noqa: F401
 app = FastAPI(
     title="API Cribado de Riesgo de Dislexia",
     version="0.1.0",
-    description="Backend para app offline-first de tamizaje temprano de riesgo de dislexia.",
+    description="Backend para app offline-first de tamizaje educativo de riesgo de dislexia.",
 )
 
 @app.middleware("http")

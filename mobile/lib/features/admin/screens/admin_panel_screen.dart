@@ -151,12 +151,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   String _sectionName(int? seccionId) {
-    if (seccionId == null) return 'Sin seccion';
+    if (seccionId == null) return 'Sin sección';
 
     final matches = _sections.where((section) => section.id == seccionId);
 
     if (matches.isEmpty) {
-      return 'Seccion $seccionId';
+      return 'Sección $seccionId';
     }
 
     return matches.first.displayName;
@@ -179,7 +179,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         appBar: AppBar(title: const Text('Panel del personal educativo')),
         body: const Center(
           child: Text(
-            'Este panel esta disponible para direccion o docentes.',
+            'Este panel está disponible para dirección o docentes.',
             textAlign: TextAlign.center,
           ),
         ),
@@ -192,7 +192,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             Tab(icon: Icon(Icons.school_outlined), text: 'Estudiantes'),
             Tab(icon: Icon(Icons.class_outlined), text: 'Secciones'),
             Tab(icon: Icon(Icons.people_alt_outlined), text: 'Usuarios'),
-            Tab(icon: Icon(Icons.link_outlined), text: 'Docente-seccion'),
+            Tab(icon: Icon(Icons.link_outlined), text: 'Docente-sección'),
           ]
         : const [
             Tab(icon: Icon(Icons.meeting_room_outlined), text: 'Modo aula'),
@@ -215,7 +215,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             IconButton(
               onPressed: _logoutStaffSession,
               icon: const Icon(Icons.logout_outlined),
-              tooltip: 'Cerrar sesi?n',
+              tooltip: 'Cerrar sesión',
             ),
           ],
           bottom: TabBar(isScrollable: true, tabs: tabs),
@@ -293,13 +293,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 ),
                 const SizedBox(height: 10),
                 const Text(
-                  'Activa una jornada semanal para que los estudiantes ingresen solo con su PIN dentro de la seccion seleccionada.',
+                  'Activa una jornada semanal para que los estudiantes ingresen solo con su PIN dentro de la sección seleccionada.',
                 ),
                 const SizedBox(height: 18),
                 DropdownButtonFormField<int>(
                   initialValue: selectedId,
                   decoration: const InputDecoration(
-                    labelText: 'Seccion',
+                    labelText: 'Sección',
                     border: OutlineInputBorder(),
                   ),
                   items: _activeSections
@@ -332,7 +332,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   const _InfoBox(
                     icon: Icons.event_busy_outlined,
                     text:
-                        'No se encontro jornada activa para la seccion seleccionada.',
+                        'No se encontró jornada activa para la sección seleccionada.',
                   ),
                 const SizedBox(height: 18),
                 Wrap(
@@ -418,9 +418,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             Expanded(
               child: Text(
                 'Jornada activa en backend.\n'
-                'Seccion: ${_sectionName(jornada.seccionId)}\n'
+                'Sección: ${_sectionName(jornada.seccionId)}\n'
                 'Lectura: ${jornada.pruebaLecturaActiva ? "activa" : "inactiva"} - '
-                'Fonologia: ${jornada.pruebaFonologiaActiva ? "activa" : "inactiva"}',
+                'Fonología: ${jornada.pruebaFonologiaActiva ? "activa" : "inactiva"}',
                 style: const TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
@@ -647,7 +647,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
 
   Widget _buildSectionsTab() {
     return _buildTabWithAction(
-      actionLabel: 'Nueva seccion',
+      actionLabel: 'Nueva sección',
       actionIcon: Icons.add_business_outlined,
       onAction: () => _showSectionDialog(),
       child: ListView.separated(
@@ -715,7 +715,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         .toList();
 
     return _buildTabWithAction(
-      actionLabel: 'Asignar seccion',
+      actionLabel: 'Asignar sección',
       actionIcon: Icons.add_link_outlined,
       onAction: teachers.isEmpty || _sections.isEmpty
           ? null
@@ -834,7 +834,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Resultado de importacion'),
+          title: const Text('Resultado de importación'),
           content: SizedBox(
             width: 520,
             child: SingleChildScrollView(
@@ -875,7 +875,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   if (result.errorCount == 0) ...[
                     const SizedBox(height: 14),
                     const Text(
-                      'Importacion completada. Los estudiantes con consentimiento firmado ya tienen PIN generado automaticamente.',
+                      'Importación completada. Los estudiantes con consentimiento firmado ya tienen PIN generado automáticamente.',
                     ),
                   ],
                 ],
@@ -966,7 +966,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                           ? null
                           : selectedSectionId,
                       decoration: const InputDecoration(
-                        labelText: 'Seccion',
+                        labelText: 'Sección',
                         border: OutlineInputBorder(),
                       ),
                       items: _activeSections
@@ -1028,7 +1028,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         leading: const Icon(Icons.password_outlined),
                         title: Text('PIN actual: ${student!.pinCorto}'),
                         subtitle: const Text(
-                          'El PIN se genera automaticamente. Use regenerar PIN si necesita cambiarlo.',
+                          'El PIN se genera automáticamente. Use regenerar PIN si necesita cambiarlo.',
                         ),
                       ),
                   ],
@@ -1143,7 +1143,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: Text(section == null ? 'Nueva seccion' : 'Editar seccion'),
+              title: Text(section == null ? 'Nueva sección' : 'Editar sección'),
               content: SingleChildScrollView(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -1160,7 +1160,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     TextField(
                       controller: nombreController,
                       decoration: const InputDecoration(
-                        labelText: 'Nombre de seccion',
+                        labelText: 'Nombre de sección',
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -1406,7 +1406,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
-              title: const Text('Asignar docente a seccion'),
+              title: const Text('Asignar docente a sección'),
               content: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -1434,7 +1434,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   DropdownButtonFormField<int>(
                     initialValue: selectedSectionId,
                     decoration: const InputDecoration(
-                      labelText: 'Seccion',
+                      labelText: 'Sección',
                       border: OutlineInputBorder(),
                     ),
                     items: _sections

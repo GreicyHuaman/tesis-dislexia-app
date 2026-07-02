@@ -122,7 +122,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       await _loadClassroomMode();
 
       _setMessage(
-        'No hay jornada activa. Pide a tu docente que active la evaluacion.',
+        'No hay jornada activa. Pide a tu docente que active la evaluación.',
         isSuccess: false,
       );
       return;
@@ -773,7 +773,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
 
   Widget _buildFooter(ThemeData theme) {
     return Text(
-      'Tamizaje educativo temprano. No reemplaza una evaluacion profesional.',
+      'Tamizaje educativo temprano. No reemplaza una evaluación profesional.',
       textAlign: TextAlign.center,
       style: theme.textTheme.bodySmall?.copyWith(
         color: theme.colorScheme.onSurfaceVariant,

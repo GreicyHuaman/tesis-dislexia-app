@@ -256,7 +256,7 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
       '  ',
     ).convert(_answers.map((answer) => answer.toJson()).toList());
 
-    debugPrint('TELEMETRIA LOCAL DE LECTURA - SESION ACTUAL');
+    debugPrint('TELEMETRÍA LOCAL DE LECTURA - SESIÓN ACTUAL');
     debugPrint(telemetryJson);
 
     debugPrint('DATOS HIVE PENDIENTES DE SINCRONIZACION');
@@ -694,7 +694,7 @@ class _RiskResultCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Semáforo: $normalized',
+              'Semáforo de riesgo: $normalized',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 22,
@@ -704,7 +704,7 @@ class _RiskResultCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             const Text(
-              'Este resultado es un indicador de riesgo para tamizaje educativo. No representa un diagnóstico clínico.',
+              'Este resultado es una estimación de riesgo para tamizaje educativo y no constituye diagnóstico clínico.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 14),
             ),

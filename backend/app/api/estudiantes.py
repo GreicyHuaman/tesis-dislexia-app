@@ -231,7 +231,7 @@ _REQUIRED_IMPORT_COLUMNS = {
     "activo",
 }
 
-_TRUE_VALUES = {"1", "true", "si", "s?", "s", "x", "yes", "y", "firmado"}
+_TRUE_VALUES = {"1", "true", "si", "sí", "s", "x", "yes", "y", "firmado"}
 _FALSE_VALUES = {"0", "false", "no", "n", ""}
 
 
@@ -250,7 +250,7 @@ def _normalize_import_key(value: object) -> str:
         "fecha_nac": "fecha_nacimiento",
         "nacimiento": "fecha_nacimiento",
         "seccion_nombre": "seccion",
-        "secci?n": "seccion",
+        "sección": "seccion",
         "consentimiento": "consentimiento_firmado",
         "consentimiento_apoderado": "consentimiento_firmado",
         "fecha_consent": "fecha_consentimiento",
@@ -1165,7 +1165,7 @@ def get_estudiante_by_pin_for_modo_aula(
     if jornada is None:
         raise HTTPException(
             status_code=403,
-            detail="No hay jornada activa para esta seccion.",
+            detail="No hay jornada activa para esta sección.",
         )
 
     estudiante = session.exec(
@@ -1180,7 +1180,7 @@ def get_estudiante_by_pin_for_modo_aula(
     if estudiante is None:
         raise HTTPException(
             status_code=404,
-            detail="No se encontro estudiante activo con consentimiento firmado para esta seccion y PIN.",
+            detail="No se encontró estudiante activo con consentimiento firmado para esta sección y PIN.",
         )
 
     return StudentPublic.model_validate(estudiante)

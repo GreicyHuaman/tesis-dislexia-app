@@ -175,7 +175,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
   String get _managementPanelDescription {
     return _isTeacherRole
         ? 'Activa jornada de aula, prepara el modo PIN y revisa estudiantes de tus secciones asignadas.'
-        : 'Gestiona estudiantes, secciones, usuarios, asignaciones e importaci?n.';
+        : 'Gestiona estudiantes, secciones, usuarios, asignaciones e importación.';
   }
 
   IconData get _managementPanelIcon {
@@ -265,7 +265,7 @@ class _ReportesScreenState extends State<ReportesScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Revisa estudiantes vencidos, prioridad alta, tendencia y pr?xima evaluaci?n semanal.',
+                    'Revisa estudiantes vencidos, prioridad alta, tendencia y próxima evaluación semanal.',
                     style: Theme.of(
                       context,
                     ).textTheme.bodySmall?.copyWith(height: 1.35),
@@ -743,7 +743,7 @@ class _SummaryCard extends StatelessWidget {
             ),
             const SizedBox(height: 14),
             const Text(
-              'Los resultados son indicadores de riesgo para tamizaje educativo. No representan diagnóstico clínico.',
+              'Los resultados son una estimación de riesgo para tamizaje educativo y seguimiento pedagógico; el semáforo de riesgo no constituye diagnóstico clínico.',
               style: TextStyle(fontSize: 13),
             ),
           ],

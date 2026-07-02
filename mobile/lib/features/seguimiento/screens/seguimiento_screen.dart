@@ -389,7 +389,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
             'Estado actual: ${_estadoSemanalTexto(historial.actual.estadoSemanal)}\n'
             'Prioridad: ${historial.actual.prioridad}\n'
             'Tendencia: ${_tendenciaTexto(historial.actual.tendencia)}\n'
-            'Pr?xima evaluaci?n: ${historial.actual.proximaEvaluacion ?? 'Pendiente'}',
+            'Próxima evaluación: ${historial.actual.proximaEvaluacion ?? 'Pendiente'}',
             style: const TextStyle(height: 1.35),
           ),
           const SizedBox(height: 14),
@@ -407,7 +407,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
               child: Padding(
                 padding: EdgeInsets.all(14),
                 child: Text(
-                  'Todav?a no hay observaciones docentes registradas.',
+                  'Todavía no hay observaciones docentes registradas.',
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -435,7 +435,7 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
             const SizedBox(height: 6),
             Text(
               'Responsable: ${observacion.responsableNombre ?? 'N/D'}\n'
-              'Sem?foro: ${observacion.semaforo ?? 'N/D'} | '
+              'Semáforo: ${observacion.semaforo ?? 'N/D'} | '
               'Prioridad: ${observacion.prioridad ?? 'N/D'} | '
               'Tendencia: ${observacion.tendencia ?? 'N/D'}',
               style: const TextStyle(height: 1.3),
@@ -894,9 +894,9 @@ class _SeguimientoItemCard extends StatelessWidget {
                   'Prioridad: ${item.prioridad}\n'
                   'Estado semanal: $statusText\n'
                   'Tendencia: $trendText\n'
-                  'Riesgo: $riskText | Sem?foro: ${item.semaforo ?? 'N/D'}\n'
-                  'Pr?xima evaluaci?n: ${item.proximaEvaluacion ?? 'Pendiente'}\n'
-                  'Acci?n sugerida: ${item.accionSugerida}',
+                  'Riesgo: $riskText | Semáforo: ${item.semaforo ?? 'N/D'}\n'
+                  'Próxima evaluación: ${item.proximaEvaluacion ?? 'Pendiente'}\n'
+                  'Acción sugerida: ${item.accionSugerida}',
                   style: const TextStyle(height: 1.32),
                 ),
               ),
@@ -925,7 +925,7 @@ class _SeguimientoItemCard extends StatelessWidget {
                 child: Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    '?ltima observaci?n: ${item.observacionDocente}',
+                    'Última observación: ${item.observacionDocente}',
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       fontStyle: FontStyle.italic,
                     ),
@@ -947,7 +947,7 @@ class _SeguimientoItemCard extends StatelessWidget {
                   OutlinedButton.icon(
                     onPressed: onRegisterObservation,
                     icon: const Icon(Icons.edit_note_outlined),
-                    label: const Text('Registrar observaci?n'),
+                    label: const Text('Registrar observación'),
                   ),
                 ],
               ),
@@ -989,8 +989,8 @@ class _SeguimientoItemCard extends StatelessWidget {
   String _estadoSemanalTexto(String value) {
     final normalized = value.toUpperCase();
 
-    if (normalized == 'SIN_EVALUACION') return 'Sin evaluaci?n';
-    if (normalized == 'AL_DIA') return 'Al d?a';
+    if (normalized == 'SIN_EVALUACION') return 'Sin evaluación';
+    if (normalized == 'AL_DIA') return 'Al día';
     if (normalized == 'VENCE_HOY') return 'Vence hoy';
     if (normalized == 'VENCIDA') return 'Vencida';
 

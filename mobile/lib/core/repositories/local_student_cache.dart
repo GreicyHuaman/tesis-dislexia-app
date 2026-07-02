@@ -139,8 +139,8 @@ class LocalStudentCache {
 
       await _studentsByPinBox.put(key, {
         ...map,
-        'nivel_lectura': ?nivelLectura,
-        'nivel_fonologia': ?nivelFonologia,
+        'nivel_lectura': nivelLectura ?? map['nivel_lectura'],
+        'nivel_fonologia': nivelFonologia ?? map['nivel_fonologia'],
         'updated_at': now,
       });
     }

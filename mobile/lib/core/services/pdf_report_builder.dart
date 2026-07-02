@@ -22,10 +22,10 @@ class PdfReportBuilder {
   }) async {
     final now = DateTime.now();
     final document = pw.Document(
-      title: 'Reporte de tamizaje de riesgo de dislexia',
+      title: 'Reporte de tamizaje educativo de riesgo de dislexia',
       author: currentUser.nombreCompleto,
-      subject: 'Reporte academico de evaluaciones',
-      creator: 'Tamizaje de riesgo de dislexia',
+      subject: 'Reporte académico de evaluaciones',
+      creator: 'Tamizaje educativo de riesgo de dislexia',
     );
 
     document.addPage(
@@ -37,7 +37,7 @@ class PdfReportBuilder {
             alignment: pw.Alignment.centerRight,
             margin: const pw.EdgeInsets.only(top: 10),
             child: pw.Text(
-              'Pagina ${context.pageNumber} de ${context.pagesCount}',
+              'Página ${context.pageNumber} de ${context.pagesCount}',
               style: const pw.TextStyle(fontSize: 8),
             ),
           );
@@ -69,7 +69,7 @@ class PdfReportBuilder {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.Text(
-          'Reporte de tamizaje de riesgo de dislexia',
+          'Reporte de tamizaje educativo de riesgo de dislexia',
           style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
         ),
         pw.SizedBox(height: 6),
@@ -78,7 +78,7 @@ class PdfReportBuilder {
           style: const pw.TextStyle(fontSize: 10),
         ),
         pw.Text(
-          'Fecha de generacion: ${_formatDateTime(generatedAt)}',
+          'Fecha de generación: ${_formatDateTime(generatedAt)}',
           style: const pw.TextStyle(fontSize: 10),
         ),
       ],
@@ -94,8 +94,9 @@ class PdfReportBuilder {
         color: PdfColors.grey100,
       ),
       child: pw.Text(
-        'Nota: Este reporte corresponde a un tamizaje temprano de riesgo. '
-        'No constituye diagnostico clinico de dislexia. Los resultados deben '
+        'Nota: Este reporte corresponde a un tamizaje educativo de riesgo. '
+        'Presenta una estimación de riesgo; no constituye diagnóstico clínico '
+        'de dislexia. Los resultados deben '
         'ser interpretados por personal especializado y complementados con '
         'evaluaciones profesionales.',
         style: const pw.TextStyle(fontSize: 9),
@@ -243,12 +244,12 @@ class PdfReportBuilder {
               'Estudiante',
               'Fecha',
               'Prueba',
-              'Items',
+              'Ítems',
               'Aciertos',
               'Errores',
               'Tiempo',
               'Riesgo',
-              'Semaforo',
+              'Semáforo',
               'Modelo',
             ],
             data: rows,

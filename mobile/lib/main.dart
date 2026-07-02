@@ -27,7 +27,7 @@ class DyslexiaScreeningApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Tamizaje de riesgo de dislexia',
+      title: 'Tamizaje educativo de riesgo de dislexia',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light(),
       home: const PinLoginScreen(),
