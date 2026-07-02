@@ -27,7 +27,7 @@ class TestSelectionScreen extends StatelessWidget {
   }
 
   void _openLectura(BuildContext context) {
-    Navigator.of(context).pushReplacement(
+    Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => LecturaAssessmentScreen(
           estudianteId: estudianteId,
@@ -39,7 +39,7 @@ class TestSelectionScreen extends StatelessWidget {
   }
 
   void _openFonologia(BuildContext context) {
-    Navigator.of(context).pushReplacement(
+    Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => FonologiaAssessmentScreen(
           estudianteId: estudianteId,
@@ -81,7 +81,7 @@ class TestSelectionScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   const Text(
-                    'Elige la prueba que realizará el estudiante.',
+                    'Elige la prueba que realizarÃ¡ el estudiante.',
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 16),
@@ -96,9 +96,9 @@ class TestSelectionScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   _TestOptionCard(
-                    title: 'Conciencia fonológica',
+                    title: 'Conciencia fonolÃ³gica',
                     subtitle:
-                        'Identificación de sílaba inicial mediante arrastrar y soltar.',
+                        'IdentificaciÃ³n de sÃ­laba inicial mediante arrastrar y soltar.',
                     icon: Icons.drag_indicator,
                     onTap: () => _openFonologia(context),
                   ),

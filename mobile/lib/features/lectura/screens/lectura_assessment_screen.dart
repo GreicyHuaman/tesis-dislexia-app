@@ -1,3 +1,4 @@
+import '../../home/screens/student_test_completed_screen.dart';
 import 'dart:convert';
 import 'dart:math';
 
@@ -43,9 +44,6 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
   String? _feedbackMessage;
   String? _syncMessage;
   String? _localSessionId;
-  String? _lastSemaforo;
-
-  double? _lastPorcentajeRiesgo;
 
   List<Stimulus> _allStimuli = [];
   List<Stimulus> _sessionStimuli = [];
@@ -280,59 +278,12 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
     );
   }
 
-  Future<void> _restartSession() async {
-    final selection = AdaptiveWordBankSelector.select<Stimulus>(
-      items: _allStimuli,
-      level: _currentAdaptiveLevel,
-      difficultyOf: (stimulus) => stimulus.complejidadEstimulo,
-      random: _random,
-    );
-    final sessionStimuli = selection.items;
-    final metadata = selection.metadata;
-
-    String? sessionId;
-
-    if (sessionStimuli.isNotEmpty) {
-      sessionId = await LocalEvaluationStorage.createSession(
-        tipoPrueba: 'LECTURA',
-        totalItems: sessionStimuli.length,
-        estudianteId: widget.estudianteId,
-        nivelDificultadAplicado: metadata.nivelDificultadAplicado,
-        totalBaja: metadata.totalBaja,
-        totalMedia: metadata.totalMedia,
-        totalAlta: metadata.totalAlta,
-        versionBancoPalabras: metadata.versionBancoPalabras,
-      );
-    }
-
-    if (!mounted) return;
-
-    setState(() {
-      _sessionStimuli = sessionStimuli;
-      _localSessionId = sessionId;
-      _answers.clear();
-      _currentIndex = 0;
-      _isFinished = _sessionStimuli.isEmpty;
-      _feedbackMessage = null;
-      _syncMessage = null;
-      _lastPorcentajeRiesgo = null;
-      _lastSemaforo = null;
-      _tapsErroneosCurrent = 0;
-      _isSavingAnswer = false;
-      _pendingLocalSessions = LocalEvaluationStorage.countPendingSessions();
-    });
-
-    if (_sessionStimuli.isNotEmpty) {
-      _prepareCurrentQuestion();
-    }
-  }
-
   Future<void> _syncPendingSessions() async {
     if (_isSyncing) return;
 
     setState(() {
       _isSyncing = true;
-      _syncMessage = 'Sincronizando con el backend...';
+      _syncMessage = 'Sincronizando con el servidor...';
     });
 
     final result = await _syncService.syncPendingEvaluations();
@@ -343,11 +294,6 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
       _isSyncing = false;
       _syncMessage = result.message;
       _pendingLocalSessions = LocalEvaluationStorage.countPendingSessions();
-
-      if (result.success && result.porcentajeRiesgo != null) {
-        _lastPorcentajeRiesgo = result.porcentajeRiesgo;
-        _lastSemaforo = result.semaforo;
-      }
 
       if (result.success && result.nivelLectura != null) {
         _currentAdaptiveLevel = AdaptiveWordBankSelector.clampLevel(
@@ -505,212 +451,24 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
   }
 
   Widget _buildSummaryScreen() {
-    final canSync = _pendingLocalSessions > 0 && !_isSyncing;
+    final normalizedSyncMessage = (_syncMessage ?? '').toLowerCase();
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Resumen de lectura'),
-        actions: [
-          IconButton(
-            tooltip: 'Cambiar estudiante',
-            onPressed: _isSyncing ? null : _changeStudent,
-            icon: const Icon(Icons.logout),
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Icon(Icons.check_circle_outline, size: 64),
-              const SizedBox(height: 16),
-              Text(
-                'Evaluación finalizada',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineSmall,
-              ),
-              const SizedBox(height: 24),
-              _SummaryTile(
-                label: 'Estudiante',
-                value: widget.studentDisplayName,
-              ),
-              _SummaryTile(
-                label: 'ID estudiante',
-                value: '${widget.estudianteId}',
-              ),
-              _SummaryTile(
-                label: 'Total de ítems',
-                value: '${_answers.length}',
-              ),
-              _SummaryTile(
-                label: 'Aciertos al primer intento',
-                value: '$_aciertosPrimerIntento',
-              ),
-              _SummaryTile(
-                label: 'Taps erróneos totales',
-                value: '$_totalTapsErroneos',
-              ),
-              _SummaryTile(
-                label: 'Tiempo promedio',
-                value: '$_promedioTiempoMs ms',
-              ),
-              _SummaryTile(
-                label: 'Sesiones pendientes de sincronizar',
-                value: '$_pendingLocalSessions',
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'La sesión fue guardada en Hive DB localmente.',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 20),
-              ElevatedButton.icon(
-                onPressed: canSync ? _syncPendingSessions : null,
-                icon: _isSyncing
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : const Icon(Icons.cloud_upload_outlined),
-                label: Text(
-                  _isSyncing ? 'Sincronizando...' : 'Sincronizar con backend',
-                ),
-              ),
-              if (_syncMessage != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  _syncMessage!,
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color:
-                        _syncMessage!.toLowerCase().contains('exitosa') ||
-                            _syncMessage!.toLowerCase().contains('no hay')
-                        ? Colors.green
-                        : Colors.red,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-              if (_lastPorcentajeRiesgo != null && _lastSemaforo != null) ...[
-                const SizedBox(height: 16),
-                _RiskResultCard(
-                  porcentajeRiesgo: _lastPorcentajeRiesgo!,
-                  semaforo: _lastSemaforo!,
-                ),
-              ],
-              const SizedBox(height: 16),
-              OutlinedButton.icon(
-                onPressed: _isSyncing ? null : _restartSession,
-                icon: const Icon(Icons.restart_alt),
-                label: const Text('Reiniciar prueba con el mismo estudiante'),
-              ),
-              const SizedBox(height: 10),
-              OutlinedButton.icon(
-                onPressed: _isSyncing ? null : _changeStudent,
-                icon: const Icon(Icons.logout),
-                label: const Text('Cambiar estudiante'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+    final syncSuccess =
+        (!_isSyncing && _pendingLocalSessions == 0) ||
+        normalizedSyncMessage.contains('exitosa') ||
+        normalizedSyncMessage.contains('completada') ||
+        normalizedSyncMessage.contains('no hay evaluaciones');
 
-class _SummaryTile extends StatelessWidget {
-  final String label;
-  final String value;
+    final message = _isSyncing
+        ? 'Sincronizando con el servidor...'
+        : syncSuccess
+        ? 'Sincronización completada.'
+        : 'Se sincronizará automáticamente cuando haya conexión.';
 
-  const _SummaryTile({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        title: Text(label),
-        trailing: Text(
-          value,
-          overflow: TextOverflow.ellipsis,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-      ),
-    );
-  }
-}
-
-class _RiskResultCard extends StatelessWidget {
-  final double porcentajeRiesgo;
-  final String semaforo;
-
-  const _RiskResultCard({
-    required this.porcentajeRiesgo,
-    required this.semaforo,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final normalized = semaforo.toUpperCase();
-
-    Color color;
-    IconData icon;
-
-    if (normalized == 'ROJO') {
-      color = Colors.red;
-      icon = Icons.warning_amber_rounded;
-    } else if (normalized == 'AMARILLO') {
-      color = Colors.orange;
-      icon = Icons.info_outline;
-    } else {
-      color = Colors.green;
-      icon = Icons.check_circle_outline;
-    }
-
-    return Card(
-      elevation: 3,
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: Column(
-          children: [
-            Icon(icon, size: 48, color: color),
-            const SizedBox(height: 12),
-            const Text(
-              'Resultado preliminar de tamizaje',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 19, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              '${porcentajeRiesgo.toStringAsFixed(2)}%',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 34,
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Semáforo de riesgo: $normalized',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 14),
-            const Text(
-              'Este resultado es una estimación de riesgo para tamizaje educativo y no constituye diagnóstico clínico.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14),
-            ),
-          ],
-        ),
-      ),
+    return StudentTestCompletedScreen(
+      testName: 'lectura',
+      syncSuccess: syncSuccess,
+      syncMessage: message,
     );
   }
 }
