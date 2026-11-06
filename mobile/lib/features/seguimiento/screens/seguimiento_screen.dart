@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../core/models/auth_user.dart';
 import '../../../core/models/seguimiento_models.dart';
+import '../../../core/services/connection_errors.dart';
 import '../../../core/services/seguimiento_service.dart';
+import '../widgets/observation_dialog.dart';
 
 class SeguimientoScreen extends StatefulWidget {
   final AuthUser currentUser;
@@ -15,23 +17,6 @@ class SeguimientoScreen extends StatefulWidget {
 
 class _SeguimientoScreenState extends State<SeguimientoScreen> {
   final SeguimientoService _seguimientoService = const SeguimientoService();
-
-  static const List<String> _observationCategories = [
-    'Lectura lenta',
-    'Confusión visual de letras',
-    'Omisiones',
-    'Sustituciones',
-    'Inversión de letras',
-    'Dificultad con pseudopalabras',
-    'Dificultad de segmentación silábica',
-    'Dificultad de conciencia fonológica',
-    'Dificultad en rimas',
-    'Baja atención durante la prueba',
-    'Frustración o cansancio',
-    'Requiere reforzamiento',
-    'Requiere derivación sugerida',
-    'Otro',
-  ];
 
   bool _isLoading = true;
   String? _errorMessage;
@@ -72,11 +57,16 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
         _items = items;
         _isLoading = false;
       });
-    } catch (error) {
+    } catch (error, stackTrace) {
+      logRequestFailure('Cargar seguimiento', error, stackTrace);
       if (!mounted) return;
 
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = requestErrorMessage(
+          error,
+          fallbackMessage:
+              'No se pudo cargar el seguimiento. Vuelva a intentarlo.',
+        );
         _isLoading = false;
       });
     }
@@ -91,220 +81,15 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
     _loadSeguimiento();
   }
 
-  bool _isObservationRequired(SeguimientoItem item, String estado) {
-    final semaforo = (item.semaforo ?? '').toUpperCase();
-    final estadoSemanal = item.estadoSemanal.toUpperCase();
-    final estadoSeguimiento = estado.toUpperCase();
-
-    return semaforo == 'ROJO' ||
-        estadoSemanal == 'VENCIDA' ||
-        estadoSeguimiento == 'DERIVACION_SUGERIDA' ||
-        estadoSeguimiento == 'CERRADO' ||
-        estadoSeguimiento == 'CAMBIO_MANUAL';
-  }
-
   Future<void> _openObservationDialog(SeguimientoItem item) async {
-    final controller = TextEditingController(
-      text: item.observacionDocente ?? '',
-    );
-    final selectedCategories = item.categorias.toSet();
-    String selectedEstado = item.estado ?? 'ABIERTO';
-    bool isSaving = false;
-
     final saved = await showDialog<bool>(
       context: context,
-      barrierDismissible: !isSaving,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (dialogContext, setDialogState) {
-            final required = _isObservationRequired(item, selectedEstado);
-
-            Future<void> saveObservation() async {
-              final observation = controller.text.trim();
-
-              if (required && observation.isEmpty) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  const SnackBar(
-                    content: Text(
-                      'La observación es obligatoria para este caso.',
-                    ),
-                    backgroundColor: Colors.orange,
-                  ),
-                );
-                return;
-              }
-
-              setDialogState(() {
-                isSaving = true;
-              });
-
-              final navigator = Navigator.of(dialogContext);
-              final messenger = ScaffoldMessenger.of(dialogContext);
-
-              try {
-                await _seguimientoService.createObservacion(
-                  authToken: widget.currentUser.accessToken,
-                  estudianteId: item.estudianteId,
-                  evaluacionId: item.evaluacionId,
-                  observacionDocente: observation,
-                  categorias: selectedCategories.toList()..sort(),
-                  estado: selectedEstado,
-                );
-
-                if (!mounted) return;
-
-                navigator.pop(true);
-              } catch (error) {
-                if (!mounted) return;
-
-                setDialogState(() {
-                  isSaving = false;
-                });
-
-                messenger.showSnackBar(
-                  SnackBar(
-                    content: Text('No se pudo guardar: $error'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              }
-            }
-
-            return AlertDialog(
-              title: const Text('Registrar observación'),
-              content: SizedBox(
-                width: 520,
-                child: SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        item.estudianteNombre,
-                        style: const TextStyle(fontWeight: FontWeight.w900),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Prioridad: ${item.prioridad}\n'
-                        'Estado semanal: ${_estadoSemanalTexto(item.estadoSemanal)}\n'
-                        'Semáforo: ${item.semaforo ?? 'N/D'}\n'
-                        'Tendencia: ${_tendenciaTexto(item.tendencia)}',
-                        style: const TextStyle(height: 1.35),
-                      ),
-                      const SizedBox(height: 14),
-                      DropdownButtonFormField<String>(
-                        initialValue: selectedEstado,
-                        decoration: const InputDecoration(
-                          labelText: 'Estado del seguimiento',
-                          border: OutlineInputBorder(),
-                        ),
-                        items: const [
-                          DropdownMenuItem<String>(
-                            value: 'ABIERTO',
-                            child: Text('Abierto'),
-                          ),
-                          DropdownMenuItem<String>(
-                            value: 'REFORZAMIENTO',
-                            child: Text('Reforzamiento'),
-                          ),
-                          DropdownMenuItem<String>(
-                            value: 'DERIVACION_SUGERIDA',
-                            child: Text('Derivación sugerida'),
-                          ),
-                          DropdownMenuItem<String>(
-                            value: 'CERRADO',
-                            child: Text('Cerrado'),
-                          ),
-                        ],
-                        onChanged: isSaving
-                            ? null
-                            : (value) {
-                                if (value == null) return;
-
-                                setDialogState(() {
-                                  selectedEstado = value;
-                                });
-                              },
-                      ),
-                      const SizedBox(height: 14),
-                      TextField(
-                        controller: controller,
-                        enabled: !isSaving,
-                        minLines: 3,
-                        maxLines: 5,
-                        decoration: InputDecoration(
-                          labelText: required
-                              ? 'Observación docente obligatoria'
-                              : 'Observación docente opcional',
-                          border: const OutlineInputBorder(),
-                          helperText: required
-                              ? 'Requerida por riesgo alto, evaluación vencida o cambio de estado.'
-                              : 'Recomendada para casos amarillos o seguimiento pedagógico.',
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        'Categorías observadas',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 6,
-                        children: _observationCategories.map((category) {
-                          final selected = selectedCategories.contains(
-                            category,
-                          );
-
-                          return FilterChip(
-                            label: Text(category),
-                            selected: selected,
-                            onSelected: isSaving
-                                ? null
-                                : (checked) {
-                                    setDialogState(() {
-                                      if (checked) {
-                                        selectedCategories.add(category);
-                                      } else {
-                                        selectedCategories.remove(category);
-                                      }
-                                    });
-                                  },
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: isSaving
-                      ? null
-                      : () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancelar'),
-                ),
-                FilledButton.icon(
-                  onPressed: isSaving ? null : saveObservation,
-                  icon: isSaving
-                      ? const SizedBox(
-                          width: 18,
-                          height: 18,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.save_outlined),
-                  label: Text(isSaving ? 'Guardando...' : 'Guardar'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      barrierDismissible: false,
+      builder: (_) => ObservationDialog(
+        item: item,
+        authToken: widget.currentUser.accessToken,
+      ),
     );
-
-    controller.dispose();
 
     if (saved == true && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -342,8 +127,13 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
                 }
 
                 if (snapshot.hasError) {
+                  final error = snapshot.error!;
                   return Text(
-                    'No se pudo cargar el historial: ${snapshot.error}',
+                    requestErrorMessage(
+                      error,
+                      fallbackMessage:
+                          'No se pudo cargar el historial. Vuelva a intentarlo.',
+                    ),
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                       fontWeight: FontWeight.w600,
@@ -386,9 +176,9 @@ class _SeguimientoScreenState extends State<SeguimientoScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Estado actual: ${_estadoSemanalTexto(historial.actual.estadoSemanal)}\n'
+            'Estado actual: ${historial.actual.estadoSemanalTexto}\n'
             'Prioridad: ${historial.actual.prioridad}\n'
-            'Tendencia: ${_tendenciaTexto(historial.actual.tendencia)}\n'
+            'Tendencia: ${historial.actual.tendenciaTexto}\n'
             'Próxima evaluación: ${historial.actual.proximaEvaluacion ?? 'Pendiente'}',
             style: const TextStyle(height: 1.35),
           ),
@@ -864,8 +654,8 @@ class _SeguimientoItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final priorityColor = _priorityColor(item.prioridad);
-    final statusText = _estadoSemanalTexto(item.estadoSemanal);
-    final trendText = _tendenciaTexto(item.tendencia);
+    final statusText = item.estadoSemanalTexto;
+    final trendText = item.tendenciaTexto;
     final riskText = item.porcentajeRiesgo == null
         ? 'Sin riesgo calculado'
         : '${item.porcentajeRiesgo!.toStringAsFixed(1)}%';
@@ -985,48 +775,4 @@ class _SeguimientoItemCard extends StatelessWidget {
 
     return Icons.help_outline;
   }
-
-  String _estadoSemanalTexto(String value) {
-    final normalized = value.toUpperCase();
-
-    if (normalized == 'SIN_EVALUACION') return 'Sin evaluación';
-    if (normalized == 'AL_DIA') return 'Al día';
-    if (normalized == 'VENCE_HOY') return 'Vence hoy';
-    if (normalized == 'VENCIDA') return 'Vencida';
-
-    return value;
-  }
-
-  String _tendenciaTexto(String value) {
-    final normalized = value.toUpperCase();
-
-    if (normalized == 'MEJORA') return 'Mejora';
-    if (normalized == 'ESTABLE') return 'Estable';
-    if (normalized == 'EMPEORA') return 'Empeora';
-    if (normalized == 'SIN_HISTORIAL') return 'Sin historial';
-
-    return value;
-  }
-}
-
-String _estadoSemanalTexto(String value) {
-  final normalized = value.toUpperCase();
-
-  if (normalized == 'SIN_EVALUACION') return 'Sin evaluación';
-  if (normalized == 'AL_DIA') return 'Al día';
-  if (normalized == 'VENCE_HOY') return 'Vence hoy';
-  if (normalized == 'VENCIDA') return 'Vencida';
-
-  return value;
-}
-
-String _tendenciaTexto(String value) {
-  final normalized = value.toUpperCase();
-
-  if (normalized == 'MEJORA') return 'Mejora';
-  if (normalized == 'ESTABLE') return 'Estable';
-  if (normalized == 'EMPEORA') return 'Empeora';
-  if (normalized == 'SIN_HISTORIAL') return 'Sin historial';
-
-  return value;
 }

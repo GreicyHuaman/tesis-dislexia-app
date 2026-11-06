@@ -20,6 +20,7 @@ from app.schemas.student_schema import (
     StudentOfflineCacheItem,
     StudentPublic,
     StudentUpdate,
+    validate_student_birth_date,
 )
 from app.services.pin_generator import (
     PinValidationError,
@@ -128,14 +129,16 @@ def _ensure_user_can_manage_section(
     _raise_forbidden()
 
 
-def _validate_consentimiento(payload: StudentCreate | StudentUpdate) -> None:
-    consentimiento = getattr(payload, "consentimiento_firmado", None)
-    fecha = getattr(payload, "fecha_consentimiento", None)
-
-    if consentimiento is False:
+def _validate_consentimiento(
+    *,
+    consentimiento: bool,
+    fecha: date | None,
+    activo: bool,
+) -> None:
+    if activo and not consentimiento:
         raise HTTPException(
             status_code=400,
-            detail="Solo se puede activar estudiantes con consentimiento firmado.",
+            detail="Para activar al estudiante se requiere consentimiento informado firmado.",
         )
 
     if consentimiento is True and fecha is None:
@@ -621,9 +624,15 @@ def create_estudiante(
         session=session,
     )
 
-    _validate_consentimiento(payload)
+    _validate_consentimiento(
+        consentimiento=payload.consentimiento_firmado,
+        fecha=payload.fecha_consentimiento,
+        activo=payload.activo,
+    )
 
-    if payload.pin_corto:
+    if not payload.consentimiento_firmado:
+        pin_corto = None
+    elif payload.pin_corto:
         _validate_pin(payload.pin_corto)
         _ensure_pin_is_unique(payload.pin_corto, session)
         pin_corto = payload.pin_corto
@@ -642,7 +651,9 @@ def create_estudiante(
         pin_corto=pin_corto,
         seccion_id=payload.seccion_id,
         consentimiento_firmado=payload.consentimiento_firmado,
-        fecha_consentimiento=payload.fecha_consentimiento,
+        fecha_consentimiento=(
+            payload.fecha_consentimiento if payload.consentimiento_firmado else None
+        ),
         nivel_lectura=1,
         nivel_fonologia=1,
         activo=payload.activo,
@@ -805,10 +816,12 @@ async def import_estudiantes(
             codigo_estudiante = None
             nombres = _required_text(row, "nombres", row_number)
             apellidos = _required_text(row, "apellidos", row_number)
-            fecha_nacimiento = _parse_import_date(
-                row.get("fecha_nacimiento"),
-                field_name="fecha_nacimiento",
-                row_number=row_number,
+            fecha_nacimiento = validate_student_birth_date(
+                _parse_import_date(
+                    row.get("fecha_nacimiento"),
+                    field_name="fecha_nacimiento",
+                    row_number=row_number,
+                )
             )
             grado = _parse_import_int(
                 row.get("grado"),
@@ -1016,9 +1029,33 @@ def update_estudiante(
             seccion_id=payload.seccion_id,
             session=session,
         )
+
+    consentimiento = (
+        payload.consentimiento_firmado
+        if payload.consentimiento_firmado is not None
+        else estudiante.consentimiento_firmado
+    )
+    fecha_consentimiento = (
+        payload.fecha_consentimiento
+        if "fecha_consentimiento" in payload.model_fields_set
+        else estudiante.fecha_consentimiento
+    )
+    activo = payload.activo if payload.activo is not None else estudiante.activo
+    if payload.consentimiento_firmado is False and payload.activo is None:
+        activo = False
+
+    _validate_consentimiento(
+        consentimiento=consentimiento,
+        fecha=fecha_consentimiento,
+        activo=activo,
+    )
+
+    if payload.seccion_id is not None:
         estudiante.seccion_id = payload.seccion_id
 
-    if payload.pin_corto is not None:
+    if not consentimiento:
+        estudiante.pin_corto = None
+    elif payload.pin_corto is not None:
         _validate_pin(payload.pin_corto)
         _ensure_pin_is_unique(
             pin_corto=payload.pin_corto,
@@ -1026,6 +1063,17 @@ def update_estudiante(
             exclude_student_id=estudiante_id,
         )
         estudiante.pin_corto = payload.pin_corto
+    elif estudiante.pin_corto is None:
+        estudiante.pin_corto = _generate_pin_for_student(
+            session=session,
+            exclude_student_id=estudiante_id,
+        )
+    elif activo and not estudiante.activo:
+        _ensure_pin_is_unique(
+            pin_corto=estudiante.pin_corto,
+            session=session,
+            exclude_student_id=estudiante_id,
+        )
 
     if payload.codigo_estudiante is not None:
         estudiante.codigo_estudiante = payload.codigo_estudiante.strip()
@@ -1039,35 +1087,15 @@ def update_estudiante(
     if payload.fecha_nacimiento is not None:
         estudiante.fecha_nacimiento = payload.fecha_nacimiento
 
-    if payload.consentimiento_firmado is not None:
-        estudiante.consentimiento_firmado = payload.consentimiento_firmado
-
-        if not payload.consentimiento_firmado:
-            estudiante.activo = False
-
-    if payload.fecha_consentimiento is not None:
-        estudiante.fecha_consentimiento = payload.fecha_consentimiento
-
-    if estudiante.consentimiento_firmado and estudiante.fecha_consentimiento is None:
-        raise HTTPException(
-            status_code=400,
-            detail="Debe registrar la fecha del consentimiento firmado.",
-        )
+    estudiante.consentimiento_firmado = consentimiento
+    estudiante.fecha_consentimiento = fecha_consentimiento if consentimiento else None
+    estudiante.activo = activo
 
     if payload.nivel_lectura is not None:
         estudiante.nivel_lectura = payload.nivel_lectura
 
     if payload.nivel_fonologia is not None:
         estudiante.nivel_fonologia = payload.nivel_fonologia
-
-    if payload.activo is not None:
-        if payload.activo and not estudiante.consentimiento_firmado:
-            raise HTTPException(
-                status_code=400,
-                detail="No se puede activar un estudiante sin consentimiento firmado.",
-            )
-
-        estudiante.activo = payload.activo
 
     session.add(estudiante)
     session.commit()
@@ -1102,6 +1130,17 @@ def regenerate_student_pin(
             seccion_id=estudiante.seccion_id,
             session=session,
         )
+
+    if not estudiante.consentimiento_firmado:
+        raise HTTPException(
+            status_code=400,
+            detail="Para generar un PIN se requiere consentimiento informado firmado.",
+        )
+    _validate_consentimiento(
+        consentimiento=estudiante.consentimiento_firmado,
+        fecha=estudiante.fecha_consentimiento,
+        activo=estudiante.activo,
+    )
 
     estudiante.pin_corto = _generate_pin_for_student(session)
 
@@ -1208,4 +1247,3 @@ def get_estudiante_by_pin(
         )
 
     return StudentPublic.model_validate(estudiante)
-

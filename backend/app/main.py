@@ -13,6 +13,7 @@ from app.api.reportes import router as reportes_router
 from app.api.seguimiento import router as seguimiento_router
 from app.api.secciones import router as secciones_router
 from app.db.session import create_db_and_tables
+from app.services.jwt_service import validate_jwt_configuration
 
 from app.models.evaluation import DetalleEvaluacion, Evaluacion  # noqa: F401
 from app.models.jornada import JornadaEvaluacion  # noqa: F401
@@ -58,6 +59,7 @@ app.add_middleware(
 
 @app.on_event("startup")
 def on_startup() -> None:
+    validate_jwt_configuration()
     create_db_and_tables()
 
 
@@ -81,4 +83,3 @@ app.include_router(evaluaciones_router)
 app.include_router(reportes_router)
 app.include_router(seguimiento_router)
 app.include_router(ml_dataset_router)
-

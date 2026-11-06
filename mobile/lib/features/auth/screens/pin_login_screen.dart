@@ -17,6 +17,9 @@ class PinLoginScreen extends StatefulWidget {
 }
 
 class _PinLoginScreenState extends State<PinLoginScreen> {
+  static const _missingClassroomNotice =
+      'No hay una sección preparada con jornada vigente. '
+      'Pide al docente que use “Descargar sección” con conexión a Internet.';
   final TextEditingController _pinController = TextEditingController();
   final StudentService _studentService = StudentService();
 
@@ -121,10 +124,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
     if (mode == null) {
       await _loadClassroomMode();
 
-      _setMessage(
-        'No hay jornada activa. Pide a tu docente que active la evaluación.',
-        isSuccess: false,
-      );
+      _setMessage(_missingClassroomNotice, isSuccess: false);
       return;
     }
 
@@ -136,7 +136,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
 
     if (state.requiresTeacherUnlock) {
       _setMessage(
-        'El ingreso esta bloqueado. Pide a tu docente o directora que lo desbloquee.',
+        'El ingreso est? bloqueado. Pide a tu docente o director que lo desbloquee.',
         isSuccess: false,
       );
       await _loadAttemptState();
@@ -177,6 +177,14 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
       if (!mounted) return;
 
       if (!result.success || result.student == null) {
+        if (result.requiresOfflinePreparation) {
+          setState(() {
+            _isLoading = false;
+            _message = result.message;
+            _isSuccessMessage = false;
+          });
+          return;
+        }
         final message = result.message.toLowerCase();
 
         if (message.contains('jornada activa') ||
@@ -504,7 +512,7 @@ class _PinLoginScreenState extends State<PinLoginScreen> {
               const SizedBox(width: 10),
               const Expanded(
                 child: Text(
-                  'No hay jornada activa. Pide a tu docente que active el modo aula.',
+                  _missingClassroomNotice,
                   style: TextStyle(fontWeight: FontWeight.w700),
                 ),
               ),

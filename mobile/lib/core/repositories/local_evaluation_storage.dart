@@ -1,9 +1,11 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../models/local_evaluation_detail.dart';
+import '../models/local_assessment_progress.dart';
 
 class LocalEvaluationStorage {
   static const String _sessionsBoxName = 'evaluation_sessions';
@@ -33,7 +35,23 @@ class LocalEvaluationStorage {
     int totalMedia = 0,
     int totalAlta = 0,
     String? versionBancoPalabras,
+    List<Map<String, dynamic>>? assessmentItems,
+    List<List<String>>? assessmentOptions,
   }) async {
+    if (assessmentItems != null) {
+      if (estudianteId == null ||
+          assessmentItems.length != totalItems ||
+          totalItems <= 0 ||
+          assessmentOptions == null ||
+          assessmentOptions.length != totalItems) {
+        throw ArgumentError('El plan de evaluación está incompleto.');
+      }
+      final existing = getIncompleteAssessment(
+        estudianteId: estudianteId,
+        tipoPrueba: tipoPrueba,
+      );
+      if (existing != null) return existing.sessionId;
+    }
     final sessionId = generateId();
     final now = DateTime.now().toUtc().toIso8601String();
 
@@ -55,9 +73,20 @@ class LocalEvaluationStorage {
       'sync_status': 'PENDING',
       'created_at': now,
       'updated_at': now,
+      if (assessmentItems != null) ...{
+        'assessment_plan': {
+          'version': 1,
+          'items': assessmentItems,
+          'options': assessmentOptions,
+        },
+        'answered_items': <Map<String, dynamic>>[],
+        'current_item_state': {'index': 0, 'errors': 0, 'elapsed_ms': 0},
+      },
     };
 
+    if (assessmentItems != null) _readAssessment(session);
     await _sessionsBox.put(sessionId, session);
+    await _sessionsBox.flush();
 
     return sessionId;
   }
@@ -65,8 +94,12 @@ class LocalEvaluationStorage {
   static Future<String> saveDetail({
     required String localSessionId,
     required LocalEvaluationDetail detail,
+    int? itemIndex,
   }) async {
-    final detailId = generateId();
+    final detailId = itemIndex == null
+        ? generateId()
+        : '$localSessionId:$itemIndex';
+    if (itemIndex != null && _detailsBox.containsKey(detailId)) return detailId;
     final now = DateTime.now().toUtc().toIso8601String();
 
     final payload = {
@@ -76,11 +109,131 @@ class LocalEvaluationStorage {
       'sync_status': 'PENDING',
       'created_at': now,
       'updated_at': now,
+      'item_index': ?itemIndex,
     };
 
     await _detailsBox.put(detailId, payload);
+    await _detailsBox.flush();
 
     return detailId;
+  }
+
+  static LocalAssessmentProgress? getIncompleteAssessment({
+    required int estudianteId,
+    required String tipoPrueba,
+  }) {
+    final candidates =
+        getAllSessions()
+            .where(
+              (session) =>
+                  session['estudiante_id'] == estudianteId &&
+                  session['tipo_prueba'] == tipoPrueba &&
+                  session['sync_status'] == 'PENDING' &&
+                  session.containsKey('assessment_plan'),
+            )
+            .toList()
+          ..sort(
+            (a, b) => a['created_at'].toString().compareTo(
+              b['created_at'].toString(),
+            ),
+          );
+    return candidates.isEmpty ? null : _readAssessment(candidates.first);
+  }
+
+  static int countLegacyIncomplete({
+    required int estudianteId,
+    required String tipoPrueba,
+  }) => getAllSessions()
+      .where(
+        (session) =>
+            session['estudiante_id'] == estudianteId &&
+            session['tipo_prueba'] == tipoPrueba &&
+            session['sync_status'] == 'PENDING' &&
+            !session.containsKey('assessment_plan'),
+      )
+      .length;
+
+  static LocalAssessmentProgress getAssessment(String sessionId) {
+    return _readAssessment(_asStringMap(_sessionsBox.get(sessionId)));
+  }
+
+  static Future<void> restoreAssessmentDetails(String sessionId) async {
+    final progress = getAssessment(sessionId);
+    for (var index = 0; index < progress.answers.length; index++) {
+      await saveDetail(
+        localSessionId: sessionId,
+        detail: progress.answers[index],
+        itemIndex: index,
+      );
+    }
+  }
+
+  static Future<LocalAssessmentProgress> saveAssessmentAnswer({
+    required String sessionId,
+    required int itemIndex,
+    required LocalEvaluationDetail detail,
+  }) async {
+    final session = _asStringMap(_sessionsBox.get(sessionId));
+    final progress = _readAssessment(session);
+    if (session['sync_status'] != 'PENDING' ||
+        itemIndex < 0 ||
+        itemIndex >= progress.totalItems ||
+        itemIndex > progress.answeredItems ||
+        detail.stimulusId != progress.items[itemIndex]['id'] ||
+        detail.tipoPrueba != progress.tipoPrueba) {
+      throw StateError('La respuesta no corresponde al ítem pendiente.');
+    }
+    if (itemIndex == progress.answeredItems) {
+      final answers = [...progress.answers, detail];
+      await _sessionsBox.put(sessionId, {
+        ...session,
+        'answered_items': answers.map((answer) => answer.toJson()).toList(),
+        'current_item_state': {
+          'index': answers.length,
+          'errors': 0,
+          'elapsed_ms': 0,
+        },
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      });
+      await _sessionsBox.flush();
+    }
+    final saved = getAssessment(sessionId);
+    await saveDetail(
+      localSessionId: sessionId,
+      detail: saved.answers[itemIndex],
+      itemIndex: itemIndex,
+    );
+    return saved;
+  }
+
+  static Future<bool> saveCurrentItemState({
+    required String sessionId,
+    required int itemIndex,
+    required int errors,
+    required int elapsedMs,
+  }) async {
+    if (errors < 0 || elapsedMs < 0) {
+      throw ArgumentError('Los intentos y el tiempo no pueden ser negativos.');
+    }
+    final session = _asStringMap(_sessionsBox.get(sessionId));
+    final progress = _readAssessment(session);
+    // Una escritura del ítem anterior no debe sobrescribir una respuesta guardada.
+    if (session['sync_status'] != 'PENDING' ||
+        itemIndex != progress.answeredItems ||
+        progress.remainingItems == 0) {
+      return false;
+    }
+    await _sessionsBox.put(sessionId, {
+      ...session,
+      'current_item_state': {
+        'index': itemIndex,
+        'errors': max(errors, progress.currentErrors),
+        'elapsed_ms': max(elapsedMs, progress.currentElapsedMs),
+      },
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
+    await _sessionsBox.flush();
+    return true;
   }
 
   static Future<void> finishSession({
@@ -94,7 +247,25 @@ class LocalEvaluationStorage {
     final currentSession = _asStringMap(currentValue);
 
     if (currentSession.isEmpty) {
+      throw StateError('No se encontró la sesión local.');
+    }
+    if (currentSession['sync_status'] == 'COMPLETED_PENDING_SYNC' ||
+        currentSession['sync_status'] == 'SYNCED') {
       return;
+    }
+    final expected = currentSession['total_items'];
+    final hasPlan = currentSession.containsKey('assessment_plan');
+    final count = hasPlan
+        ? _readAssessment(currentSession).answeredItems
+        : getDetailsBySession(localSessionId).length;
+    if (expected is! int ||
+        expected <= 0 ||
+        totalItems != expected ||
+        count != expected) {
+      throw StateError('La evaluación tiene respuestas pendientes.');
+    }
+    if (hasPlan) {
+      await restoreAssessmentDetails(localSessionId);
     }
 
     final now = DateTime.now().toUtc().toIso8601String();
@@ -111,6 +282,7 @@ class LocalEvaluationStorage {
     };
 
     await _sessionsBox.put(localSessionId, updatedSession);
+    await _sessionsBox.flush();
   }
 
   static List<Map<String, dynamic>> getAllSessions() {
@@ -152,6 +324,12 @@ class LocalEvaluationStorage {
   static Map<String, dynamic> getPendingSyncPayload() {
     final pendingSessions = getAllSessions()
         .where((session) => session['sync_status'] == 'COMPLETED_PENDING_SYNC')
+        .map(
+          (session) => Map<String, dynamic>.from(session)
+            ..remove('assessment_plan')
+            ..remove('answered_items')
+            ..remove('current_item_state'),
+        )
         .toList();
 
     final pendingSessionIds = pendingSessions
@@ -166,6 +344,9 @@ class LocalEvaluationStorage {
                 detail['local_session_id']?.toString(),
               ) &&
               detail['sync_status'] == 'PENDING',
+        )
+        .map(
+          (detail) => Map<String, dynamic>.from(detail)..remove('item_index'),
         )
         .toList();
 
@@ -213,6 +394,8 @@ class LocalEvaluationStorage {
         'updated_at': now,
       });
     }
+    await _sessionsBox.flush();
+    await _detailsBox.flush();
   }
 
   static String exportDebugJson() {
@@ -234,5 +417,93 @@ class LocalEvaluationStorage {
     }
 
     return {};
+  }
+
+  static LocalAssessmentProgress _readAssessment(Map<String, dynamic> session) {
+    final plan = _asStringMap(session['assessment_plan']);
+    final rawItems = plan['items'];
+    final rawOptions = plan['options'];
+    final rawAnswers = session['answered_items'];
+    final sessionId = session['local_session_id'];
+    final studentId = session['estudiante_id'];
+    final tipo = session['tipo_prueba'];
+    final level = session['nivel_dificultad_aplicado'];
+    if (plan['version'] != 1 ||
+        rawItems is! List ||
+        rawOptions is! List ||
+        rawAnswers is! List ||
+        sessionId is! String ||
+        studentId is! int ||
+        studentId <= 0 ||
+        tipo is! String ||
+        !{'LECTURA', 'FONOLOGIA'}.contains(tipo) ||
+        level is! int ||
+        level < 1 ||
+        level > 3 ||
+        rawItems.isEmpty ||
+        rawItems.length != session['total_items'] ||
+        rawOptions.length != rawItems.length ||
+        rawAnswers.length > rawItems.length) {
+      throw const FormatException('El progreso local no se puede recuperar.');
+    }
+    final items = <Map<String, dynamic>>[];
+    final options = <List<String>>[];
+    final ids = <String>{};
+    for (var index = 0; index < rawItems.length; index++) {
+      final item = _asStringMap(rawItems[index]);
+      final id = item['id'];
+      final choices = rawOptions[index];
+      final target = tipo == 'LECTURA'
+          ? item['texto']
+          : item['silaba_objetivo'];
+      if (id is! String ||
+          id.isEmpty ||
+          !ids.add(id) ||
+          item['tipo_prueba'] != tipo ||
+          choices is! List ||
+          choices.length < 3 ||
+          choices.toSet().length != choices.length ||
+          target is! String ||
+          target.trim().isEmpty ||
+          !choices.contains(target) ||
+          (tipo == 'FONOLOGIA' &&
+              (item['palabra'] is! String ||
+                  item['palabra'].toString().trim().isEmpty)) ||
+          choices.any((choice) => choice is! String || choice.trim().isEmpty)) {
+        throw const FormatException('El plan local contiene ítems inválidos.');
+      }
+      items.add(item);
+      options.add(choices.cast<String>().toList());
+    }
+    final answers = rawAnswers
+        .map((answer) => LocalEvaluationDetail.fromJson(_asStringMap(answer)))
+        .toList();
+    for (var index = 0; index < answers.length; index++) {
+      if (answers[index].stimulusId != items[index]['id'] ||
+          answers[index].tipoPrueba != tipo) {
+        throw const FormatException('Las respuestas no coinciden con el plan.');
+      }
+    }
+    final state = _asStringMap(session['current_item_state']);
+    final errors = state['errors'];
+    final elapsed = state['elapsed_ms'];
+    if (state['index'] != answers.length ||
+        errors is! int ||
+        errors < 0 ||
+        elapsed is! int ||
+        elapsed < 0) {
+      throw const FormatException('El estado del ítem pendiente es inválido.');
+    }
+    return LocalAssessmentProgress(
+      sessionId: sessionId,
+      estudianteId: studentId,
+      tipoPrueba: tipo,
+      nivelAplicado: level,
+      items: items,
+      options: options,
+      answers: answers,
+      currentErrors: errors,
+      currentElapsedMs: elapsed,
+    );
   }
 }

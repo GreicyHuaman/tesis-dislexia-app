@@ -10,8 +10,8 @@ from app.schemas.auth_schema import (
     LoginResponse,
 )
 from app.services.jwt_service import (
-    ACCESS_TOKEN_EXPIRE_MINUTES,
     create_access_token,
+    get_access_token_expire_minutes,
 )
 from app.services.password_service import (
     hash_password,
@@ -34,7 +34,7 @@ def _build_login_response(
     return LoginResponse(
         access_token=access_token,
         token_type="bearer",
-        expires_in_minutes=ACCESS_TOKEN_EXPIRE_MINUTES,
+        expires_in_minutes=get_access_token_expire_minutes(),
         user=public_user,
         id=public_user.id,
         nombres=public_user.nombres,
@@ -100,4 +100,3 @@ def get_me(
     current_user: Usuario = Depends(get_current_user),
 ) -> CurrentUserPublic:
     return CurrentUserPublic.model_validate(current_user)
-

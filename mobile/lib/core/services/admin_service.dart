@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/admin_models.dart';
+import 'connection_errors.dart';
 
 class AdminService {
   final String baseUrl;
@@ -33,7 +34,7 @@ class AdminService {
     String? codigoEstudiante,
     required String nombres,
     required String apellidos,
-    String? fechaNacimiento,
+    required String fechaNacimiento,
     required int seccionId,
     required bool consentimientoFirmado,
     String? fechaConsentimiento,
@@ -63,7 +64,7 @@ class AdminService {
     String? codigoEstudiante,
     required String nombres,
     required String apellidos,
-    String? fechaNacimiento,
+    required String fechaNacimiento,
     int? seccionId,
     required bool consentimientoFirmado,
     String? fechaConsentimiento,
@@ -141,20 +142,14 @@ class AdminService {
 
   Future<AdminSection> createSection({
     required String? authToken,
-    required int grado,
     required String nombre,
-    String? turno,
+    required String turno,
     bool activo = true,
   }) async {
     final json = await _postJson(
       path: '/api/v1/secciones',
       authToken: authToken,
-      body: {
-        'grado': grado,
-        'nombre': nombre,
-        'turno': turno,
-        'activo': activo,
-      },
+      body: {'grado': 3, 'nombre': nombre, 'turno': turno, 'activo': activo},
     );
 
     return AdminSection.fromJson(json);
@@ -163,20 +158,14 @@ class AdminService {
   Future<AdminSection> updateSection({
     required String? authToken,
     required int seccionId,
-    required int grado,
     required String nombre,
-    String? turno,
+    required String turno,
     required bool activo,
   }) async {
     final json = await _patchJson(
       path: '/api/v1/secciones/$seccionId',
       authToken: authToken,
-      body: {
-        'grado': grado,
-        'nombre': nombre,
-        'turno': turno,
-        'activo': activo,
-      },
+      body: {'grado': 3, 'nombre': nombre, 'turno': turno, 'activo': activo},
     );
 
     return AdminSection.fromJson(json);
@@ -408,9 +397,12 @@ class AdminService {
     }
 
     if (response.statusCode == 401 || response.statusCode == 403) {
-      throw Exception('Sesión no autorizada. $message');
+      throw RequestFailure(
+        'Sesión no autorizada. $message',
+        statusCode: response.statusCode,
+      );
     }
 
-    throw Exception(message);
+    throw RequestFailure(message, statusCode: response.statusCode);
   }
 }

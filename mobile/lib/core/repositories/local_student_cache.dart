@@ -83,6 +83,48 @@ class LocalStudentCache {
     return saved;
   }
 
+  static Future<void> replaceStudentsForSection({
+    required int seccionId,
+    required Map<String, Student> studentsByPin,
+  }) async {
+    for (final entry in studentsByPin.entries) {
+      if (!RegExp(r'^\d{4}$').hasMatch(entry.key) ||
+          entry.value.seccionId != seccionId ||
+          !entry.value.activo ||
+          !entry.value.consentimientoFirmado) {
+        throw ArgumentError(
+          'El padrón contiene datos no habilitados para esta sección.',
+        );
+      }
+    }
+    final obsoleteKeys = _studentsByPinBox
+        .toMap()
+        .entries
+        .where((entry) {
+          final map = _asStringMap(entry.value);
+          return _asInt(map['seccion_id']) == seccionId &&
+              !studentsByPin.containsKey(entry.key);
+        })
+        .map((entry) => entry.key)
+        .toList();
+
+    for (final entry in studentsByPin.entries) {
+      await saveStudentByPin(pin: entry.key, student: entry.value);
+    }
+    await _studentsByPinBox.deleteAll(obsoleteKeys);
+    await _studentsByPinBox.flush();
+  }
+
+  static int countStudentsForSection(int seccionId) {
+    return _studentsByPinBox.values.where((value) {
+      final map = _asStringMap(value);
+      return _asInt(map['seccion_id']) == seccionId &&
+          map['activo'] == true &&
+          map['consentimiento_firmado'] == true &&
+          RegExp(r'^\d{4}$').hasMatch(map['pin_corto']?.toString() ?? '');
+    }).length;
+  }
+
   static Student? findByPin(String pin) {
     final cleanPin = pin.trim();
     final value = _studentsByPinBox.get(cleanPin);

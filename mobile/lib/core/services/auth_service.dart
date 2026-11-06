@@ -1,9 +1,9 @@
-import 'dart:async';
 import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
 import '../models/auth_user.dart';
+import 'connection_errors.dart';
 
 class AuthLoginResult {
   final bool success;
@@ -44,16 +44,18 @@ class AuthService {
     try {
       final uri = Uri.parse('$baseUrl/api/v1/auth/login');
 
-      final response = await http
-          .post(
-            uri,
-            headers: {
-              'Content-Type': 'application/json',
-              'Accept': 'application/json',
-            },
-            body: jsonEncode({'email': cleanEmail, 'password': password}),
-          )
-          .timeout(const Duration(seconds: 15));
+      final response = await runNetworkRequest(
+        () => http
+            .post(
+              uri,
+              headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+              },
+              body: jsonEncode({'email': cleanEmail, 'password': password}),
+            )
+            .timeout(const Duration(seconds: 15)),
+      );
 
       if (response.statusCode == 401 || response.statusCode == 403) {
         return const AuthLoginResult(
@@ -65,11 +67,9 @@ class AuthService {
       }
 
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        return AuthLoginResult(
-          success: false,
-          user: null,
-          message: 'Error del servidor: ${response.statusCode}.',
-          expiresInMinutes: 0,
+        throw httpRequestFailure(
+          response.statusCode,
+          fallbackMessage: 'No se pudo iniciar sesión. Vuelva a intentarlo.',
         );
       }
 
@@ -78,12 +78,7 @@ class AuthService {
       final user = AuthUser.fromJson(decoded);
 
       if (!user.hasAccessToken) {
-        return const AuthLoginResult(
-          success: false,
-          user: null,
-          message: 'El backend no devolvió token de autenticación.',
-          expiresInMinutes: 0,
-        );
+        throw const FormatException('Respuesta de autenticación sin token.');
       }
 
       final expiresIn = _asInt(decoded['expires_in_minutes']);
@@ -94,18 +89,15 @@ class AuthService {
         message: 'Sesión iniciada correctamente.',
         expiresInMinutes: expiresIn <= 0 ? 480 : expiresIn,
       );
-    } on TimeoutException {
-      return const AuthLoginResult(
-        success: false,
-        user: null,
-        message: 'Tiempo de espera agotado conectando con el backend.',
-        expiresInMinutes: 0,
-      );
-    } catch (error) {
+    } catch (error, stackTrace) {
+      logRequestFailure('Inicio de sesión', error, stackTrace);
       return AuthLoginResult(
         success: false,
         user: null,
-        message: 'Error iniciando sesión: $error',
+        message: requestErrorMessage(
+          error,
+          fallbackMessage: 'No se pudo iniciar sesión. Vuelva a intentarlo.',
+        ),
         expiresInMinutes: 0,
       );
     }

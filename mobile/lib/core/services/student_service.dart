@@ -11,12 +11,14 @@ class StudentLookupResult {
   final Student? student;
   final String message;
   final bool fromCache;
+  final bool requiresOfflinePreparation;
 
   const StudentLookupResult({
     required this.success,
     required this.student,
     required this.message,
     this.fromCache = false,
+    this.requiresOfflinePreparation = false,
   });
 }
 
@@ -435,6 +437,17 @@ class StudentService {
     required String cleanPin,
     required int seccionId,
   }) {
+    if (LocalStudentCache.countStudentsForSection(seccionId) == 0) {
+      return const StudentLookupResult(
+        success: false,
+        student: null,
+        message:
+            'Esta sección no está disponible sin conexión. '
+            'Pide al docente que use “Descargar sección” con conexión a Internet.',
+        fromCache: true,
+        requiresOfflinePreparation: true,
+      );
+    }
     final cachedStudent = LocalStudentCache.findByPinForSection(
       pin: cleanPin,
       seccionId: seccionId,

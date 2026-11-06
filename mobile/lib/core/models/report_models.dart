@@ -251,6 +251,68 @@ class ReportSummary {
   }
 }
 
+class InstitutionalSummary {
+  final int totalSecciones;
+  final int seccionesActivas;
+  final int seccionesInactivas;
+  final int totalEstudiantes;
+  final int estudiantesActivos;
+  final int estudiantesInactivos;
+  final int totalEvaluaciones;
+  final int estudiantesConEvaluaciones;
+  final int estudiantesSinEvaluaciones;
+
+  const InstitutionalSummary({
+    required this.totalSecciones,
+    required this.seccionesActivas,
+    required this.seccionesInactivas,
+    required this.totalEstudiantes,
+    required this.estudiantesActivos,
+    required this.estudiantesInactivos,
+    required this.totalEvaluaciones,
+    required this.estudiantesConEvaluaciones,
+    required this.estudiantesSinEvaluaciones,
+  });
+
+  factory InstitutionalSummary.fromJson(Map<String, dynamic> json) {
+    int count(String key) {
+      final value = json[key];
+      if (value is! int || value < 0) {
+        throw FormatException('Indicador institucional inválido: $key.');
+      }
+      return value;
+    }
+
+    final result = InstitutionalSummary(
+      totalSecciones: count('total_secciones'),
+      seccionesActivas: count('secciones_activas'),
+      seccionesInactivas: count('secciones_inactivas'),
+      totalEstudiantes: count('total_estudiantes'),
+      estudiantesActivos: count('estudiantes_activos'),
+      estudiantesInactivos: count('estudiantes_inactivos'),
+      totalEvaluaciones: count('total_evaluaciones'),
+      estudiantesConEvaluaciones: count('estudiantes_con_evaluaciones'),
+      estudiantesSinEvaluaciones: count('estudiantes_sin_evaluaciones'),
+    );
+    if (result.seccionesActivas + result.seccionesInactivas !=
+            result.totalSecciones ||
+        result.estudiantesActivos + result.estudiantesInactivos !=
+            result.totalEstudiantes ||
+        result.estudiantesConEvaluaciones + result.estudiantesSinEvaluaciones !=
+            result.totalEstudiantes ||
+        result.estudiantesConEvaluaciones > result.totalEvaluaciones) {
+      throw const FormatException(
+        'Indicadores institucionales inconsistentes.',
+      );
+    }
+    return result;
+  }
+
+  double? get porcentajeCobertura => totalEstudiantes == 0
+      ? null
+      : estudiantesConEvaluaciones * 100 / totalEstudiantes;
+}
+
 class StudentTestProfile {
   final String tipoPrueba;
   final int totalEvaluaciones;

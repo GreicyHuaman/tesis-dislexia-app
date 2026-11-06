@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/report_models.dart';
+import 'connection_errors.dart';
 
 class ReportFilters {
   final String? tipoPrueba;
@@ -49,6 +50,34 @@ class ReportService {
     this.baseUrl = 'https://tesis-dislexia-app-production.up.railway.app',
   });
 
+  Future<InstitutionalSummary> fetchResumenInstitucional({
+    String? authToken,
+  }) async {
+    final uri = Uri.parse('$baseUrl/api/v1/reportes/resumen-institucional');
+    final response = await runNetworkRequest(
+      () => http
+          .get(
+            uri,
+            headers: _headers(authToken: authToken, accept: 'application/json'),
+          )
+          .timeout(const Duration(seconds: 15)),
+    );
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw httpRequestFailure(
+        response.statusCode,
+        fallbackMessage:
+            'No se pudo cargar el resumen institucional. Vuelva a intentarlo.',
+      );
+    }
+    final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException(
+        'Formato inesperado del resumen institucional.',
+      );
+    }
+    return InstitutionalSummary.fromJson(decoded);
+  }
+
   Future<ReportSummary> fetchResumenSemaforo({
     String? authToken,
     ReportFilters filters = const ReportFilters(),
@@ -57,16 +86,19 @@ class ReportService {
       '$baseUrl/api/v1/reportes/resumen-semaforo',
     ).replace(queryParameters: filters.toQueryParameters());
 
-    final response = await http
-        .get(
-          uri,
-          headers: _headers(authToken: authToken, accept: 'application/json'),
-        )
-        .timeout(const Duration(seconds: 15));
+    final response = await runNetworkRequest(
+      () => http
+          .get(
+            uri,
+            headers: _headers(authToken: authToken, accept: 'application/json'),
+          )
+          .timeout(const Duration(seconds: 15)),
+    );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Error cargando resumen: ${response.statusCode}. ${response.body}',
+      throw httpRequestFailure(
+        response.statusCode,
+        fallbackMessage: 'No se pudo cargar el resumen. Vuelva a intentarlo.',
       );
     }
 
@@ -84,16 +116,20 @@ class ReportService {
       '$baseUrl/api/v1/reportes/evaluaciones',
     ).replace(queryParameters: filters.toQueryParameters());
 
-    final response = await http
-        .get(
-          uri,
-          headers: _headers(authToken: authToken, accept: 'application/json'),
-        )
-        .timeout(const Duration(seconds: 15));
+    final response = await runNetworkRequest(
+      () => http
+          .get(
+            uri,
+            headers: _headers(authToken: authToken, accept: 'application/json'),
+          )
+          .timeout(const Duration(seconds: 15)),
+    );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Error cargando evaluaciones: ${response.statusCode}. ${response.body}',
+      throw httpRequestFailure(
+        response.statusCode,
+        fallbackMessage:
+            'No se pudieron cargar las evaluaciones. Vuelva a intentarlo.',
       );
     }
 
@@ -124,16 +160,19 @@ class ReportService {
       '$baseUrl/api/v1/reportes/estudiantes/$estudianteId/perfil-riesgo',
     );
 
-    final response = await http
-        .get(
-          uri,
-          headers: _headers(authToken: authToken, accept: 'application/json'),
-        )
-        .timeout(const Duration(seconds: 15));
+    final response = await runNetworkRequest(
+      () => http
+          .get(
+            uri,
+            headers: _headers(authToken: authToken, accept: 'application/json'),
+          )
+          .timeout(const Duration(seconds: 15)),
+    );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Error cargando perfil del estudiante: ${response.statusCode}. ${response.body}',
+      throw httpRequestFailure(
+        response.statusCode,
+        fallbackMessage: 'No se pudo cargar el perfil. Vuelva a intentarlo.',
       );
     }
 
@@ -157,16 +196,19 @@ class ReportService {
       '$baseUrl/api/v1/reportes/evaluaciones.csv',
     ).replace(queryParameters: filters.toQueryParameters());
 
-    final response = await http
-        .get(
-          uri,
-          headers: _headers(authToken: cleanToken, accept: 'text/csv'),
-        )
-        .timeout(const Duration(seconds: 30));
+    final response = await runNetworkRequest(
+      () => http
+          .get(
+            uri,
+            headers: _headers(authToken: cleanToken, accept: 'text/csv'),
+          )
+          .timeout(const Duration(seconds: 30)),
+    );
 
     if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception(
-        'Error exportando CSV: ${response.statusCode}. ${response.body}',
+      throw httpRequestFailure(
+        response.statusCode,
+        fallbackMessage: 'No se pudo exportar el archivo. Vuelva a intentarlo.',
       );
     }
 

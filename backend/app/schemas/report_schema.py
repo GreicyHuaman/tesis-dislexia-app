@@ -1,7 +1,7 @@
 ﻿from datetime import datetime
 from typing import Optional
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class EvaluationReportItem(BaseModel):
@@ -40,6 +40,18 @@ class ReportSummaryResponse(BaseModel):
     semaforos: list[SemaforoSummaryItem]
 
 
+class InstitutionalSummaryResponse(BaseModel):
+    total_secciones: int = Field(ge=0)
+    secciones_activas: int = Field(ge=0)
+    secciones_inactivas: int = Field(ge=0)
+    total_estudiantes: int = Field(ge=0)
+    estudiantes_activos: int = Field(ge=0)
+    estudiantes_inactivos: int = Field(ge=0)
+    total_evaluaciones: int = Field(ge=0)
+    estudiantes_con_evaluaciones: int = Field(ge=0)
+    estudiantes_sin_evaluaciones: int = Field(ge=0)
+
+
 class StudentTestProfile(BaseModel):
     tipo_prueba: str
     total_evaluaciones: int
@@ -70,4 +82,3 @@ class StudentRiskProfileResponse(BaseModel):
     ultima_fecha_general: Optional[datetime] = None
 
     pruebas: list[StudentTestProfile]
-

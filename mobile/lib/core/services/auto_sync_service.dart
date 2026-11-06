@@ -2,9 +2,12 @@ import 'dart:async';
 
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 
 import '../repositories/local_evaluation_storage.dart';
 import 'evaluation_sync_service.dart';
+import 'connection_errors.dart';
 
 enum AutoSyncPhase { idle, offline, syncing, synced, error }
 
@@ -65,10 +68,11 @@ class AutoSyncService {
       (results) {
         unawaited(_handleConnectivity(results, reason: 'cambio_conectividad'));
       },
-      onError: (Object error) {
+      onError: (Object error, StackTrace stackTrace) {
+        logRequestFailure('Escuchar conectividad', error, stackTrace);
         _updateStatus(
           phase: AutoSyncPhase.error,
-          message: 'Error escuchando conectividad: $error',
+          message: connectionCheckFailedMessage,
           connectionLabel: 'Error',
         );
       },
@@ -82,9 +86,34 @@ class AutoSyncService {
   }
 
   Future<void> checkAndSync({String reason = 'manual'}) async {
-    final results = await _connectivity.checkConnectivity();
+    try {
+      final results = await _connectivity.checkConnectivity();
+      await _handleConnectivity(results, reason: reason);
+    } on PlatformException catch (error, stackTrace) {
+      _reportCheckFailure(error, stackTrace, connectionCheckFailedMessage);
+    } on MissingPluginException catch (error, stackTrace) {
+      _reportCheckFailure(error, stackTrace, connectionCheckFailedMessage);
+    } on HiveError catch (error, stackTrace) {
+      _reportCheckFailure(
+        error,
+        stackTrace,
+        'No se pudo consultar el envío guardado. Pida ayuda al personal educativo.',
+      );
+    }
+  }
 
-    await _handleConnectivity(results, reason: reason);
+  void _reportCheckFailure(
+    Object error,
+    StackTrace stackTrace,
+    String message,
+  ) {
+    logRequestFailure('Revisar sincronización', error, stackTrace);
+    _updateStatus(
+      phase: AutoSyncPhase.error,
+      message: message,
+      pendingSessions: status.value.pendingSessions,
+      connectionLabel: status.value.connectionLabel,
+    );
   }
 
   Future<void> syncNow() async {
@@ -102,8 +131,7 @@ class AutoSyncService {
     if (!_hasNetwork(results)) {
       _updateStatus(
         phase: AutoSyncPhase.offline,
-        message:
-            'Sin conexión. Las evaluaciones quedan guardadas localmente en Hive.',
+        message: noInternetMessage,
         pendingSessions: pendingSessions,
         connectionLabel: connectionLabel,
       );
@@ -136,38 +164,40 @@ class AutoSyncService {
 
     _isSyncing = true;
 
-    _updateStatus(
-      phase: AutoSyncPhase.syncing,
-      message:
-          'Sincronizando automáticamente $pendingSessions sesión(es) pendiente(s)...',
-      pendingSessions: pendingSessions,
-      connectionLabel: connectionLabel,
-    );
-
-    final result = await _syncService.syncPendingEvaluations();
-
-    final remainingSessions =
-        LocalEvaluationStorage.countCompletedPendingSyncSessions();
-
-    if (result.success) {
+    try {
       _updateStatus(
-        phase: AutoSyncPhase.synced,
-        message: result.message,
-        pendingSessions: remainingSessions,
-        connectionLabel: connectionLabel,
-        porcentajeRiesgo: result.porcentajeRiesgo,
-        semaforo: result.semaforo,
-      );
-    } else {
-      _updateStatus(
-        phase: AutoSyncPhase.error,
-        message: result.message,
-        pendingSessions: remainingSessions,
+        phase: AutoSyncPhase.syncing,
+        message:
+            'Sincronizando automáticamente $pendingSessions sesión(es) pendiente(s)...',
+        pendingSessions: pendingSessions,
         connectionLabel: connectionLabel,
       );
+
+      final result = await _syncService.syncPendingEvaluations();
+
+      final remainingSessions =
+          LocalEvaluationStorage.countCompletedPendingSyncSessions();
+
+      if (result.success) {
+        _updateStatus(
+          phase: AutoSyncPhase.synced,
+          message: result.message,
+          pendingSessions: remainingSessions,
+          connectionLabel: connectionLabel,
+          porcentajeRiesgo: result.porcentajeRiesgo,
+          semaforo: result.semaforo,
+        );
+      } else {
+        _updateStatus(
+          phase: AutoSyncPhase.error,
+          message: result.message,
+          pendingSessions: remainingSessions,
+          connectionLabel: connectionLabel,
+        );
+      }
+    } finally {
+      _isSyncing = false;
     }
-
-    _isSyncing = false;
   }
 
   bool _hasNetwork(List<ConnectivityResult> results) {

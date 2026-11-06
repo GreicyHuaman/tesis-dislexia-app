@@ -7,6 +7,7 @@ import '../../../core/models/auth_user.dart';
 import '../../../core/repositories/auth_session_storage.dart';
 import '../../../core/models/report_models.dart';
 import '../../../core/services/report_service.dart';
+import '../../../core/services/connection_errors.dart';
 import '../../../core/services/pdf_report_builder.dart';
 import '../../auth/screens/pin_login_screen.dart';
 import '../../auth/widgets/offline_cache_setup_dialog.dart';
@@ -14,12 +15,24 @@ import '../../admin/screens/admin_panel_screen.dart';
 import '../../../core/utils/csv_exporter.dart';
 import '../../../core/utils/pdf_exporter.dart';
 import 'student_risk_profile_screen.dart';
+import '../widgets/institutional_summary_card.dart';
 import '../../seguimiento/screens/seguimiento_screen.dart';
 
 class ReportesScreen extends StatefulWidget {
   final AuthUser currentUser;
+  final PdfReportBuilder pdfReportBuilder;
+  final Future<String> Function({
+    required List<int> bytes,
+    required String filename,
+  })
+  savePdf;
 
-  const ReportesScreen({super.key, required this.currentUser});
+  const ReportesScreen({
+    super.key,
+    required this.currentUser,
+    this.pdfReportBuilder = const PdfReportBuilder(),
+    this.savePdf = savePdfFile,
+  });
 
   @override
   State<ReportesScreen> createState() => _ReportesScreenState();
@@ -34,11 +47,17 @@ class _ReportesScreenState extends State<ReportesScreen> {
   }
 
   final ReportService _reportService = const ReportService();
-  final PdfReportBuilder _pdfReportBuilder = const PdfReportBuilder();
   final TextEditingController _studentIdController = TextEditingController();
 
   bool _isLoading = true;
+  bool _isExportingPdf = false;
   String? _errorMessage;
+  bool _isLoadingInstitutional = false;
+  InstitutionalSummary? _institutionalSummary;
+  String? _institutionalError;
+  int _reportRequestRevision = 0;
+  int _institutionalRequestRevision = 0;
+  int _userScopeRevision = 0;
 
   String? _selectedTipoPrueba;
   String? _selectedSemaforo;
@@ -50,6 +69,35 @@ class _ReportesScreenState extends State<ReportesScreen> {
   void initState() {
     super.initState();
     _loadReportes();
+    if (_isDirectorRole) _loadInstitutionalSummary();
+  }
+
+  @override
+  void didUpdateWidget(covariant ReportesScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    final previous = oldWidget.currentUser;
+    final current = widget.currentUser;
+    if (previous.id == current.id &&
+        previous.rol == current.rol &&
+        previous.gradoScope == current.gradoScope &&
+        previous.accessToken == current.accessToken) {
+      return;
+    }
+    _userScopeRevision++;
+    _reportRequestRevision++;
+    _institutionalRequestRevision++;
+    _summary = null;
+    _evaluaciones = [];
+    _errorMessage = null;
+    _institutionalSummary = null;
+    _institutionalError = null;
+    _isLoadingInstitutional = false;
+    _isExportingPdf = false;
+    _selectedTipoPrueba = null;
+    _selectedSemaforo = null;
+    _studentIdController.clear();
+    _loadReportes();
+    if (_isDirectorRole) _loadInstitutionalSummary();
   }
 
   @override
@@ -70,6 +118,8 @@ class _ReportesScreenState extends State<ReportesScreen> {
   }
 
   Future<void> _loadReportes() async {
+    final requestRevision = ++_reportRequestRevision;
+    final user = widget.currentUser;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
@@ -79,38 +129,96 @@ class _ReportesScreenState extends State<ReportesScreen> {
       final filters = _currentFilters;
 
       final summary = await _reportService.fetchResumenSemaforo(
-        authToken: widget.currentUser.accessToken,
+        authToken: user.accessToken,
         filters: filters,
       );
 
+      if (!mounted || requestRevision != _reportRequestRevision) return;
       final evaluaciones = await _reportService.fetchEvaluaciones(
-        authToken: widget.currentUser.accessToken,
+        authToken: user.accessToken,
         filters: filters,
       );
 
-      if (!mounted) return;
+      if (!mounted || requestRevision != _reportRequestRevision) return;
 
       setState(() {
         _summary = summary;
         _evaluaciones = evaluaciones;
         _isLoading = false;
       });
-    } catch (error) {
-      if (!mounted) return;
+    } catch (error, stackTrace) {
+      logRequestFailure('Cargar reportes', error, stackTrace);
+      if (!mounted || requestRevision != _reportRequestRevision) return;
 
-      final errorText = error.toString();
-
-      if (errorText.contains('401')) {
+      if (error is RequestFailure && error.statusCode == 401) {
         await AuthSessionStorage.clearSession();
       }
 
+      if (!mounted || requestRevision != _reportRequestRevision) return;
+
       setState(() {
-        _errorMessage = errorText.contains('401')
-            ? 'Sesión vencida o no autorizada. Cierra sesión e ingresa nuevamente.'
-            : errorText;
+        _errorMessage = requestErrorMessage(
+          error,
+          fallbackMessage:
+              'No se pudieron cargar los reportes. Vuelva a intentarlo.',
+        );
         _isLoading = false;
       });
     }
+  }
+
+  Future<void> _loadInstitutionalSummary() async {
+    if (!_isDirectorRole || _isLoadingInstitutional) return;
+    final requestRevision = ++_institutionalRequestRevision;
+    final user = widget.currentUser;
+    setState(() {
+      _isLoadingInstitutional = true;
+      _institutionalError = null;
+    });
+    try {
+      final summary = await _reportService.fetchResumenInstitucional(
+        authToken: user.accessToken,
+      );
+      if (!mounted || requestRevision != _institutionalRequestRevision) return;
+      setState(() {
+        _institutionalSummary = summary;
+      });
+    } catch (error, stackTrace) {
+      logRequestFailure('Cargar resumen institucional', error, stackTrace);
+      if (!mounted || requestRevision != _institutionalRequestRevision) return;
+      if (error is RequestFailure && error.statusCode == 401) {
+        await AuthSessionStorage.clearSession();
+      }
+      if (!mounted || requestRevision != _institutionalRequestRevision) return;
+      setState(() {
+        if (error is RequestFailure &&
+            (error.statusCode == 401 || error.statusCode == 403)) {
+          _institutionalSummary = null;
+        }
+        _institutionalError = requestErrorMessage(
+          error,
+          fallbackMessage:
+              'No se pudo cargar el resumen institucional. Vuelva a intentarlo.',
+        );
+      });
+    } finally {
+      if (mounted && requestRevision == _institutionalRequestRevision) {
+        setState(() {
+          _isLoadingInstitutional = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _refreshAll() async {
+    if (_isDirectorRole) {
+      _institutionalRequestRevision++;
+      _isLoadingInstitutional = false;
+    }
+    await Future.wait([
+      _loadReportes(),
+      if (_isDirectorRole) _loadInstitutionalSummary(),
+    ]);
   }
 
   void _openStudentProfile(EvaluationReportItem evaluacion) {
@@ -144,13 +252,17 @@ class _ReportesScreenState extends State<ReportesScreen> {
     );
   }
 
-  void _openAdminPanel() {
-    Navigator.of(context).push(
+  Future<void> _openAdminPanel() async {
+    await Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => AdminPanelScreen(currentUser: widget.currentUser),
       ),
     );
+    if (mounted && _isDirectorRole) await _refreshAll();
   }
+
+  bool get _isDirectorRole =>
+      widget.currentUser.rol.toUpperCase() == 'DIRECTORA';
 
   bool get _canOpenManagementPanel {
     final role = widget.currentUser.rol.toUpperCase();
@@ -310,9 +422,11 @@ class _ReportesScreenState extends State<ReportesScreen> {
   }
 
   Future<void> _exportPdf() async {
-    if (_isLoading) return;
+    if (_isLoading || _isExportingPdf) return;
 
-    if (_summary == null) {
+    final summary = _summary;
+    final scopeRevision = _userScopeRevision;
+    if (summary == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Primero carga los reportes antes de exportar PDF.'),
@@ -322,19 +436,25 @@ class _ReportesScreenState extends State<ReportesScreen> {
       return;
     }
 
+    setState(() {
+      _isExportingPdf = true;
+    });
+
     try {
-      final result = await _pdfReportBuilder.buildEvaluationsReport(
+      final result = await widget.pdfReportBuilder.buildEvaluationsReport(
         currentUser: widget.currentUser,
-        summary: _summary,
+        summary: summary,
         evaluations: _evaluaciones,
       );
 
-      final savedPath = await savePdfFile(
+      if (!mounted || scopeRevision != _userScopeRevision) return;
+
+      final savedPath = await widget.savePdf(
         bytes: result.bytes,
         filename: result.filename,
       );
 
-      if (!mounted) return;
+      if (!mounted || scopeRevision != _userScopeRevision) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -342,40 +462,58 @@ class _ReportesScreenState extends State<ReportesScreen> {
           backgroundColor: Colors.green,
         ),
       );
-    } catch (error) {
-      if (!mounted) return;
+    } catch (error, stackTrace) {
+      logRequestFailure('Exportar PDF', error, stackTrace);
+      if (!mounted || scopeRevision != _userScopeRevision) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error exportando PDF: $error'),
+        const SnackBar(
+          content: Text('No se pudo exportar el PDF. Vuelva a intentarlo.'),
           backgroundColor: Colors.red,
         ),
       );
+    } finally {
+      if (mounted && scopeRevision == _userScopeRevision) {
+        setState(() {
+          _isExportingPdf = false;
+        });
+      }
     }
   }
 
   Future<void> _exportCsv() async {
+    final scopeRevision = _userScopeRevision;
     try {
       final result = await _reportService.downloadEvaluacionesCsv(
         authToken: widget.currentUser.accessToken,
         filters: _currentFilters,
       );
 
+      if (!mounted || scopeRevision != _userScopeRevision) return;
       final savedPath = await saveCsvFile(
         bytes: result.bytes,
         filename: result.filename,
       );
 
-      if (!mounted) return;
+      if (!mounted || scopeRevision != _userScopeRevision) return;
 
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('CSV exportado: $savedPath')));
-    } catch (error) {
-      if (!mounted) return;
+    } catch (error, stackTrace) {
+      logRequestFailure('Exportar CSV', error, stackTrace);
+      if (!mounted || scopeRevision != _userScopeRevision) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No se pudo exportar CSV: $error')),
+        SnackBar(
+          content: Text(
+            requestErrorMessage(
+              error,
+              fallbackMessage:
+                  'No se pudo exportar el archivo. Vuelva a intentarlo.',
+            ),
+          ),
+        ),
       );
     }
   }
@@ -386,7 +524,9 @@ class _ReportesScreenState extends State<ReportesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reporte docente'),
+        title: Text(
+          _isDirectorRole ? 'Resumen institucional' : 'Reporte docente',
+        ),
         actions: [
           IconButton(
             onPressed: _prepareOfflineModeFromPortal,
@@ -395,7 +535,9 @@ class _ReportesScreenState extends State<ReportesScreen> {
           ),
 
           IconButton(
-            onPressed: _isLoading ? null : _loadReportes,
+            onPressed: _isLoading || _isLoadingInstitutional
+                ? null
+                : _refreshAll,
             icon: const Icon(Icons.refresh),
             tooltip: 'Actualizar',
           ),
@@ -405,8 +547,14 @@ class _ReportesScreenState extends State<ReportesScreen> {
             tooltip: 'Seguimiento semanal',
           ),
           IconButton(
-            onPressed: _isLoading ? null : _exportPdf,
-            icon: const Icon(Icons.picture_as_pdf_outlined),
+            onPressed: _isLoading || _isExportingPdf ? null : _exportPdf,
+            icon: _isExportingPdf
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.picture_as_pdf_outlined),
             tooltip: 'Exportar PDF',
           ),
           if (_canOpenManagementPanel)
@@ -427,11 +575,11 @@ class _ReportesScreenState extends State<ReportesScreen> {
   }
 
   Widget _buildBody(ReportSummary? summary) {
-    if (_isLoading && summary == null) {
+    if (!_isDirectorRole && _isLoading && summary == null) {
       return const Center(child: CircularProgressIndicator());
     }
 
-    if (_errorMessage != null && summary == null) {
+    if (!_isDirectorRole && _errorMessage != null && summary == null) {
       return Padding(
         padding: const EdgeInsets.all(20),
         child: Center(
@@ -457,15 +605,24 @@ class _ReportesScreenState extends State<ReportesScreen> {
       );
     }
 
-    if (summary == null) {
+    if (!_isDirectorRole && summary == null) {
       return const Center(child: Text('No hay datos de reporte.'));
     }
 
     return RefreshIndicator(
-      onRefresh: _loadReportes,
+      onRefresh: _refreshAll,
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (_isDirectorRole) ...[
+            InstitutionalSummaryCard(
+              summary: _institutionalSummary,
+              isLoading: _isLoadingInstitutional,
+              errorMessage: _institutionalError,
+              onRetry: _loadInstitutionalSummary,
+            ),
+            const SizedBox(height: 14),
+          ],
           _UserScopeCard(user: widget.currentUser),
           const SizedBox(height: 14),
           _buildSeguimientoShortcut(),
@@ -502,45 +659,53 @@ class _ReportesScreenState extends State<ReportesScreen> {
               textAlign: TextAlign.center,
               style: const TextStyle(color: Colors.red),
             ),
+            if (_isDirectorRole && summary == null)
+              OutlinedButton.icon(
+                onPressed: _isLoading ? null : _loadReportes,
+                icon: const Icon(Icons.refresh),
+                label: const Text('Reintentar reportes'),
+              ),
           ],
-          const SizedBox(height: 14),
-          _SummaryCard(summary: summary),
-          const SizedBox(height: 18),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'Historial de evaluaciones',
-                  style: Theme.of(context).textTheme.titleLarge,
+          if (summary != null) ...[
+            const SizedBox(height: 14),
+            _SummaryCard(summary: summary),
+            const SizedBox(height: 18),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    'Historial de evaluaciones',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
-              ),
-              Text(
-                '${_evaluaciones.length} resultado(s)',
-                style: const TextStyle(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (_evaluaciones.isEmpty)
-            const Card(
-              child: Padding(
-                padding: EdgeInsets.all(18),
-                child: Text(
-                  'No hay evaluaciones visibles con los filtros seleccionados.',
-                  textAlign: TextAlign.center,
+                Text(
+                  '${_evaluaciones.length} resultado(s)',
+                  style: const TextStyle(fontWeight: FontWeight.w600),
                 ),
-              ),
-            )
-          else
-            ..._evaluaciones.map(
-              (evaluacion) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _EvaluationCard(
-                  evaluacion: evaluacion,
-                  onOpenProfile: () => _openStudentProfile(evaluacion),
-                ),
-              ),
+              ],
             ),
+            const SizedBox(height: 10),
+            if (_evaluaciones.isEmpty)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(18),
+                  child: Text(
+                    'No hay evaluaciones visibles con los filtros seleccionados.',
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+              )
+            else
+              ..._evaluaciones.map(
+                (evaluacion) => Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _EvaluationCard(
+                    evaluacion: evaluacion,
+                    onOpenProfile: () => _openStudentProfile(evaluacion),
+                  ),
+                ),
+              ),
+          ],
         ],
       ),
     );

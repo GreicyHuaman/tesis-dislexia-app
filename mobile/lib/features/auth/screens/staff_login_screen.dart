@@ -1,8 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../../core/models/auth_user.dart';
 import '../../../core/repositories/auth_session_storage.dart';
 import '../../../core/services/auth_service.dart';
+import '../../../core/services/auto_sync_service.dart';
 import '../../reportes/screens/reportes_screen.dart';
 
 class StaffLoginScreen extends StatefulWidget {
@@ -152,6 +155,12 @@ class _StaffLoginScreenState extends State<StaffLoginScreen> {
   }
 
   void _openStaffHome(AuthUser user) {
+    if (user.rol.toUpperCase() == 'MAESTRO' ||
+        user.rol.toUpperCase() == 'DIRECTORA') {
+      unawaited(
+        AutoSyncService.instance.checkAndSync(reason: 'sesion_personal'),
+      );
+    }
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => ReportesScreen(currentUser: user)),
     );

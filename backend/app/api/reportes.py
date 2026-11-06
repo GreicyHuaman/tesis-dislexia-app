@@ -4,9 +4,10 @@ from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import Response
+from sqlalchemy import func
 from sqlmodel import Session, select
 
-from app.core.security import get_current_user
+from app.core.security import get_current_user, require_roles
 from app.db.session import get_session
 from app.models.evaluation import Evaluacion
 from app.models.prediction import PrediccionModelo
@@ -15,6 +16,7 @@ from app.models.student import Estudiante
 from app.models.user import Usuario
 from app.schemas.report_schema import (
     EvaluationReportItem,
+    InstitutionalSummaryResponse,
     ReportSummaryResponse,
     SemaforoSummaryItem,
     StudentRiskProfileResponse,
@@ -300,6 +302,67 @@ def list_evaluaciones_by_estudiante(
     ]
 
 
+@router.get(
+    "/resumen-institucional",
+    response_model=InstitutionalSummaryResponse,
+    dependencies=[Depends(require_roles("DIRECTORA"))],
+)
+def get_resumen_institucional(
+    current_user: Usuario = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> InstitutionalSummaryResponse:
+    sections = select(func.count(Seccion.id))
+    students = select(func.count(Estudiante.id))
+    evaluations = select(func.count(Evaluacion.id))
+    students_with_evaluations = select(func.count(Estudiante.id)).where(
+        Estudiante.id.in_(select(Evaluacion.estudiante_id)),
+    )
+
+    if current_user.grado_scope is not None:
+        section_ids = select(Seccion.id).where(
+            Seccion.grado == current_user.grado_scope,
+        )
+        student_ids = select(Estudiante.id).where(
+            Estudiante.seccion_id.in_(section_ids),
+        )
+        sections = sections.where(Seccion.grado == current_user.grado_scope)
+        students = students.where(Estudiante.seccion_id.in_(section_ids))
+        evaluations = evaluations.where(Evaluacion.estudiante_id.in_(student_ids))
+        students_with_evaluations = students_with_evaluations.where(
+            Estudiante.seccion_id.in_(section_ids),
+        )
+
+    # Una sentencia conserva un mismo instante para todos los indicadores.
+    counts = select(
+        sections.scalar_subquery(),
+        sections.where(Seccion.activo == True).scalar_subquery(),  # noqa: E712
+        students.scalar_subquery(),
+        students.where(Estudiante.activo == True).scalar_subquery(),  # noqa: E712
+        evaluations.scalar_subquery(),
+        students_with_evaluations.scalar_subquery(),
+    )
+    (
+        total_sections,
+        active_sections,
+        total_students,
+        active_students,
+        total_evaluations,
+        evaluated_students,
+    ) = session.exec(counts).one()
+
+    return InstitutionalSummaryResponse(
+        total_secciones=total_sections,
+        secciones_activas=active_sections,
+        secciones_inactivas=total_sections - active_sections,
+        total_estudiantes=total_students,
+        estudiantes_activos=active_students,
+        estudiantes_inactivos=total_students - active_students,
+        total_evaluaciones=total_evaluations,
+        estudiantes_con_evaluaciones=evaluated_students,
+        estudiantes_sin_evaluaciones=total_students - evaluated_students,
+    )
+
+
 @router.get("/resumen-semaforo", response_model=ReportSummaryResponse)
 def get_resumen_semaforo(
     tipo_prueba: str | None = Query(default=None),
@@ -560,5 +623,3 @@ def export_evaluaciones_csv(
             "Content-Disposition": "attachment; filename=reporte_evaluaciones.csv",
         },
     )
-
-

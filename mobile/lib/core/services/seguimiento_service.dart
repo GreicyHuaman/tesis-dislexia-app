@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../models/seguimiento_models.dart';
+import 'connection_errors.dart';
 
 class SeguimientoService {
   final String baseUrl;
@@ -15,9 +16,11 @@ class SeguimientoService {
   Future<SeguimientoResumen> fetchResumen({required String? authToken}) async {
     final uri = Uri.parse('$baseUrl/api/v1/seguimiento/resumen');
 
-    final response = await http
-        .get(uri, headers: _headers(authToken))
-        .timeout(const Duration(seconds: 15));
+    final response = await runNetworkRequest(
+      () => http
+          .get(uri, headers: _headers(authToken))
+          .timeout(const Duration(seconds: 15)),
+    );
 
     _ensureSuccess(response);
 
@@ -45,16 +48,18 @@ class SeguimientoService {
       '$baseUrl/api/v1/seguimiento/priorizados',
     ).replace(queryParameters: query.isEmpty ? null : query);
 
-    final response = await http
-        .get(uri, headers: _headers(authToken))
-        .timeout(const Duration(seconds: 15));
+    final response = await runNetworkRequest(
+      () => http
+          .get(uri, headers: _headers(authToken))
+          .timeout(const Duration(seconds: 15)),
+    );
 
     _ensureSuccess(response);
 
     final decoded = jsonDecode(utf8.decode(response.bodyBytes));
 
     if (decoded is! List) {
-      return [];
+      throw const FormatException('Formato inesperado de seguimiento.');
     }
 
     return decoded
@@ -75,9 +80,11 @@ class SeguimientoService {
       '$baseUrl/api/v1/seguimiento/estudiante/$estudianteId',
     );
 
-    final response = await http
-        .get(uri, headers: _headers(authToken))
-        .timeout(const Duration(seconds: 15));
+    final response = await runNetworkRequest(
+      () => http
+          .get(uri, headers: _headers(authToken))
+          .timeout(const Duration(seconds: 15)),
+    );
 
     _ensureSuccess(response);
 
@@ -106,14 +113,25 @@ class SeguimientoService {
       'estado': estado.trim().toUpperCase(),
     };
 
-    final response = await http
-        .post(
-          uri,
-          headers: {..._headers(authToken), 'Content-Type': 'application/json'},
-          body: jsonEncode(body),
-        )
-        .timeout(const Duration(seconds: 15));
+    final response = await runNetworkRequest(
+      () => http
+          .post(
+            uri,
+            headers: {
+              ..._headers(authToken),
+              'Content-Type': 'application/json',
+            },
+            body: jsonEncode(body),
+          )
+          .timeout(const Duration(seconds: 15)),
+    );
 
+    if (response.statusCode == 422) {
+      throw const RequestFailure(
+        'Selecciona al menos una categoría del catálogo y revisa los datos de la observación.',
+        statusCode: 422,
+      );
+    }
     _ensureSuccess(response);
   }
 
@@ -121,7 +139,10 @@ class SeguimientoService {
     final token = authToken?.trim();
 
     if (token == null || token.isEmpty) {
-      throw Exception('No existe token de sesión académica.');
+      throw const RequestFailure(
+        'Sesión vencida o no autorizada. Cierra sesión e ingresa nuevamente.',
+        statusCode: 401,
+      );
     }
 
     return {'Accept': 'application/json', 'Authorization': 'Bearer $token'};
@@ -132,18 +153,10 @@ class SeguimientoService {
       return;
     }
 
-    String message = 'Error HTTP ${response.statusCode}.';
-
-    try {
-      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
-
-      if (decoded is Map && decoded['detail'] != null) {
-        message = decoded['detail'].toString();
-      }
-    } catch (_) {
-      // Mantener mensaje generico.
-    }
-
-    throw Exception(message);
+    throw httpRequestFailure(
+      response.statusCode,
+      fallbackMessage:
+          'No se pudo completar la operación de seguimiento. Vuelva a intentarlo.',
+    );
   }
 }

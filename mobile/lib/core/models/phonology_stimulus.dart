@@ -57,6 +57,19 @@ class PhonologyStimulus {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'tipo_estimulo': tipoEstimulo,
+    'palabra': palabra,
+    'silaba_objetivo': silabaObjetivo,
+    'opciones': opciones,
+    'num_silabas': numSilabas,
+    'num_letras': numLetras,
+    'frecuencia': frecuencia,
+    'complejidad_estimulo': complejidadEstimulo,
+    'tipo_prueba': tipoPrueba,
+  };
+
   static int? _asNullableInt(dynamic value) {
     if (value == null) return null;
     if (value is int) return value;

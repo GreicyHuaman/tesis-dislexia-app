@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 
 from app.core.security import get_current_user, require_roles
 from app.db.session import get_session
-from app.models.section import Seccion
+from app.models.section import DocenteSeccion, Seccion
 from app.models.user import Usuario
 from app.schemas.section_schema import (
     SectionCreate,
@@ -25,11 +25,15 @@ def list_secciones(
     rol = current_user.rol.upper()
 
     if rol == "MAESTRO":
-        # Para simplificar el panel inicial, el maestro tambien puede ver
-        # secciones activas, pero no puede crear ni editar.
+        assigned_section_ids = select(DocenteSeccion.seccion_id).where(
+            DocenteSeccion.usuario_id == current_user.id,
+        )
         statement = (
             select(Seccion)
-            .where(Seccion.activo == True)  # noqa: E712
+            .where(
+                Seccion.activo == True,  # noqa: E712
+                Seccion.id.in_(assigned_section_ids),
+            )
             .order_by(Seccion.grado, Seccion.nombre)
         )
     else:
@@ -116,4 +120,3 @@ def update_seccion(
     session.refresh(seccion)
 
     return SectionPublic.model_validate(seccion)
-

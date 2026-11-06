@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../core/services/report_service.dart';
+import '../../../core/services/connection_errors.dart';
 import '../../../core/services/student_pdf_report_builder.dart';
 import '../../../core/utils/pdf_exporter.dart';
 import '../../../core/widgets/app_status_view.dart';
@@ -56,11 +57,15 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
         _profile = profile;
         _isLoading = false;
       });
-    } catch (error) {
+    } catch (error, stackTrace) {
+      logRequestFailure('Cargar perfil', error, stackTrace);
       if (!mounted) return;
 
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = requestErrorMessage(
+          error,
+          fallbackMessage: 'No se pudo cargar el perfil. Vuelva a intentarlo.',
+        );
         _isLoading = false;
       });
     }

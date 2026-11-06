@@ -1,5 +1,7 @@
 ﻿import os
 
+from sqlalchemy import inspect
+
 from sqlmodel import Session, SQLModel, create_engine
 
 DEFAULT_DATABASE_URL = (
@@ -23,9 +25,22 @@ engine = create_engine(
 
 def create_db_and_tables() -> None:
     SQLModel.metadata.create_all(engine)
+    inspector = inspect(engine)
+    columns = {column["name"] for column in inspector.get_columns("evaluaciones")}
+    unique_session_id = any(
+        index.get("unique") and index["column_names"] == ["local_session_id"]
+        for index in inspector.get_indexes("evaluaciones")
+    ) or any(
+        constraint["column_names"] == ["local_session_id"]
+        for constraint in inspector.get_unique_constraints("evaluaciones")
+    )
+    if not {"local_session_id", "sync_payload_hash"}.issubset(columns) or not unique_session_id:
+        raise RuntimeError(
+            "Falta la migración de sincronización. "
+            "Ejecute python -m app.db.migrate_sync_sessions antes del arranque."
+        )
 
 
 def get_session():
     with Session(engine) as session:
         yield session
-

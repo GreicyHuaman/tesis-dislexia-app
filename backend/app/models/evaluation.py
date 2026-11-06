@@ -9,6 +9,11 @@ class Evaluacion(SQLModel, table=True):
 
     id: Optional[int] = Field(default=None, primary_key=True)
 
+    local_session_id: Optional[str] = Field(
+        default=None, max_length=128, unique=True, index=True,
+    )
+    sync_payload_hash: Optional[str] = Field(default=None, max_length=64)
+
     estudiante_id: Optional[int] = Field(default=None, foreign_key="estudiantes.id")
 
     fecha_evaluacion: datetime = Field(default_factory=datetime.utcnow)
@@ -51,4 +56,3 @@ class DetalleEvaluacion(SQLModel, table=True):
     # No reemplaza las columnas principales del diseño.
     stimulus_id: Optional[str] = Field(default=None)
     texto: Optional[str] = Field(default=None)
-

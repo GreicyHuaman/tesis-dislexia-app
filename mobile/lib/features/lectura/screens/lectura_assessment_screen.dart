@@ -1,5 +1,4 @@
 import '../../home/screens/student_test_completed_screen.dart';
-import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -10,6 +9,8 @@ import '../../../core/models/stimulus.dart';
 import '../../../core/repositories/local_evaluation_storage.dart';
 import '../../../core/repositories/stimuli_repository.dart';
 import '../../../core/services/evaluation_sync_service.dart';
+import '../../../core/services/assessment_progress_tracker.dart';
+import '../../../core/services/connection_errors.dart';
 import '../../auth/screens/pin_login_screen.dart';
 
 class LecturaAssessmentScreen extends StatefulWidget {
@@ -32,21 +33,23 @@ class LecturaAssessmentScreen extends StatefulWidget {
 class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
   final StimuliRepository _repository = StimuliRepository();
   final EvaluationSyncService _syncService = const EvaluationSyncService();
-  final Stopwatch _stopwatch = Stopwatch();
   final Random _random = Random();
+  AssessmentProgressTracker? _progressTracker;
 
   bool _isLoading = true;
   bool _isFinished = false;
   bool _isSavingAnswer = false;
   bool _isSyncing = false;
+  bool _isFinishing = false;
 
   String? _errorMessage;
   String? _feedbackMessage;
   String? _syncMessage;
   String? _localSessionId;
+  String? _saveErrorMessage;
 
-  List<Stimulus> _allStimuli = [];
   List<Stimulus> _sessionStimuli = [];
+  List<List<String>> _sessionOptions = [];
   List<String> _options = [];
   final List<LocalEvaluationDetail> _answers = [];
 
@@ -66,96 +69,113 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
 
   @override
   void dispose() {
-    _stopwatch.stop();
+    _progressTracker?.dispose();
     super.dispose();
   }
 
   Future<void> _loadStimuli() async {
     try {
-      final stimuli = await _repository.loadLecturaStimuli();
-
-      final validStimuli = stimuli
-          .where((stimulus) => stimulus.texto.trim().isNotEmpty)
-          .toList();
-
-      final selection = AdaptiveWordBankSelector.select<Stimulus>(
-        items: validStimuli,
-        level: _currentAdaptiveLevel,
-        difficultyOf: (stimulus) => stimulus.complejidadEstimulo,
-        random: _random,
+      var progress = LocalEvaluationStorage.getIncompleteAssessment(
+        estudianteId: widget.estudianteId,
+        tipoPrueba: 'LECTURA',
       );
-      final sessionStimuli = selection.items;
-      final metadata = selection.metadata;
-
-      String? sessionId;
-
-      if (sessionStimuli.isNotEmpty) {
-        sessionId = await LocalEvaluationStorage.createSession(
+      if (progress == null) {
+        final stimuli = await _repository.loadLecturaStimuli();
+        final validStimuli = stimuli
+            .where((stimulus) => stimulus.texto.trim().isNotEmpty)
+            .toList();
+        final selection = AdaptiveWordBankSelector.select<Stimulus>(
+          items: validStimuli,
+          level: _currentAdaptiveLevel,
+          difficultyOf: (stimulus) => stimulus.complejidadEstimulo,
+          random: _random,
+        );
+        final metadata = selection.metadata;
+        final options = selection.items.map((current) {
+          final distractors =
+              validStimuli
+                  .where((stimulus) => stimulus.texto != current.texto)
+                  .map((stimulus) => stimulus.texto)
+                  .toSet()
+                  .toList()
+                ..shuffle(_random);
+          return [current.texto, ...distractors.take(2)]..shuffle(_random);
+        }).toList();
+        final sessionId = await LocalEvaluationStorage.createSession(
           tipoPrueba: 'LECTURA',
-          totalItems: sessionStimuli.length,
+          totalItems: selection.items.length,
           estudianteId: widget.estudianteId,
           nivelDificultadAplicado: metadata.nivelDificultadAplicado,
           totalBaja: metadata.totalBaja,
           totalMedia: metadata.totalMedia,
           totalAlta: metadata.totalAlta,
           versionBancoPalabras: metadata.versionBancoPalabras,
+          assessmentItems: selection.items
+              .map((item) => item.toJson())
+              .toList(),
+          assessmentOptions: options,
         );
+        progress = LocalEvaluationStorage.getAssessment(sessionId);
       }
+      await LocalEvaluationStorage.restoreAssessmentDetails(progress.sessionId);
 
       if (!mounted) return;
 
       setState(() {
-        _allStimuli = validStimuli;
-        _sessionStimuli = sessionStimuli;
-        _localSessionId = sessionId;
+        _sessionStimuli = progress!.items.map(Stimulus.fromJson).toList();
+        _sessionOptions = progress.options;
+        _answers.addAll(progress.answers);
+        _currentIndex = progress.answeredItems;
+        _currentAdaptiveLevel = progress.nivelAplicado;
+        _localSessionId = progress.sessionId;
         _pendingLocalSessions = LocalEvaluationStorage.countPendingSessions();
         _isLoading = false;
-        _isFinished = _sessionStimuli.isEmpty;
       });
-
-      if (_sessionStimuli.isNotEmpty) {
-        _prepareCurrentQuestion();
+      _progressTracker = AssessmentProgressTracker(
+        sessionId: progress.sessionId,
+        onSaveError: () {
+          if (mounted) {
+            setState(() {
+              _saveErrorMessage =
+                  'No se pudo guardar. Pide ayuda a tu docente.';
+            });
+          }
+        },
+      );
+      if (progress.remainingItems == 0) {
+        await _finishSession();
+      } else {
+        _prepareCurrentQuestion(
+          savedErrors: progress.currentErrors,
+          savedElapsedMs: progress.currentElapsedMs,
+        );
       }
-    } catch (error) {
+    } catch (error, stackTrace) {
+      logRequestFailure('Abrir prueba de lectura', error, stackTrace);
       if (!mounted) return;
 
       setState(() {
-        _errorMessage = error.toString();
+        _errorMessage = 'No se pudo abrir la prueba. Pide ayuda a tu docente.';
         _isLoading = false;
       });
     }
   }
 
-  void _prepareCurrentQuestion() {
+  void _prepareCurrentQuestion({int savedErrors = 0, int savedElapsedMs = 0}) {
     if (_sessionStimuli.isEmpty || _currentIndex >= _sessionStimuli.length) {
       _finishSession();
       return;
     }
 
-    final currentStimulus = _sessionStimuli[_currentIndex];
-
-    final distractors = _allStimuli
-        .where((stimulus) => stimulus.texto != currentStimulus.texto)
-        .map((stimulus) => stimulus.texto)
-        .toSet()
-        .toList();
-
-    distractors.shuffle(_random);
-
-    final generatedOptions = <String>[
-      currentStimulus.texto,
-      ...distractors.take(2),
-    ];
-
-    generatedOptions.shuffle(_random);
-
-    _stopwatch
-      ..reset()
-      ..start();
+    _progressTracker!.startItem(
+      index: _currentIndex,
+      savedErrors: savedErrors,
+      savedElapsedMs: savedElapsedMs,
+    );
 
     setState(() {
-      _options = generatedOptions;
-      _tapsErroneosCurrent = 0;
+      _options = _sessionOptions[_currentIndex];
+      _tapsErroneosCurrent = savedErrors;
       _feedbackMessage = null;
       _syncMessage = null;
       _isSavingAnswer = false;
@@ -163,7 +183,7 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
   }
 
   Future<void> _handleOptionTap(String selectedText) async {
-    if (_isSavingAnswer) return;
+    if (_isSavingAnswer || _isFinishing) return;
 
     if (_sessionStimuli.isEmpty || _currentIndex >= _sessionStimuli.length) {
       await _finishSession();
@@ -177,7 +197,22 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
       setState(() {
         _tapsErroneosCurrent++;
         _feedbackMessage = 'Intenta otra vez';
+        _isSavingAnswer = true;
       });
+      _progressTracker!.errors = _tapsErroneosCurrent;
+      try {
+        await _progressTracker!.checkpoint();
+        if (mounted) setState(() => _saveErrorMessage = null);
+      } catch (error, stackTrace) {
+        logRequestFailure('Guardar intento de lectura', error, stackTrace);
+        if (mounted) {
+          setState(() {
+            _saveErrorMessage = 'No se pudo guardar. Pide ayuda a tu docente.';
+          });
+        }
+      } finally {
+        if (mounted) setState(() => _isSavingAnswer = false);
+      }
       return;
     }
 
@@ -185,7 +220,7 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
       _isSavingAnswer = true;
     });
 
-    _stopwatch.stop();
+    _progressTracker!.stopItem();
 
     final hadErrors = _tapsErroneosCurrent > 0;
 
@@ -193,7 +228,7 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
       stimulusId: currentStimulus.id,
       texto: currentStimulus.texto,
       tipoPrueba: currentStimulus.tipoPrueba,
-      tiempoRespuestaMs: _stopwatch.elapsedMilliseconds,
+      tiempoRespuestaMs: _progressTracker!.elapsedMs,
       duracionDragDropMs: null,
       tapsErroneos: _tapsErroneosCurrent,
       tipoError: hadErrors ? 'SELECCION_INCORRECTA' : null,
@@ -201,74 +236,80 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
       acierto: !hadErrors,
     );
 
-    final sessionId = _localSessionId;
-
-    if (sessionId != null) {
-      await LocalEvaluationStorage.saveDetail(
-        localSessionId: sessionId,
+    try {
+      final saved = await LocalEvaluationStorage.saveAssessmentAnswer(
+        sessionId: _localSessionId!,
+        itemIndex: _currentIndex,
         detail: detail,
       );
-    }
-
-    if (!mounted) return;
-
-    final isLastQuestion = _currentIndex == _sessionStimuli.length - 1;
-
-    if (isLastQuestion) {
+      if (!mounted) return;
       setState(() {
-        _answers.add(detail);
+        _answers
+          ..clear()
+          ..addAll(saved.answers);
+        _currentIndex = saved.answeredItems;
         _feedbackMessage = null;
+        _saveErrorMessage = null;
         _pendingLocalSessions = LocalEvaluationStorage.countPendingSessions();
       });
-
-      await _finishSession();
-      return;
+      if (saved.remainingItems == 0) {
+        await _finishSession();
+      } else {
+        _prepareCurrentQuestion();
+      }
+    } catch (error, stackTrace) {
+      logRequestFailure('Guardar respuesta de lectura', error, stackTrace);
+      if (mounted) {
+        _progressTracker?.resumeItem();
+        setState(() {
+          _isSavingAnswer = false;
+          _saveErrorMessage = 'No se pudo guardar. Pide ayuda a tu docente.';
+        });
+      }
     }
-
-    setState(() {
-      _answers.add(detail);
-      _currentIndex++;
-      _feedbackMessage = null;
-      _pendingLocalSessions = LocalEvaluationStorage.countPendingSessions();
-    });
-
-    _prepareCurrentQuestion();
   }
 
   Future<void> _finishSession() async {
-    _stopwatch.stop();
-
-    final sessionId = _localSessionId;
-
-    if (sessionId != null) {
+    if (_isFinishing) return;
+    _progressTracker?.stopItem();
+    if (_answers.length != _sessionStimuli.length || _answers.isEmpty) {
+      setState(() {
+        _isSavingAnswer = false;
+        _saveErrorMessage = 'Faltan respuestas. Puedes continuar la prueba.';
+      });
+      return;
+    }
+    setState(() => _isFinishing = true);
+    try {
       await LocalEvaluationStorage.finishSession(
-        localSessionId: sessionId,
+        localSessionId: _localSessionId!,
         totalItems: _answers.length,
         aciertosPrimerIntento: _aciertosPrimerIntento,
         tapsErroneosTotales: _totalTapsErroneos,
         tiempoPromedioMs: _promedioTiempoMs,
       );
+      if (!mounted) return;
+      setState(() {
+        _isFinished = true;
+        _isSavingAnswer = false;
+        _pendingLocalSessions = LocalEvaluationStorage.countPendingSessions();
+      });
+      await _syncPendingSessions();
+    } catch (error, stackTrace) {
+      logRequestFailure('Finalizar lectura', error, stackTrace);
+      if (mounted) {
+        setState(() {
+          _saveErrorMessage = 'No se pudo guardar. Pide ayuda a tu docente.';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isFinishing = false;
+          _isSavingAnswer = false;
+        });
+      }
     }
-
-    final telemetryJson = const JsonEncoder.withIndent(
-      '  ',
-    ).convert(_answers.map((answer) => answer.toJson()).toList());
-
-    debugPrint('TELEMETRÍA LOCAL DE LECTURA - SESIÓN ACTUAL');
-    debugPrint(telemetryJson);
-
-    debugPrint('DATOS HIVE PENDIENTES DE SINCRONIZACION');
-    debugPrint(LocalEvaluationStorage.exportDebugJson());
-
-    if (!mounted) return;
-
-    setState(() {
-      _isFinished = true;
-      _isSavingAnswer = false;
-      _pendingLocalSessions = LocalEvaluationStorage.countPendingSessions();
-    });
-
-    await _syncPendingSessions();
   }
 
   void _changeStudent() {
@@ -334,7 +375,7 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Text(
-            'Error cargando estímulos:\n$_errorMessage',
+            _errorMessage!,
             style: const TextStyle(color: Colors.red),
           ),
         ),
@@ -350,7 +391,24 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
 
   Widget _buildQuestionScreen() {
     if (_sessionStimuli.isEmpty || _currentIndex >= _sessionStimuli.length) {
-      return _buildSummaryScreen();
+      return Scaffold(
+        appBar: AppBar(title: const Text('Evaluación lectora')),
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(_saveErrorMessage ?? 'Guardando la prueba...'),
+              if (_isFinishing)
+                const CircularProgressIndicator()
+              else
+                FilledButton(
+                  onPressed: _finishSession,
+                  child: const Text('Reintentar guardado'),
+                ),
+            ],
+          ),
+        ),
+      );
     }
 
     final currentStimulus = _sessionStimuli[_currentIndex];
@@ -434,13 +492,15 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
                   ),
                 ),
               const SizedBox(height: 24),
+              if (_saveErrorMessage != null) Text(_saveErrorMessage!),
               Text(
                 'Taps erróneos en este ítem: $_tapsErroneosCurrent',
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
               Text(
-                'Sesiones locales pendientes: $_pendingLocalSessions',
+                'Respuestas guardadas: ${_answers.length} de ${_sessionStimuli.length}. '
+                'Faltan ${_sessionStimuli.length - _answers.length}.',
                 textAlign: TextAlign.center,
               ),
             ],

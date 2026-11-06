@@ -163,7 +163,7 @@ class LocalPinAttemptGuard {
       return const PinAttemptFailureResult(
         outcome: PinAttemptFailureOutcome.teacherUnlockRequired,
         message:
-            'El ingreso está bloqueado. Pide a tu docente o directora que lo desbloquee.',
+            'El ingreso está bloqueado. Pide a tu docente o director que lo desbloquee.',
       );
     }
 
@@ -195,7 +195,7 @@ class LocalPinAttemptGuard {
         return const PinAttemptFailureResult(
           outcome: PinAttemptFailureOutcome.teacherUnlockRequired,
           message:
-              'Se alcanzaron varios bloqueos. Pide a tu docente o directora que desbloquee el ingreso.',
+              'Se alcanzaron varios bloqueos. Pide a tu docente o director que desbloquee el ingreso.',
         );
       }
 

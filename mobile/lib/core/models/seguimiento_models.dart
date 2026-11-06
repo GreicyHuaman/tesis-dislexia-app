@@ -1,5 +1,13 @@
 import 'dart:convert';
 
+const seguimientoObservationCategories = [
+  'Refuerzo pedagógico',
+  'Reevaluación',
+  'Coordinación con familia',
+  'Seguimiento general',
+  'Otro',
+];
+
 class SeguimientoResumen {
   final int totalEstudiantes;
   final int sinEvaluacion;
@@ -106,6 +114,22 @@ class SeguimientoItem {
   }
 
   bool get prioridadAlta => prioridad.toUpperCase() == 'ALTA';
+
+  String get estadoSemanalTexto => switch (estadoSemanal.toUpperCase()) {
+    'SIN_EVALUACION' => 'Sin evaluación',
+    'AL_DIA' => 'Al día',
+    'VENCE_HOY' => 'Vence hoy',
+    'VENCIDA' => 'Vencida',
+    _ => estadoSemanal,
+  };
+
+  String get tendenciaTexto => switch (tendencia.toUpperCase()) {
+    'MEJORA' => 'Mejora',
+    'ESTABLE' => 'Estable',
+    'EMPEORA' => 'Empeora',
+    'SIN_HISTORIAL' => 'Sin historial',
+    _ => tendencia,
+  };
 }
 
 int _asInt(dynamic value) {

@@ -1,9 +1,9 @@
-import 'dart:typed_data';
-
+import 'package:flutter/foundation.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 
 import '../models/auth_user.dart';
+import '../models/report_models.dart';
 
 class PdfReportResult {
   final String filename;
@@ -17,9 +17,26 @@ class PdfReportBuilder {
 
   Future<PdfReportResult> buildEvaluationsReport({
     required AuthUser currentUser,
-    required dynamic summary,
-    required List<dynamic> evaluations,
-  }) async {
+    required ReportSummary summary,
+    required List<EvaluationReportItem> evaluations,
+  }) {
+    return compute(
+      _buildInBackground,
+      _PdfReportInput(
+        currentUser: currentUser,
+        summary: summary,
+        evaluations: List<EvaluationReportItem>.of(evaluations),
+      ),
+      debugLabel: 'Disly PDF institucional',
+    );
+  }
+
+  static Future<PdfReportResult> _buildInBackground(_PdfReportInput input) {
+    return const PdfReportBuilder()._buildDocument(input);
+  }
+
+  Future<PdfReportResult> _buildDocument(_PdfReportInput input) async {
+    final currentUser = input.currentUser;
     final now = DateTime.now();
     final document = pw.Document(
       title: 'Reporte de tamizaje educativo de riesgo de dislexia',
@@ -48,15 +65,15 @@ class PdfReportBuilder {
             pw.SizedBox(height: 14),
             _buildDisclaimer(),
             pw.SizedBox(height: 14),
-            _buildSummary(summary),
+            _buildSummary(input.summary),
             pw.SizedBox(height: 18),
-            _buildEvaluationsTable(evaluations),
+            ..._buildEvaluationsTable(input.evaluations),
           ];
         },
       ),
     );
 
-    final bytes = await document.save();
+    final bytes = await document.save(enableEventLoopBalancing: true);
 
     return PdfReportResult(filename: _buildFilename(now), bytes: bytes);
   }
@@ -157,7 +174,9 @@ class PdfReportBuilder {
     );
   }
 
-  pw.Widget _buildEvaluationsTable(List<dynamic> evaluations) {
+  List<pw.Widget> _buildEvaluationsTable(
+    List<EvaluationReportItem> evaluations,
+  ) {
     final rows = evaluations.map((item) {
       final id = _readValue(item, 'id')?.toString() ?? '-';
 
@@ -224,20 +243,20 @@ class PdfReportBuilder {
       ];
     }).toList();
 
-    return pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
+    return [
+      pw.Text(
+        'Detalle de evaluaciones',
+        style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
+      ),
+      pw.SizedBox(height: 8),
+      if (rows.isEmpty)
         pw.Text(
-          'Detalle de evaluaciones',
-          style: pw.TextStyle(fontSize: 14, fontWeight: pw.FontWeight.bold),
-        ),
-        pw.SizedBox(height: 8),
-        if (rows.isEmpty)
-          pw.Text(
-            'No hay evaluaciones para los filtros seleccionados.',
-            style: const pw.TextStyle(fontSize: 10),
-          )
-        else
+          'No hay evaluaciones para los filtros seleccionados.',
+          style: const pw.TextStyle(fontSize: 10),
+        )
+      else
+        // Cada tabla pagina directamente y conserva la proteccion de MultiPage.
+        for (var firstRow = 0; firstRow < rows.length; firstRow += 100)
           pw.TableHelper.fromTextArray(
             headers: const [
               'ID',
@@ -252,7 +271,7 @@ class PdfReportBuilder {
               'Semáforo',
               'Modelo',
             ],
-            data: rows,
+            data: rows.skip(firstRow).take(100).toList(),
             border: pw.TableBorder.all(color: PdfColors.grey600, width: 0.35),
             headerStyle: pw.TextStyle(
               fontWeight: pw.FontWeight.bold,
@@ -276,8 +295,7 @@ class PdfReportBuilder {
               10: pw.FlexColumnWidth(1.2),
             },
           ),
-      ],
-    );
+    ];
   }
 
   Object? _readValue(dynamic source, String key) {
@@ -301,6 +319,8 @@ class PdfReportBuilder {
           return source.porcentaje_promedio_riesgo;
         case 'semaforos':
           return source.semaforos;
+        case 'total':
+          return source.total;
         case 'estudianteNombre':
           return source.estudianteNombre;
         case 'estudiante_nombre':
@@ -402,4 +422,16 @@ class PdfReportBuilder {
 
     return 'reporte_evaluaciones_$year$month${day}_$hour$minute.pdf';
   }
+}
+
+class _PdfReportInput {
+  final AuthUser currentUser;
+  final ReportSummary summary;
+  final List<EvaluationReportItem> evaluations;
+
+  const _PdfReportInput({
+    required this.currentUser,
+    required this.summary,
+    required this.evaluations,
+  });
 }

@@ -1,7 +1,16 @@
 ﻿from datetime import date, datetime
-from typing import Optional
+from typing import Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+
+ObservationCategory = Literal[
+    "Refuerzo pedagógico",
+    "Reevaluación",
+    "Coordinación con familia",
+    "Seguimiento general",
+    "Otro",
+]
 
 
 class SeguimientoPublic(BaseModel):
@@ -68,16 +77,23 @@ class SeguimientoObservacionCreate(BaseModel):
     estudiante_id: int
     evaluacion_id: Optional[int] = None
     observacion_docente: Optional[str] = None
-    categorias: list[str] = Field(default_factory=list)
+    categorias: list[ObservationCategory] = Field(min_length=1)
     estado: str = "ABIERTO"
 
 
 class SeguimientoUpdate(BaseModel):
     observacion_docente: Optional[str] = None
-    categorias: Optional[list[str]] = None
+    categorias: Optional[list[ObservationCategory]] = Field(default=None, min_length=1)
     estado: Optional[str] = None
     prioridad: Optional[str] = None
     accion_sugerida: Optional[str] = None
+
+    @field_validator("categorias", mode="before")
+    @classmethod
+    def validate_categories_when_supplied(cls, value: object) -> object:
+        if value is None:
+            raise ValueError("Selecciona al menos una categoría válida.")
+        return value
 
 
 class SeguimientoHistorialResponse(BaseModel):
@@ -86,4 +102,3 @@ class SeguimientoHistorialResponse(BaseModel):
     seccion_id: Optional[int] = None
     actual: SeguimientoItem
     observaciones: list[SeguimientoPublic]
-

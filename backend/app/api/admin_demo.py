@@ -1,4 +1,6 @@
-﻿from fastapi import APIRouter, Depends, Header, HTTPException, status
+import os
+
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from sqlmodel import Session, select
 
 from app.db.session import get_session
@@ -168,6 +170,8 @@ def seed_demo_data(
     authorization: str | None = Header(default=None),
     session: Session = Depends(get_session),
 ):
+    if os.getenv("ENABLE_DEMO_SEED", "").strip().lower() != "true":
+        raise HTTPException(status_code=404, detail="Recurso no disponible.")
     _validate_seed_access(
         session=session,
         authorization=authorization,
@@ -260,4 +264,3 @@ def seed_demo_data(
             },
         ],
     }
-

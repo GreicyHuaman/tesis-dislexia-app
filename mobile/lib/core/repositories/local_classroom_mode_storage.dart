@@ -115,6 +115,7 @@ class LocalClassroomModeStorage {
     );
 
     await box.put(_currentKey, state.toMap());
+    await box.flush();
   }
 
   static Future<void> clear() async {

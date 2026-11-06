@@ -8,26 +8,39 @@ import '../../../core/repositories/auth_session_storage.dart';
 import '../../../core/models/student.dart';
 import '../../../core/repositories/local_classroom_mode_storage.dart';
 import '../../../core/repositories/local_student_cache.dart';
+import '../../../core/repositories/phonology_repository.dart';
+import '../../../core/repositories/stimuli_repository.dart';
 import '../../../core/services/admin_service.dart';
 import '../../../core/services/jornada_service.dart';
 import '../../auth/screens/pin_login_screen.dart';
+import '../widgets/section_form_dialog.dart';
 
 class AdminPanelScreen extends StatefulWidget {
   final AuthUser currentUser;
+  final AdminService adminService;
+  final JornadaService jornadaService;
 
-  const AdminPanelScreen({super.key, required this.currentUser});
+  const AdminPanelScreen({
+    super.key,
+    required this.currentUser,
+    this.adminService = const AdminService(),
+    this.jornadaService = const JornadaService(),
+  });
 
   @override
   State<AdminPanelScreen> createState() => _AdminPanelScreenState();
 }
 
 class _AdminPanelScreenState extends State<AdminPanelScreen> {
-  final AdminService _adminService = const AdminService();
-  final JornadaService _jornadaService = const JornadaService();
+  AdminService get _adminService => widget.adminService;
+  JornadaService get _jornadaService => widget.jornadaService;
 
   bool _isLoading = true;
   bool _isImportingStudents = false;
+  bool _isPreparingClassroom = false;
   String? _errorMessage;
+  int _loadGeneration = 0;
+  String? _classroomModeNotice;
 
   List<AdminStudent> _students = [];
   List<AdminSection> _sections = [];
@@ -66,37 +79,85 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     _loadAdminData();
   }
 
+  @override
+  void didUpdateWidget(covariant AdminPanelScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.currentUser.id != widget.currentUser.id ||
+        oldWidget.currentUser.rol != widget.currentUser.rol ||
+        oldWidget.currentUser.accessToken != widget.currentUser.accessToken) {
+      _students = [];
+      _sections = [];
+      _users = [];
+      _teacherSectionLinks = [];
+      _classroomMode = null;
+      _classroomModeNotice = null;
+      _activeJornada = null;
+      _selectedClassroomSectionId = null;
+      _loadAdminData();
+    }
+  }
+
   Future<void> _loadAdminData() async {
+    final generation = ++_loadGeneration;
+    final authToken = _token;
+    final canManageFullAdmin = _canManageFullAdmin;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
 
     try {
-      final students = await _adminService.fetchStudents(authToken: _token);
-      final sections = await _adminService.fetchSections(authToken: _token);
+      final students = await _adminService.fetchStudents(authToken: authToken);
+      final sections = await _adminService.fetchSections(authToken: authToken);
 
       List<AcademicUser> users = [];
       List<TeacherSectionLink> links = [];
 
-      if (_canManageFullAdmin) {
-        users = await _adminService.fetchUsers(authToken: _token);
-        links = await _adminService.fetchTeacherSectionLinks(authToken: _token);
+      if (canManageFullAdmin) {
+        users = await _adminService.fetchUsers(authToken: authToken);
+        links = await _adminService.fetchTeacherSectionLinks(
+          authToken: authToken,
+        );
       }
 
-      final classroomMode = await LocalClassroomModeStorage.getCurrent();
+      if (!mounted || generation != _loadGeneration) return;
+
+      var classroomMode = await LocalClassroomModeStorage.getCurrent();
+      if (!mounted || generation != _loadGeneration) return;
+
+      final activeSections = sections
+          .where((section) => section.activo)
+          .toList();
+      final activeSectionIds = activeSections
+          .map((section) => section.id)
+          .toSet();
+      String? classroomModeNotice;
+
+      if (classroomMode != null &&
+          !activeSectionIds.contains(classroomMode.seccionId)) {
+        await LocalClassroomModeStorage.clear();
+        classroomMode = null;
+        classroomModeNotice =
+            'Se desactivó el modo aula local porque la sección guardada '
+            'no está entre tus secciones disponibles.';
+      }
+
+      if (!mounted || generation != _loadGeneration) return;
 
       JornadaEvaluacion? activeJornada;
-      int? selectedSectionId = classroomMode?.seccionId;
+      int? selectedSectionId =
+          classroomMode?.seccionId ?? _selectedClassroomSectionId;
 
-      if (selectedSectionId == null && sections.isNotEmpty) {
-        selectedSectionId = sections.first.id;
+      if (!activeSectionIds.contains(selectedSectionId)) {
+        selectedSectionId = activeSections.isEmpty
+            ? null
+            : activeSections.first.id;
       }
 
       if (selectedSectionId != null) {
         try {
           activeJornada = await _jornadaService.obtenerJornadaActiva(
-            authToken: _token,
+            authToken: authToken,
             seccionId: selectedSectionId,
           );
         } catch (_) {
@@ -104,7 +165,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         }
       }
 
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
 
       setState(() {
         _students = students;
@@ -112,12 +173,13 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         _users = users;
         _teacherSectionLinks = links;
         _classroomMode = classroomMode;
+        _classroomModeNotice = classroomModeNotice;
         _selectedClassroomSectionId = selectedSectionId;
         _activeJornada = activeJornada;
         _isLoading = false;
       });
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || generation != _loadGeneration) return;
 
       setState(() {
         _errorMessage = error.toString();
@@ -126,7 +188,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     }
   }
 
-  Future<void> _runAction(Future<void> Function() action) async {
+  Future<void> _runAction(
+    Future<void> Function() action, {
+    String Function()? successMessage,
+  }) async {
     final messenger = ScaffoldMessenger.of(context);
 
     try {
@@ -136,8 +201,10 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       if (!mounted) return;
 
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text('Operacion realizada correctamente.'),
+        SnackBar(
+          content: Text(
+            successMessage?.call() ?? 'Operacion realizada correctamente.',
+          ),
           backgroundColor: Colors.green,
         ),
       );
@@ -147,6 +214,19 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       messenger.showSnackBar(
         SnackBar(content: Text(error.toString()), backgroundColor: Colors.red),
       );
+    }
+  }
+
+  Future<void> _runClassroomAction(
+    Future<void> Function() action, {
+    String Function()? successMessage,
+  }) async {
+    if (_isPreparingClassroom) return;
+    setState(() => _isPreparingClassroom = true);
+    try {
+      await _runAction(action, successMessage: successMessage);
+    } finally {
+      if (mounted) setState(() => _isPreparingClassroom = false);
     }
   }
 
@@ -208,12 +288,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           ),
           actions: [
             IconButton(
-              onPressed: _isLoading ? null : _loadAdminData,
+              onPressed: _isLoading || _isPreparingClassroom
+                  ? null
+                  : _loadAdminData,
               icon: const Icon(Icons.refresh),
               tooltip: 'Actualizar',
             ),
             IconButton(
-              onPressed: _logoutStaffSession,
+              onPressed: _isPreparingClassroom ? null : _logoutStaffSession,
               icon: const Icon(Icons.logout_outlined),
               tooltip: 'Cerrar sesión',
             ),
@@ -261,6 +343,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Widget _buildClassroomModeTab() {
+    final availableSections = _activeSections;
     final selectedId = _selectedClassroomSectionId;
     final activeMode = _classroomMode;
     final activeJornada = _activeJornada;
@@ -296,13 +379,24 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   'Activa una jornada semanal para que los estudiantes ingresen solo con su PIN dentro de la sección seleccionada.',
                 ),
                 const SizedBox(height: 18),
+                if (availableSections.isEmpty) ...[
+                  _InfoBox(
+                    icon: Icons.info_outline,
+                    text: _isTeacher
+                        ? 'No tienes secciones activas asignadas. '
+                              'Solicita la asignación al director.'
+                        : 'No hay secciones activas disponibles.',
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 DropdownButtonFormField<int>(
+                  key: ValueKey(selectedId),
                   initialValue: selectedId,
                   decoration: const InputDecoration(
                     labelText: 'Sección',
                     border: OutlineInputBorder(),
                   ),
-                  items: _activeSections
+                  items: availableSections
                       .map(
                         (section) => DropdownMenuItem(
                           value: section.id,
@@ -310,14 +404,23 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                         ),
                       )
                       .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedClassroomSectionId = value;
-                      _activeJornada = null;
-                    });
-                  },
+                  onChanged: availableSections.isEmpty || _isPreparingClassroom
+                      ? null
+                      : (value) {
+                          setState(() {
+                            _selectedClassroomSectionId = value;
+                            _activeJornada = null;
+                          });
+                        },
                 ),
                 const SizedBox(height: 16),
+                if (_classroomModeNotice != null) ...[
+                  _InfoBox(
+                    icon: Icons.info_outline,
+                    text: _classroomModeNotice!,
+                  ),
+                  const SizedBox(height: 16),
+                ],
                 if (activeMode != null)
                   _buildCurrentClassroomModeCard(activeMode)
                 else
@@ -340,28 +443,35 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   runSpacing: 12,
                   children: [
                     FilledButton.icon(
-                      onPressed: selectedId == null
+                      onPressed: selectedId == null || _isPreparingClassroom
                           ? null
                           : () => _activateClassroomMode(selectedId),
                       icon: const Icon(Icons.play_circle_outline),
                       label: const Text('Activar jornada'),
                     ),
                     OutlinedButton.icon(
-                      onPressed: selectedId == null
+                      onPressed: selectedId == null || _isPreparingClassroom
+                          ? null
+                          : _downloadSelectedSection,
+                      icon: const Icon(Icons.download_outlined),
+                      label: const Text('Descargar sección'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: selectedId == null || _isPreparingClassroom
                           ? null
                           : () => _checkActiveJornada(selectedId),
                       icon: const Icon(Icons.search_outlined),
                       label: const Text('Verificar jornada'),
                     ),
                     OutlinedButton.icon(
-                      onPressed: activeMode == null
+                      onPressed: activeMode == null || _isPreparingClassroom
                           ? null
                           : () => _goToStudentPinScreen(),
                       icon: const Icon(Icons.login_outlined),
                       label: const Text('Ir a PIN estudiante'),
                     ),
                     OutlinedButton.icon(
-                      onPressed: activeMode == null
+                      onPressed: activeMode == null || _isPreparingClassroom
                           ? null
                           : () => _clearClassroomMode(),
                       icon: const Icon(Icons.logout_outlined),
@@ -369,6 +479,12 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     ),
                   ],
                 ),
+                if (_isPreparingClassroom) ...[
+                  const SizedBox(height: 12),
+                  const LinearProgressIndicator(),
+                  const SizedBox(height: 8),
+                  const Text('Preparando la sección para uso sin conexión...'),
+                ],
               ],
             ),
           ),
@@ -426,7 +542,9 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
             ),
             IconButton(
               tooltip: 'Cerrar jornada',
-              onPressed: () => _closeJornada(jornada.id),
+              onPressed: _isPreparingClassroom
+                  ? null
+                  : () => _closeJornada(jornada.id),
               icon: const Icon(Icons.stop_circle_outlined),
             ),
           ],
@@ -435,60 +553,127 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     );
   }
 
-  Future<void> _activateClassroomMode(int seccionId) async {
+  Future<void> _downloadSelectedSection() async {
+    final seccionId = _selectedClassroomSectionId;
+    if (seccionId == null) {
+      throw StateError('Selecciona una sección disponible para descargar.');
+    }
+    await _activateClassroomMode(seccionId, announceDownload: true);
+  }
+
+  Future<void> _activateClassroomMode(
+    int seccionId, {
+    bool announceDownload = false,
+  }) async {
     final sectionName = _sectionName(seccionId);
+    final authToken = _token;
+    final userId = widget.currentUser.id;
+    final userRole = widget.currentUser.rol;
+    var downloadedCount = 0;
 
-    await _runAction(() async {
-      JornadaEvaluacion jornada;
+    void ensureCurrentSession() {
+      if (!mounted ||
+          _token != authToken ||
+          widget.currentUser.id != userId ||
+          widget.currentUser.rol != userRole) {
+        throw StateError('La sesión cambió. Vuelve a preparar tu sección.');
+      }
+    }
 
-      try {
-        jornada = await _jornadaService.activarJornada(
-          authToken: _token,
-          seccionId: seccionId,
-          pruebaLecturaActiva: true,
-          pruebaFonologiaActiva: true,
-          duracionHoras: 8,
+    await _runClassroomAction(
+      () async {
+        final students = await _fetchOfflineStudentsForSection(
+          seccionId,
+          authToken: authToken,
         );
-      } catch (error) {
-        final message = error.toString();
+        ensureCurrentSession();
+        if (announceDownload && students.isEmpty) {
+          throw StateError(
+            'La sección no tiene estudiantes habilitados para descargar.',
+          );
+        }
+        final lectura = await StimuliRepository().loadLecturaStimuli();
+        final fonologia = await PhonologyRepository().loadPhonologyStimuli();
+        if (lectura.isEmpty || fonologia.isEmpty) {
+          throw StateError(
+            'Faltan recursos para ejecutar las pruebas sin conexión.',
+          );
+        }
+        ensureCurrentSession();
+        JornadaEvaluacion jornada;
 
-        if (!message.contains('Ya existe una jornada activa')) {
-          rethrow;
+        try {
+          jornada = await _jornadaService.activarJornada(
+            authToken: authToken,
+            seccionId: seccionId,
+            pruebaLecturaActiva: true,
+            pruebaFonologiaActiva: true,
+            duracionHoras: 8,
+          );
+        } catch (error) {
+          final message = error.toString();
+
+          if (!message.contains('Ya existe una jornada activa')) {
+            rethrow;
+          }
+
+          jornada = await _jornadaService.obtenerJornadaActiva(
+            authToken: authToken,
+            seccionId: seccionId,
+          );
         }
 
-        jornada = await _jornadaService.obtenerJornadaActiva(
-          authToken: _token,
+        ensureCurrentSession();
+        if (jornada.seccionId != seccionId ||
+            !jornada.estaActiva ||
+            jornada.estaExpirada) {
+          throw StateError('La sección no tiene una jornada vigente.');
+        }
+        final previousMode = await LocalClassroomModeStorage.getCurrent();
+        ensureCurrentSession();
+        if (previousMode?.seccionId == seccionId) {
+          await LocalClassroomModeStorage.clear();
+          ensureCurrentSession();
+          setState(() => _classroomMode = null);
+        }
+        await LocalStudentCache.replaceStudentsForSection(
           seccionId: seccionId,
+          studentsByPin: students,
         );
-      }
-
-      await LocalClassroomModeStorage.saveFromJornada(
-        jornada: jornada,
-        sectionDisplayName: sectionName,
-      );
-
-      await _refreshOfflineCacheForSection(seccionId);
-
-      if (!mounted) return;
-
-      setState(() {
-        _classroomMode = ClassroomModeState(
-          seccionId: jornada.seccionId,
+        ensureCurrentSession();
+        await LocalClassroomModeStorage.saveFromJornada(
+          jornada: jornada,
           sectionDisplayName: sectionName,
-          jornadaId: jornada.id,
-          fechaInicio: jornada.fechaInicio,
-          fechaExpiracion: jornada.fechaExpiracion,
-          pruebaLecturaActiva: jornada.pruebaLecturaActiva,
-          pruebaFonologiaActiva: jornada.pruebaFonologiaActiva,
         );
-        _activeJornada = jornada;
-        _selectedClassroomSectionId = seccionId;
-      });
-    });
+
+        ensureCurrentSession();
+        downloadedCount = students.length;
+
+        setState(() {
+          _classroomMode = ClassroomModeState(
+            seccionId: jornada.seccionId,
+            sectionDisplayName: sectionName,
+            jornadaId: jornada.id,
+            fechaInicio: jornada.fechaInicio,
+            fechaExpiracion: jornada.fechaExpiracion,
+            pruebaLecturaActiva: jornada.pruebaLecturaActiva,
+            pruebaFonologiaActiva: jornada.pruebaFonologiaActiva,
+          );
+          _activeJornada = jornada;
+          _selectedClassroomSectionId = seccionId;
+        });
+      },
+      successMessage: announceDownload
+          ? () =>
+                'Sección $sectionName descargada: $downloadedCount '
+                '${downloadedCount == 1 ? "estudiante habilitado" : "estudiantes habilitados"}. '
+                'Disponible sin conexión mientras la jornada siga vigente.'
+          : null,
+    );
   }
 
   Future<void> _checkActiveJornada(int seccionId) async {
-    await _runAction(() async {
+    await _runClassroomAction(() async {
       final jornada = await _jornadaService.obtenerJornadaActiva(
         authToken: _token,
         seccionId: seccionId,
@@ -631,7 +816,11 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                       tooltip: 'Editar',
                     ),
                     IconButton(
-                      onPressed: () => _regeneratePin(student),
+                      onPressed:
+                          student.consentimientoFirmado &&
+                              student.fechaConsentimiento != null
+                          ? () => _regeneratePin(student)
+                          : null,
                       icon: const Icon(Icons.password_outlined),
                       tooltip: 'Regenerar PIN',
                     ),
@@ -894,6 +1083,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Future<void> _showStudentDialog({AdminStudent? student}) async {
+    final formKey = GlobalKey<FormState>();
     final nombresController = TextEditingController(
       text: student?.nombres ?? '',
     );
@@ -907,16 +1097,23 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       text: student?.fechaConsentimiento ?? _todayIsoDate(),
     );
 
-    int selectedSectionId =
-        student?.seccionId ??
-        (_activeSections.isNotEmpty ? _activeSections.first.id : 0);
+    int? selectedSectionId = student == null
+        ? (_activeSections.isNotEmpty ? _activeSections.first.id : null)
+        : student.seccionId;
+    if (!_activeSections.any((section) => section.id == selectedSectionId)) {
+      selectedSectionId = null;
+    }
+    String? sectionError;
+    String? activationError;
 
     bool activo = student?.activo ?? true;
     bool consentimientoFirmado = student?.consentimientoFirmado ?? true;
+    Future<bool?>? dialogCompleted;
 
     final saved = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
+        dialogCompleted = ModalRoute.of<bool>(dialogContext)!.completed;
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return AlertDialog(
@@ -924,114 +1121,161 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                 student == null ? 'Nuevo estudiante' : 'Editar estudiante',
               ),
               content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: nombresController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombres',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: apellidosController,
-                      decoration: const InputDecoration(
-                        labelText: 'Apellidos',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: fechaNacimientoController,
-                      keyboardType: TextInputType.datetime,
-                      decoration: InputDecoration(
-                        labelText: 'Fecha nacimiento',
-                        helperText: 'Use YYYY-MM-DD o DD/MM/YYYY',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.calendar_month_outlined),
-                          onPressed: () => _pickDateIntoController(
-                            controller: fechaNacimientoController,
-                            firstDate: DateTime(2000),
-                            lastDate: DateTime.now(),
-                          ),
+                child: Form(
+                  key: formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextFormField(
+                        controller: nombresController,
+                        decoration: const InputDecoration(
+                          labelText: 'Nombres',
+                          errorMaxLines: 2,
+                          border: OutlineInputBorder(),
                         ),
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? 'Ingresa los nombres del estudiante.'
+                            : null,
                       ),
-                    ),
-                    const SizedBox(height: 12),
-                    DropdownButtonFormField<int>(
-                      initialValue: selectedSectionId == 0
-                          ? null
-                          : selectedSectionId,
-                      decoration: const InputDecoration(
-                        labelText: 'Sección',
-                        border: OutlineInputBorder(),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: apellidosController,
+                        decoration: const InputDecoration(
+                          labelText: 'Apellidos',
+                          errorMaxLines: 2,
+                          border: OutlineInputBorder(),
+                        ),
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? 'Ingresa los apellidos del estudiante.'
+                            : null,
                       ),
-                      items: _activeSections
-                          .map(
-                            (section) => DropdownMenuItem(
-                              value: section.id,
-                              child: Text(section.displayName),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: fechaNacimientoController,
+                        validator: _validateStudentBirthDate,
+                        keyboardType: TextInputType.datetime,
+                        decoration: InputDecoration(
+                          labelText: 'Fecha nacimiento',
+                          errorMaxLines: 3,
+                          helperMaxLines: 2,
+                          helperText:
+                              'Edad permitida: 8 a 9 años cumplidos.\n'
+                              'Use YYYY-MM-DD o DD/MM/YYYY',
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.calendar_month_outlined),
+                            onPressed: () => _pickDateIntoController(
+                              controller: fechaNacimientoController,
+                              firstDate: DateTime(2000),
+                              lastDate: DateTime.now(),
                             ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        if (value == null) return;
-
-                        setDialogState(() {
-                          selectedSectionId = value;
-                        });
-                      },
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: fechaConsentimientoController,
-                      keyboardType: TextInputType.datetime,
-                      decoration: InputDecoration(
-                        labelText: 'Fecha consentimiento',
-                        helperText: 'Use YYYY-MM-DD o DD/MM/YYYY',
-                        border: const OutlineInputBorder(),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.calendar_month_outlined),
-                          onPressed: () => _pickDateIntoController(
-                            controller: fechaConsentimientoController,
-                            firstDate: DateTime(2020),
-                            lastDate: DateTime.now(),
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      value: consentimientoFirmado,
-                      title: const Text('Consentimiento firmado'),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          consentimientoFirmado = value;
-                        });
-                      },
-                    ),
-                    SwitchListTile(
-                      value: activo,
-                      title: const Text('Activo'),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          activo = value;
-                        });
-                      },
-                    ),
-                    if (student?.pinCorto != null)
-                      ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: const Icon(Icons.password_outlined),
-                        title: Text('PIN actual: ${student!.pinCorto}'),
-                        subtitle: const Text(
-                          'El PIN se genera automáticamente. Use regenerar PIN si necesita cambiarlo.',
+                      const SizedBox(height: 12),
+                      DropdownButtonFormField<int>(
+                        initialValue: selectedSectionId,
+                        decoration: InputDecoration(
+                          labelText: 'Sección',
+                          errorText: sectionError,
+                          border: const OutlineInputBorder(),
+                        ),
+                        items: _activeSections
+                            .map(
+                              (section) => DropdownMenuItem(
+                                value: section.id,
+                                child: Text(section.displayName),
+                              ),
+                            )
+                            .toList(),
+                        onChanged: (value) {
+                          if (value == null) return;
+
+                          setDialogState(() {
+                            selectedSectionId = value;
+                            sectionError = null;
+                          });
+                        },
+                      ),
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        controller: fechaConsentimientoController,
+                        enabled: consentimientoFirmado,
+                        validator: (value) {
+                          if (!consentimientoFirmado) return null;
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Ingresa la fecha del consentimiento firmado.';
+                          }
+                          return _dateInputError(
+                            value,
+                            fieldLabel: 'La fecha de consentimiento',
+                          );
+                        },
+                        keyboardType: TextInputType.datetime,
+                        decoration: InputDecoration(
+                          labelText: 'Fecha consentimiento',
+                          errorMaxLines: 3,
+                          helperText: consentimientoFirmado
+                              ? 'Use YYYY-MM-DD o DD/MM/YYYY'
+                              : 'Solo se registra con consentimiento firmado.',
+                          helperMaxLines: 2,
+                          border: const OutlineInputBorder(),
+                          suffixIcon: IconButton(
+                            icon: const Icon(Icons.calendar_month_outlined),
+                            onPressed: consentimientoFirmado
+                                ? () => _pickDateIntoController(
+                                    controller: fechaConsentimientoController,
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime.now(),
+                                  )
+                                : null,
+                          ),
                         ),
                       ),
-                  ],
+                      const SizedBox(height: 8),
+                      SwitchListTile(
+                        value: consentimientoFirmado,
+                        title: const Text('Consentimiento firmado'),
+                        subtitle: const Text(
+                          'Sin consentimiento, guarda al estudiante como inactivo.',
+                        ),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            consentimientoFirmado = value;
+                            activationError = null;
+                          });
+                        },
+                      ),
+                      SwitchListTile(
+                        value: activo,
+                        title: const Text('Activo'),
+                        onChanged: (value) {
+                          setDialogState(() {
+                            activo = value;
+                            activationError = null;
+                          });
+                        },
+                      ),
+                      if (activationError != null)
+                        Text(
+                          activationError!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      if (student?.pinCorto != null)
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: const Icon(Icons.password_outlined),
+                          title: Text('PIN actual: ${student!.pinCorto}'),
+                          subtitle: const Text(
+                            'El PIN se genera automáticamente. Use regenerar PIN si necesita cambiarlo.',
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
               actions: [
@@ -1040,7 +1284,22 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  onPressed: () {
+                    final fieldsValid = formKey.currentState!.validate();
+                    setDialogState(() {
+                      activationError = activo && !consentimientoFirmado
+                          ? 'Para activar al estudiante se requiere consentimiento informado firmado.'
+                          : null;
+                    });
+                    if (selectedSectionId == null) {
+                      setDialogState(() {
+                        sectionError = 'Selecciona una sección disponible.';
+                      });
+                      return;
+                    }
+                    if (!fieldsValid || activationError != null) return;
+                    Navigator.of(dialogContext).pop(true);
+                  },
                   child: const Text('Guardar'),
                 ),
               ],
@@ -1050,30 +1309,41 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
       },
     );
 
+    final nombres = nombresController.text.trim();
+    final apellidos = apellidosController.text.trim();
+    final nacimientoInput = fechaNacimientoController.text;
+    final consentimientoInput = fechaConsentimientoController.text;
+
+    // El diálogo sigue montado durante su animación de salida.
+    await dialogCompleted;
     nombresController.dispose();
     apellidosController.dispose();
     fechaNacimientoController.dispose();
     fechaConsentimientoController.dispose();
 
-    if (saved != true) {
+    final seccionId = selectedSectionId;
+    if (saved != true || seccionId == null || !mounted) {
       return;
     }
 
-    final nombres = nombresController.text.trim();
-    final apellidos = apellidosController.text.trim();
-
-    String? fechaNacimiento;
+    String fechaNacimiento;
     String? fechaConsentimiento;
 
     try {
-      fechaNacimiento = _normalizeDateInput(
-        fechaNacimientoController.text,
+      final parsedBirthDate = _normalizeDateInput(
+        nacimientoInput,
         fieldLabel: 'Fecha de nacimiento',
       );
-      fechaConsentimiento = _normalizeDateInput(
-        fechaConsentimientoController.text,
-        fieldLabel: 'Fecha de consentimiento',
-      );
+      if (parsedBirthDate == null) {
+        throw Exception('Ingresa la fecha de nacimiento del estudiante.');
+      }
+      fechaNacimiento = parsedBirthDate;
+      fechaConsentimiento = consentimientoFirmado
+          ? _normalizeDateInput(
+              consentimientoInput,
+              fieldLabel: 'Fecha de consentimiento',
+            )
+          : null;
 
       if (consentimientoFirmado && fechaConsentimiento == null) {
         throw Exception(
@@ -1096,7 +1366,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           nombres: nombres,
           apellidos: apellidos,
           fechaNacimiento: fechaNacimiento,
-          seccionId: selectedSectionId,
+          seccionId: seccionId,
           consentimientoFirmado: consentimientoFirmado,
           fechaConsentimiento: fechaConsentimiento,
           activo: activo,
@@ -1108,7 +1378,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
           nombres: nombres,
           apellidos: apellidos,
           fechaNacimiento: fechaNacimiento,
-          seccionId: selectedSectionId,
+          seccionId: seccionId,
           consentimientoFirmado: consentimientoFirmado,
           fechaConsentimiento: fechaConsentimiento,
           activo: activo,
@@ -1127,109 +1397,30 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
   }
 
   Future<void> _showSectionDialog({AdminSection? section}) async {
-    final gradoController = TextEditingController(
-      text: section?.grado.toString() ?? '3',
-    );
-    final nombreController = TextEditingController(text: section?.nombre ?? '');
-    final turnoController = TextEditingController(
-      text: section?.turno ?? 'MANANA',
-    );
-
-    bool activo = section?.activo ?? true;
-
-    final saved = await showDialog<bool>(
+    final data = await showDialog<SectionFormData>(
       context: context,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setDialogState) {
-            return AlertDialog(
-              title: Text(section == null ? 'Nueva sección' : 'Editar sección'),
-              content: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextField(
-                      controller: gradoController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Grado',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: nombreController,
-                      decoration: const InputDecoration(
-                        labelText: 'Nombre de sección',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: turnoController,
-                      decoration: const InputDecoration(
-                        labelText: 'Turno',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SwitchListTile(
-                      value: activo,
-                      title: const Text('Activa'),
-                      onChanged: (value) {
-                        setDialogState(() {
-                          activo = value;
-                        });
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: const Text('Cancelar'),
-                ),
-                ElevatedButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
-                  child: const Text('Guardar'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (_) => SectionFormDialog(section: section),
     );
 
-    gradoController.dispose();
-    nombreController.dispose();
-    turnoController.dispose();
-
-    if (saved != true) {
+    if (data == null || !mounted) {
       return;
     }
-
-    final grado = int.tryParse(gradoController.text.trim()) ?? 3;
-    final nombre = nombreController.text.trim();
-    final turno = turnoController.text.trim();
 
     await _runAction(() async {
       if (section == null) {
         await _adminService.createSection(
           authToken: _token,
-          grado: grado,
-          nombre: nombre,
-          turno: turno,
-          activo: activo,
+          nombre: data.nombre,
+          turno: data.turno,
+          activo: data.activo,
         );
       } else {
         await _adminService.updateSection(
           authToken: _token,
           seccionId: section.id,
-          grado: grado,
-          nombre: nombre,
-          turno: turno,
-          activo: activo,
+          nombre: data.nombre,
+          turno: data.turno,
+          activo: data.activo,
         );
       }
     });
@@ -1244,6 +1435,7 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     final passwordController = TextEditingController();
     String rol = user?.rol.toUpperCase() ?? 'MAESTRO';
     bool activo = user?.activo ?? true;
+    String? emailError;
 
     final saved = await showDialog<bool>(
       context: context,
@@ -1275,8 +1467,17 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                     TextField(
                       controller: emailController,
                       keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Correo',
+                      onChanged: (_) {
+                        if (emailError != null) {
+                          setDialogState(() {
+                            emailError = null;
+                          });
+                        }
+                      },
+                      decoration: InputDecoration(
+                        labelText: 'Correo institucional',
+                        helperText: 'Ejemplo: jlinarez@edu.com',
+                        errorText: emailError,
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -1340,7 +1541,20 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
                   child: const Text('Cancelar'),
                 ),
                 ElevatedButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(true),
+                  onPressed: () {
+                    final validationError = _validateInstitutionalEmail(
+                      emailController.text,
+                    );
+
+                    if (validationError != null) {
+                      setDialogState(() {
+                        emailError = validationError;
+                      });
+                      return;
+                    }
+
+                    Navigator.of(dialogContext).pop(true);
+                  },
                   child: const Text('Guardar'),
                 ),
               ],
@@ -1390,6 +1604,20 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         );
       }
     });
+  }
+
+  String? _validateInstitutionalEmail(String value) {
+    final email = value.trim();
+    final emailPattern = RegExp(
+      r"^[A-Z0-9.!#$%&'*+/=?^_`{|}~-]+@(?:[A-Z0-9-]+\.)?edu\.com$",
+      caseSensitive: false,
+    );
+
+    if (!emailPattern.hasMatch(email)) {
+      return 'Ingresa un correo institucional válido terminado en .edu.com.';
+    }
+
+    return null;
   }
 
   Future<void> _showTeacherSectionDialog() async {
@@ -1486,17 +1714,14 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     });
   }
 
-  Future<int> _refreshOfflineCacheForSection(int seccionId) async {
-    final students = await _adminService.fetchStudents(authToken: _token);
-    var cachedCount = 0;
+  Future<Map<String, Student>> _fetchOfflineStudentsForSection(
+    int seccionId, {
+    required String? authToken,
+  }) async {
+    final students = await _adminService.fetchStudents(authToken: authToken);
+    final studentsByPin = <String, Student>{};
 
     for (final student in students) {
-      final pin = student.pinCorto?.trim();
-
-      if (pin == null || pin.isEmpty) {
-        continue;
-      }
-
       if (student.seccionId != seccionId) {
         continue;
       }
@@ -1505,27 +1730,34 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
         continue;
       }
 
-      await LocalStudentCache.saveStudentByPin(
-        pin: pin,
-        student: Student.fromJson({
-          'id': student.id,
-          'codigo_estudiante': student.codigoEstudiante,
-          'nombres': student.nombres,
-          'apellidos': student.apellidos,
-          'fecha_nacimiento': student.fechaNacimiento,
-          'pin_corto': student.pinCorto,
-          'seccion_id': student.seccionId,
-          'consentimiento_firmado': student.consentimientoFirmado,
-          'nivel_lectura': student.nivelLectura,
-          'nivel_fonologia': student.nivelFonologia,
-          'activo': student.activo,
-        }),
-      );
-
-      cachedCount++;
+      final pin = student.pinCorto?.trim();
+      if (pin == null || !RegExp(r'^\d{4}$').hasMatch(pin)) {
+        throw StateError(
+          'El estudiante ${student.nombreCompleto} no tiene un PIN válido. '
+          'Corrige su PIN antes de descargar la sección.',
+        );
+      }
+      if (studentsByPin.containsKey(pin)) {
+        throw StateError(
+          'La sección contiene PIN duplicados. Revisa el padrón.',
+        );
+      }
+      studentsByPin[pin] = Student.fromJson({
+        'id': student.id,
+        'codigo_estudiante': student.codigoEstudiante,
+        'nombres': student.nombres,
+        'apellidos': student.apellidos,
+        'fecha_nacimiento': student.fechaNacimiento,
+        'pin_corto': student.pinCorto,
+        'seccion_id': student.seccionId,
+        'consentimiento_firmado': student.consentimientoFirmado,
+        'nivel_lectura': student.nivelLectura,
+        'nivel_fonologia': student.nivelFonologia,
+        'activo': student.activo,
+      });
     }
 
-    return cachedCount;
+    return studentsByPin;
   }
 
   Future<void> _pickDateIntoController({
@@ -1557,7 +1789,35 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     controller.text = _toIsoDate(selected);
   }
 
-  String? _normalizeDateInput(String raw, {required String fieldLabel}) {
+  String? _validateStudentBirthDate(String? raw) {
+    final text = raw?.trim() ?? '';
+    if (text.isEmpty) {
+      return 'Ingresa la fecha de nacimiento del estudiante.';
+    }
+    final today = DateTime.now().toUtc().subtract(const Duration(hours: 5));
+    final error = _dateInputError(
+      text,
+      fieldLabel: 'La fecha de nacimiento',
+      today: today,
+    );
+    if (error != null) return error;
+
+    final birthDate = _tryParseDateInput(text)!;
+    final birthdayHasPassed =
+        today.month > birthDate.month ||
+        (today.month == birthDate.month && today.day >= birthDate.day);
+    final age = today.year - birthDate.year - (birthdayHasPassed ? 0 : 1);
+    if (age != 8 && age != 9) {
+      return 'El estudiante debe tener entre 8 y 9 años cumplidos.';
+    }
+    return null;
+  }
+
+  String? _dateInputError(
+    String raw, {
+    required String fieldLabel,
+    DateTime? today,
+  }) {
     final text = raw.trim();
 
     if (text.isEmpty) {
@@ -1567,20 +1827,29 @@ class _AdminPanelScreenState extends State<AdminPanelScreen> {
     final parsed = _tryParseDateInput(text);
 
     if (parsed == null) {
-      throw Exception(
-        '$fieldLabel debe tener formato YYYY-MM-DD o DD/MM/YYYY.',
-      );
+      return '$fieldLabel debe tener formato YYYY-MM-DD o DD/MM/YYYY.';
     }
 
-    final today = DateTime.now();
+    final currentDate = today ?? DateTime.now();
     final parsedOnly = DateTime(parsed.year, parsed.month, parsed.day);
-    final todayOnly = DateTime(today.year, today.month, today.day);
+    final todayOnly = DateTime(
+      currentDate.year,
+      currentDate.month,
+      currentDate.day,
+    );
 
     if (parsedOnly.isAfter(todayOnly)) {
-      throw Exception('$fieldLabel no puede ser futura.');
+      return '$fieldLabel no puede ser futura.';
     }
 
-    return _toIsoDate(parsed);
+    return null;
+  }
+
+  String? _normalizeDateInput(String raw, {required String fieldLabel}) {
+    final error = _dateInputError(raw, fieldLabel: fieldLabel);
+    if (error != null) throw Exception(error);
+    final parsed = _tryParseDateInput(raw);
+    return parsed == null ? null : _toIsoDate(parsed);
   }
 
   DateTime? _tryParseDateInput(String raw) {
