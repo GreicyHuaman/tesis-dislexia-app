@@ -10,6 +10,7 @@ import 'package:mobile/core/models/auth_user.dart';
 import 'package:mobile/core/models/report_models.dart';
 import 'package:mobile/core/services/pdf_report_builder.dart';
 import 'package:mobile/features/reportes/screens/reportes_screen.dart';
+import 'package:mobile/features/reportes/screens/student_risk_profile_screen.dart';
 
 import 'pdf_report_builder_test.dart' show pdfDirector, pdfTeacher;
 
@@ -72,6 +73,14 @@ void main() {
       if (request.url.path.endsWith('/evaluaciones')) {
         return http.Response('[]', 200);
       }
+      if (request.url.path.endsWith('/perfil-riesgo')) {
+        return http.Response(
+          '{"estudiante_id":1,"estudiante_nombre":"Estudiante Prueba",'
+          '"seccion_id":10,"total_evaluaciones":0,"pruebas":[]}',
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      }
       throw StateError('Solicitud inesperada en prueba.');
     }),
   );
@@ -92,7 +101,7 @@ void main() {
                 saves++;
                 expect(filename, 'reporte_prueba.pdf');
                 expect(String.fromCharCodes(bytes), '%PDF-test');
-                return 'reporte_prueba.pdf';
+                return r'C:\ruta_privada\reporte_prueba.pdf';
               },
             ),
           ),
@@ -112,11 +121,58 @@ void main() {
         await tester.pumpAndSettle();
         expect(saves, 1);
         expect(tester.widget<IconButton>(pdfButton).onPressed, isNotNull);
-        expect(find.text('PDF generado: reporte_prueba.pdf'), findsOneWidget);
+        expect(find.text('El PDF se descargó con éxito.'), findsOneWidget);
+        expect(find.textContaining('PDF generado:'), findsNothing);
+        expect(find.textContaining('ruta_privada'), findsNothing);
+        expect(find.textContaining('reporte_prueba.pdf'), findsNothing);
         expect(tester.takeException(), isNull);
       });
     });
   }
+
+  testWidgets('PDF individual: confirmación breve solo después de guardar', (
+    tester,
+  ) async {
+    final saveStarted = Completer<void>();
+    final saved = Completer<String>();
+    await withReportResponses(() async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: StudentRiskProfileScreen(
+            estudianteId: 1,
+            authToken: 'test-token',
+            savePdf: ({required bytes, required filename}) {
+              expect(String.fromCharCodes(bytes.take(5)), '%PDF-');
+              expect(filename.endsWith('.pdf'), isTrue);
+              saveStarted.complete();
+              return saved.future;
+            },
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.runAsync(() async {
+        await tester.tap(find.byTooltip('Exportar PDF individual'));
+        final deadline = DateTime.now().add(const Duration(seconds: 5));
+        while (!saveStarted.isCompleted) {
+          if (DateTime.now().isAfter(deadline)) {
+            throw StateError('No se inició el guardado del PDF individual.');
+          }
+          await tester.pump(const Duration(milliseconds: 10));
+          await Future<void>.delayed(Duration.zero);
+        }
+      });
+      await tester.pump();
+      expect(find.text('El PDF se descargó con éxito.'), findsNothing);
+      saved.complete(r'C:\ruta_privada\perfil_prueba.pdf');
+      await tester.pumpAndSettle();
+      expect(find.text('El PDF se descargó con éxito.'), findsOneWidget);
+      expect(find.textContaining('PDF generado:'), findsNothing);
+      expect(find.textContaining('ruta_privada'), findsNothing);
+      expect(find.textContaining('perfil_prueba.pdf'), findsNothing);
+      expect(tester.takeException(), isNull);
+    });
+  });
 
   testWidgets('Un error de generación se informa y permite reintentar', (
     tester,
@@ -146,9 +202,11 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('Detalle técnico'), findsNothing);
-      expect(find.textContaining('PDF generado:'), findsNothing);
+      expect(find.text('El PDF se descargó con éxito.'), findsNothing);
       expect(tester.widget<IconButton>(pdfButton).onPressed, isNotNull);
       expect(saves, 0);
+      await tester.pump(const Duration(seconds: 4));
+      await tester.pumpAndSettle();
       builder.completion = Completer<PdfReportResult>();
       await tester.tap(pdfButton);
       await tester.pump();
@@ -156,6 +214,7 @@ void main() {
       await tester.pumpAndSettle();
       expect(builder.calls, 2);
       expect(saves, 1);
+      expect(find.text('El PDF se descargó con éxito.'), findsOneWidget);
       expect(tester.widget<IconButton>(pdfButton).onPressed, isNotNull);
       expect(tester.takeException(), isNull);
     });
@@ -187,7 +246,7 @@ void main() {
         findsOneWidget,
       );
       expect(find.textContaining('ruta privada'), findsNothing);
-      expect(find.textContaining('PDF generado:'), findsNothing);
+      expect(find.text('El PDF se descargó con éxito.'), findsNothing);
       expect(tester.widget<IconButton>(pdfButton).onPressed, isNotNull);
       expect(tester.takeException(), isNull);
     });

@@ -11,12 +11,18 @@ class StudentRiskProfileScreen extends StatefulWidget {
   final int estudianteId;
   final int? usuarioId;
   final String? authToken;
+  final Future<String> Function({
+    required List<int> bytes,
+    required String filename,
+  })
+  savePdf;
 
   const StudentRiskProfileScreen({
     super.key,
     required this.estudianteId,
     this.usuarioId,
     this.authToken,
+    this.savePdf = savePdfFile,
   });
 
   @override
@@ -89,16 +95,13 @@ class _StudentRiskProfileScreenState extends State<StudentRiskProfileScreen> {
         profile: _profile,
       );
 
-      final savedPath = await savePdfFile(
-        bytes: result.bytes,
-        filename: result.filename,
-      );
+      await widget.savePdf(bytes: result.bytes, filename: result.filename);
 
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF generado: $savedPath'),
+        const SnackBar(
+          content: Text('El PDF se descargó con éxito.'),
           backgroundColor: Colors.green,
         ),
       );

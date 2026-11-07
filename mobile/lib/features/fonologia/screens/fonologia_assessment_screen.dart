@@ -201,7 +201,7 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
     if (!isCorrect) {
       setState(() {
         _erroresCurrent++;
-        _feedbackMessage = 'Esa no es la sílaba inicial. Intenta otra vez.';
+        _feedbackMessage = 'Vuelve a intentarlo';
         _isSavingAnswer = true;
       });
       _progressTracker!.errors = _erroresCurrent;
@@ -555,11 +555,6 @@ class _FonologiaAssessmentScreenState extends State<FonologiaAssessmentScreen> {
                 ),
               const SizedBox(height: 24),
               if (_saveErrorMessage != null) Text(_saveErrorMessage!),
-              Text(
-                'Errores de arrastre en este ítem: $_erroresCurrent',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
               Text(
                 'Respuestas guardadas: ${_answers.length} de ${_sessionStimuli.length}. '
                 'Faltan ${_sessionStimuli.length - _answers.length}.',

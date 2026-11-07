@@ -18,8 +18,7 @@ class PinLoginScreen extends StatefulWidget {
 
 class _PinLoginScreenState extends State<PinLoginScreen> {
   static const _missingClassroomNotice =
-      'No hay una sección preparada con jornada vigente. '
-      'Pide al docente que use “Descargar sección” con conexión a Internet.';
+      'Tu docente te ayudará a preparar la sección para empezar.';
   final TextEditingController _pinController = TextEditingController();
   final StudentService _studentService = StudentService();
 

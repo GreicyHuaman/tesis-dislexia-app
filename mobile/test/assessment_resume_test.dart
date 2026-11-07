@@ -522,6 +522,8 @@ void main() {
         }
         expect(find.text('Ítem ${count + 1} de 10'), findsOneWidget);
         expect(find.byType(StudentTestCompletedScreen), findsNothing);
+        expect(find.textContaining('Taps erróneos'), findsNothing);
+        expect(find.textContaining('Errores de arrastre'), findsNothing);
         for (var error = 1; error <= 2; error++) {
           await tester.runAsync(() async {
             final saved = Hive.box('evaluation_sessions').watch().firstWhere(
@@ -535,6 +537,15 @@ void main() {
             await waitForUi(tester, () => readyForAnswer(tester, tipo));
           });
           await tester.pumpAndSettle();
+          expect(find.text('Vuelve a intentarlo'), findsOneWidget);
+          expect(find.textContaining('Intenta otra vez'), findsNothing);
+          expect(
+            find.textContaining('Esa no es la sílaba inicial'),
+            findsNothing,
+          );
+          expect(find.textContaining('Taps erróneos'), findsNothing);
+          expect(find.textContaining('Errores de arrastre'), findsNothing);
+          expect(LocalEvaluationStorage.getAssessment(id).currentErrors, error);
         }
         final before = LocalEvaluationStorage.getAssessment(id);
         await closeScreen(tester, reopen: true);
@@ -550,12 +561,11 @@ void main() {
         await tester.tap(find.text('Continuar $label'));
         await tester.pumpAndSettle();
         expect(find.text('Ítem ${count + 1} de 10'), findsOneWidget);
-        final counter = tipo == 'LECTURA'
-            ? 'Taps erróneos en este ítem: 2'
-            : 'Errores de arrastre en este ítem: 2';
-        expect(find.text(counter), findsOneWidget);
+        expect(find.textContaining('Taps erróneos'), findsNothing);
+        expect(find.textContaining('Errores de arrastre'), findsNothing);
         expect(LocalEvaluationStorage.getAllSessions(), hasLength(1));
         final resumed = LocalEvaluationStorage.getAssessment(id);
+        expect(resumed.currentErrors, 2);
         expect(resumed.items, before.items);
         expect(resumed.options, before.options);
         expect(resumed.nivelAplicado, 2);
@@ -580,10 +590,14 @@ void main() {
         expect(session['aciertos_primer_intento'], 9);
         expect(session['taps_erroneos_totales'], 2);
         expect(session['sync_status'], 'COMPLETED_PENDING_SYNC');
-        expect(
-          LocalEvaluationStorage.getPendingSyncPayload()['details'],
-          hasLength(10),
+        final payload = LocalEvaluationStorage.getPendingSyncPayload();
+        final details = payload['details'] as List<Map<String, dynamic>>;
+        expect(details, hasLength(10));
+        final detail = details.singleWhere(
+          (detail) => detail['stimulus_id'] == '$tipo-$count',
         );
+        expect(detail['taps_erroneos'], 2);
+        expect(detail['acierto'], isFalse);
         expect(tester.takeException(), isNull);
         await closeScreen(tester);
       });

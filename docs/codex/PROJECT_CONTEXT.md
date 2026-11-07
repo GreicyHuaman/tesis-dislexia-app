@@ -684,9 +684,9 @@ flutter analyze
   abrupto puede perder el tiempo posterior al ultimo checkpoint persistido:
   no se promete precision absoluta del cronometro ante la muerte del proceso.
 - No se cambia la regla adaptativa, la cantidad de diez items ni el calculo de
-  aciertos al primer intento. Se mantienen "Intenta otra vez" en lectura y
-  "Esa no es la silaba inicial. Intenta otra vez." en fonologia. Se bloquean
-  interacciones nuevas mientras se confirma el guardado.
+  aciertos al primer intento. Tras la revision QA del 2026-11-06, ambas pruebas
+  muestran "Vuelve a intentarlo" y mantienen internos los contadores de errores.
+  Se bloquean interacciones nuevas mientras se confirma el guardado.
 - No se permite finalizar con 3/10 u 8/10 ni reducir el total para simular una
   prueba completa. Las sesiones PENDING siguen fuera de la sincronizacion y
   no generan una nueva estimacion de riesgo. Si ya se guardo la ultima respuesta
@@ -847,3 +847,28 @@ flutter analyze
   respaldo y autorizacion, comprobar variables privadas, validar despliegue y
   reenvios concurrentes reales. No se valido PostgreSQL/Docker en ejecucion ni
   la APK en Android. Sin commit, push, despliegue, APK ni cambios de datos reales.
+
+## Revision QA en celular - 2026-11-06
+
+- La usuaria declara resueltas QA0002529 y QA0002652. Este cierre no acredita
+  una publicacion del formulario externo verificada por el agente.
+- La usuaria confirma el correcto funcionamiento de QA0002532, QA0002533,
+  QA0002650, QA0002651, QA0002653, QA0002654 y QA0002656 con la APK instalada.
+- Ajustes de interfaz solicitados despues de esa comprobacion:
+  - PDF institucional, docente e individual: "El PDF se descargó con éxito.",
+    solo despues de guardar; sin mostrar rutas ni nombres de archivo.
+  - Ingreso sin seccion preparada con jornada vigente:
+    "Tu docente te ayudará a preparar la sección para empezar.".
+    Se mantiene el bloqueo del PIN.
+  - Lectura y fonologia: "Vuelve a intentarlo" al responder incorrectamente,
+    sin mostrar contadores de toques o arrastres erroneos al estudiante.
+- Los errores siguen registrados en checkpoint, respuestas, totales y carga de
+  sincronizacion. Se conservan la recuperacion, los aciertos al primer intento,
+  los diez items y las reglas adaptativas de tamizaje educativo. La estimacion
+  de riesgo no constituye diagnostico clinico.
+- Para revalidar los nuevos textos en el celular se necesita una APK posterior
+  a la 1.0.0 (2). Estos ajustes no cambian el backend ni requieren migracion.
+- Comprobacion local de estos ajustes: 48 pruebas de arranque, PIN, PDF,
+  mensajes de conexion y recuperacion de ambas pruebas correctas;
+  flutter analyze --no-pub sin observaciones. Errores preservados tras reabrir
+  Hive y en la carga de sincronizacion, sin contadores visibles.

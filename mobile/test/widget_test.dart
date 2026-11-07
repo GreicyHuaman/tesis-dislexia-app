@@ -25,7 +25,10 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Bienvenido a Disly'), findsOneWidget);
     expect(find.text('Ingrese su PIN de 4 numeros.'), findsOneWidget);
-    expect(find.textContaining('No hay una sección preparada'), findsOneWidget);
+    expect(
+      find.text('Tu docente te ayudará a preparar la sección para empezar.'),
+      findsOneWidget,
+    );
     expect(tester.widget<TextField>(find.byType(TextField)).enabled, isFalse);
     expect(tester.takeException(), isNull);
     await tester.pumpWidget(const SizedBox.shrink());

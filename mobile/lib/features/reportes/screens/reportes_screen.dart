@@ -449,16 +449,13 @@ class _ReportesScreenState extends State<ReportesScreen> {
 
       if (!mounted || scopeRevision != _userScopeRevision) return;
 
-      final savedPath = await widget.savePdf(
-        bytes: result.bytes,
-        filename: result.filename,
-      );
+      await widget.savePdf(bytes: result.bytes, filename: result.filename);
 
       if (!mounted || scopeRevision != _userScopeRevision) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('PDF generado: $savedPath'),
+        const SnackBar(
+          content: Text('El PDF se descargó con éxito.'),
           backgroundColor: Colors.green,
         ),
       );

@@ -196,7 +196,7 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
     if (!isCorrectOption) {
       setState(() {
         _tapsErroneosCurrent++;
-        _feedbackMessage = 'Intenta otra vez';
+        _feedbackMessage = 'Vuelve a intentarlo';
         _isSavingAnswer = true;
       });
       _progressTracker!.errors = _tapsErroneosCurrent;
@@ -493,11 +493,6 @@ class _LecturaAssessmentScreenState extends State<LecturaAssessmentScreen> {
                 ),
               const SizedBox(height: 24),
               if (_saveErrorMessage != null) Text(_saveErrorMessage!),
-              Text(
-                'Taps erróneos en este ítem: $_tapsErroneosCurrent',
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
               Text(
                 'Respuestas guardadas: ${_answers.length} de ${_sessionStimuli.length}. '
                 'Faltan ${_sessionStimuli.length - _answers.length}.',

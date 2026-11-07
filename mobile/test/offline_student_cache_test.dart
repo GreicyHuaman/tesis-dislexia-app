@@ -231,10 +231,10 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(
-        find.textContaining('No hay una sección preparada con jornada vigente'),
+        find.text('Tu docente te ayudará a preparar la sección para empezar.'),
         findsOneWidget,
       );
-      expect(find.textContaining('Descargar sección'), findsOneWidget);
+      expect(find.textContaining('No hay una sección preparada'), findsNothing);
       expect(
         (await LocalPinAttemptGuard.getState(pinContext)).failedAttempts,
         0,
